@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Supreme Talkies - Cinematic Portal
 
-## Getting Started
+A high-fidelity, immersive cinematic web experience for **Supreme Talkies**, a short film production house. 
 
-First, run the development server:
+## 🎬 Experience
+The portal features a scroll-driven "Film Reel" metaphor, utilizing:
+- **Cinematic Motion**: GSAP and Framer Motion for film-grade transitions.
+- **Atmospheric UI**: Fixed grain overlays, custom crosshair cursors, and burnt-orange aesthetics.
+- **Production Dashboards**: Role-specific workspaces for Writers, Technicians, and Producers.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠 Tech Stack
+- **Frontend**: Vite + React + TypeScript
+- **Animation**: GSAP (ScrollTrigger), Framer Motion, Lenis (Smooth Scroll)
+- **Backend**: Supabase (Auth & Database)
+- **Styling**: Vanilla CSS with modern cinematic typography (Playfair Display & Montserrat)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Getting Started
+1. **Clone the repository.**
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+3. **Environment Setup**:
+   - Copy `.env.example` to `.env`.
+   - Open `.env` and fill in your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+4. **Run development server**:
+   ```bash
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📂 Project Structure
+- `/src/pages`: Cinematic page implementations.
+- `/src/components`: Reusable film-set UI components.
+- `/src/context`: Auth and global state management.
+- `/src/data`: Static film metadata.
+- `/public`: High-resolution film stills and production assets.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Stories that demand to be told.*

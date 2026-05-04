@@ -1,0 +1,149 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300;400;500;600&display=swap");
+
+:root {
+  --color-orange: #BCA88E;
+  --color-bg: #1e2029;
+  --color-cream: #F0EBE0;
+  --color-charcoal: #252833;
+  --color-sprocket: #2a2a2a;
+  --color-gold: #c9a84c;
+  --font-display: "Playfair Display", sans-serif;
+  --font-body: "Inter", monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--color-cream);
+  font-family: var(--font-body);
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  /* Fixed cinematic background — always visible behind everything */
+  background-color: #13151a;
+  background-image: url('/background.webp');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* Persistent dark overlay so content stays legible */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.60);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Everything above the overlay */
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background-color: var(--color-orange);
+  color: var(--color-bg);
+}
+
+/* ── Gold Scrollbar ── */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #171920;
+  border-left: 1px solid #252833;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+/* ── Keyframe Animations ── */
+@keyframes filmFlicker {
+  0%, 88%, 90%, 93%, 100% { opacity: 1; }
+  89% { opacity: 0.75; }
+  91% { opacity: 0.9; }
+  92% { opacity: 0.8; }
+}
+
+@keyframes shimmerSweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes goldenPulse {
+  0%, 100% { filter: drop-shadow(0 0 15px rgba(212,175,55,0.15)); }
+  50% { filter: drop-shadow(0 0 35px rgba(212,175,55,0.45)); }
+}
+
+@keyframes reelSprocketScroll {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.film-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 160px 160px;
+}
+
+/* Film flicker on button hover */
+.btn-flicker:hover {
+  animation: filmFlicker 2.5s infinite;
+}
+
+/* Golden shimmer on logo text */
+.golden-shimmer {
+  background: linear-gradient(
+    90deg,
+    #D4AF37 0%,
+    #F5E27A 40%,
+    #D4AF37 60%,
+    #b8860b 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerSweep 3s linear infinite;
+}
