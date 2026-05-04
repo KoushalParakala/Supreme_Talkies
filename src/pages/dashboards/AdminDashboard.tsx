@@ -55,7 +55,7 @@ const KANBAN_STAGES = [
 ];
 
 export default function AdminDashboard() {
-  const { user: adminUser, profile, loading: authLoading, isAdmin } = useAuth();
+  const { user: adminUser, loading: authLoading, isAdmin } = useAuth();
   const [section, setSection] = useState<'INBOX' | 'SCRIPTS' | 'BRIEFS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS'>('INBOX');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
