@@ -35,9 +35,19 @@ export default function CrewDirectory(){
   useEffect(()=>{
     async function fetchCrew(){
       try {
-        const {data,error}=await supabase.from('public_crew_directory').select('*').not('roles','is',null).neq('roles','{}').order('created_at',{ascending:false});
+        setLoading(true);
+        // member_directory is the correct view name from our schema
+        const {data,error}=await supabase
+          .from('member_directory')
+          .select('*')
+          .not('roles','is',null)
+          .order('created_at',{ascending:false});
+        
         if (error) throw error;
-        setCrew(data||[]);
+        
+        // Filter out empty roles array manually if needed, or rely on .not('roles','is',null)
+        const validCrew = (data||[]).filter(m => m.roles && m.roles.length > 0);
+        setCrew(validCrew);
       } catch (err){
         console.error('Fetch crew error:',err);
       } finally {setLoading(false);}
@@ -49,7 +59,17 @@ export default function CrewDirectory(){
     return crew.filter(member=>{
       const s=search.toLowerCase();
       const matchesSearch=!s||member.full_name?.toLowerCase().includes(s)||member.st_id?.toLowerCase().includes(s);
-      const matchesRole=roleFilter==='ALL'||(member.roles&&member.roles.some((r:string)=>r.toUpperCase()===roleFilter));
+      
+      let matchesRole = roleFilter === 'ALL';
+      if (!matchesRole && member.roles) {
+        matchesRole = member.roles.some((r: string) => {
+          const normR = r.toUpperCase();
+          const normF = roleFilter.toUpperCase();
+          if (normF === 'MEMBER' && normR === 'AMPLIFIER') return true;
+          return normR === normF;
+        });
+      }
+      
       const matchesAvailability=!availableOnly||member.availability===true;
       return matchesSearch&&matchesRole&&matchesAvailability;
     });
@@ -115,7 +135,9 @@ export default function CrewDirectory(){
                   </div>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                     {member.roles?.map((role:string)=>(
-                      <span key={role} style={{fontFamily:'Montserrat,sans-serif',fontSize:7,letterSpacing:2,border:'1px solid rgba(188,168,142,0.15)',padding:'2px 8px',color:'#BCA88E',textTransform:'uppercase'}}>{role}</span>
+                      <span key={role} style={{fontFamily:'Montserrat,sans-serif',fontSize:7,letterSpacing:2,border:'1px solid rgba(188,168,142,0.15)',padding:'2px 8px',color:'#BCA88E',textTransform:'uppercase'}}>
+                        {role.toUpperCase() === 'AMPLIFIER' ? 'MEMBER' : role}
+                      </span>
                     ))}
                   </div>
                   {member.niche&&(
