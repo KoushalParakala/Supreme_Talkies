@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -52,12 +52,17 @@ export default function AmplifierDashboard() {
     }
   }, [user, activeTab]);
 
+  const fetchIdRef = useRef(0);
+
   const fetchShoutouts = async () => {
+    const fetchId = ++fetchIdRef.current;
     const { data } = await supabase.from('shoutout_wall')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(50);
+    if (fetchId !== fetchIdRef.current) return;
     const profileMap = await fetchMemberDirectoryByIds((data || []).map((shoutout: any) => shoutout.user_id));
+    if (fetchId !== fetchIdRef.current) return;
     setShoutouts((data || []).map((shoutout: any) => ({
       ...shoutout,
       profiles: profileMap.get(shoutout.user_id) || null
@@ -66,10 +71,13 @@ export default function AmplifierDashboard() {
 
   const fetchGroups = async () => {
     if (!user) return;
+    const fetchId = ++fetchIdRef.current;
     const { data } = await supabase.from('amplifier_groups')
       .select('*')
       .contains('member_ids', [user.id]);
+    if (fetchId !== fetchIdRef.current) return;
     const profileMap = await fetchMemberDirectoryByIds((data || []).flatMap((group: any) => group.member_ids || []));
+    if (fetchId !== fetchIdRef.current) return;
     setGroups((data || []).map((group: any) => ({
       ...group,
       members: (group.member_ids || []).map((memberId: string) => profileMap.get(memberId)).filter(Boolean)
@@ -295,7 +303,7 @@ export default function AmplifierDashboard() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <span style={{ fontSize: 24 }}>{sh.profiles?.avatar_symbol || '👤'}</span>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', margin: 0, fontWeight: 700 }}>{sh.profiles?.full_name?.toUpperCase()}</p>
-                      <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.4, background: 'rgba(188,168,142,0.1)', padding: '2px 6px' }}>{sh.profiles?.st_id}</span>
+                      <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.4, background: 'rgba(188,168,142,0.1)', padding: '2px 6px' }}>{sh.profiles?.st_id ? (sh.profiles.st_id.startsWith('SUPR-') ? sh.profiles.st_id : 'SUPR-' + sh.profiles.st_id) : 'NO-ID'}</span>
                     </div>
                     <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{timeAgo(sh.created_at)}</p>
                   </div>
@@ -303,7 +311,7 @@ export default function AmplifierDashboard() {
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#F0EBE0', lineHeight: 1.7, margin: 0 }}>{sh.message}</p>
                   
                   {sh.link && (
-                    <a href={sh.link} target="_blank" style={{ alignSelf: 'flex-start', background: 'rgba(188,168,142,0.1)', color: '#BCA88E', textDecoration: 'none', fontSize: 9, padding: '4px 10px', fontFamily: 'Inter, monospace', letterSpacing: 1 }}>{sh.link.substring(0, 30)}...</a>
+                    <a href={sh.link} target="_blank" rel="noopener noreferrer" style={{ alignSelf: 'flex-start', background: 'rgba(188,168,142,0.1)', color: '#BCA88E', textDecoration: 'none', fontSize: 9, padding: '4px 10px', fontFamily: 'Inter, monospace', letterSpacing: 1 }}>{sh.link.substring(0, 30)}...</a>
                   )}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>

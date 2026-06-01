@@ -72,6 +72,7 @@ ON CONFLICT (id) DO UPDATE SET public = true;
 -- 4.1 PROFILES (central user record)
 CREATE TABLE public.profiles (
   id                UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email             TEXT,
   full_name         TEXT,
   age               INT,
   phone             TEXT,
@@ -400,9 +401,10 @@ CREATE TRIGGER trg_assign_st_id
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_symbol, role, roles, st_id)
+  INSERT INTO public.profiles (id, email, full_name, avatar_symbol, role, roles, st_id)
   VALUES (
     NEW.id,
+    NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
     '🎬',
     'member',
@@ -447,12 +449,19 @@ ALTER TABLE public.admin_templates       ENABLE ROW LEVEL SECURITY;
 
 -- Helper: is admin
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN LANGUAGE sql STABLE AS $$
-  SELECT EXISTS (
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER STABLE AS $$
+BEGIN
+  -- Fast-path JWT check: avoids database queries for predefined admin emails
+  IF auth.jwt() ->> 'email' IN ('admin@supremetalkies.com', 'koushal.sub@gmail.com') THEN
+    RETURN TRUE;
+  END IF;
+
+  RETURN EXISTS (
     SELECT 1 FROM public.profiles
     WHERE id = auth.uid()
       AND ('admin' = ANY(roles) OR role = 'admin')
   );
+END;
 $$;
 
 -- ── PROFILES ──

@@ -34,11 +34,11 @@ export function CornerAccents() {
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path
               d={
-                pos.hasOwnProperty('right') && pos.hasOwnProperty('top')
+                'right' in pos && 'top' in pos
                   ? 'M20,0 L20,8 M12,0 L20,0'
-                  : pos.hasOwnProperty('left') && pos.hasOwnProperty('top')
+                  : 'left' in pos && 'top' in pos
                   ? 'M0,0 L0,8 M0,0 L8,0'
-                  : pos.hasOwnProperty('right') && pos.hasOwnProperty('bottom')
+                  : 'right' in pos && 'bottom' in pos
                   ? 'M20,20 L20,12 M12,20 L20,20'
                   : 'M0,20 L0,12 M0,20 L8,20'
               }

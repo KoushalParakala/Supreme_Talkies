@@ -104,7 +104,7 @@ export default function CrewDirectory(){
               <input type="checkbox" checked={availableOnly} onChange={e=>setAvailableOnly(e.target.checked)} style={{display:'none'}}/>
               <span style={{fontFamily:'Inter,monospace',fontSize:9,letterSpacing:2,color:'#BCA88E',opacity:availableOnly?1:0.5}}>AVAILABLE ONLY</span>
             </label>
-            <CinemaInput placeholder="Search by name or ST-ID..." value={search} onChange={setSearch}/>
+            <CinemaInput placeholder="Search by name or SUPR-ID..." value={search} onChange={setSearch}/>
           </div>
         </div>
         <div style={{padding:'60px clamp(32px,6vw,100px)'}}>
@@ -120,7 +120,7 @@ export default function CrewDirectory(){
                   whileHover={{background:'rgba(188,168,142,0.04)'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
                     <div style={{width:48,height:48,border:'1px solid rgba(188,168,142,0.2)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontFamily:'Playfair Display,serif',color:'#BCA88E',background:'rgba(0,0,0,0.24)'}}>
-                      {member.avatar_symbol||'M'}
+                       {member.avatar_symbol||'M'}
                     </div>
                     {member.st_verified&&(
                       <div style={{fontFamily:'Montserrat,sans-serif',fontSize:7,fontWeight:700,color:'#BCA88E',letterSpacing:2,display:'flex',alignItems:'center',gap:4}}>
@@ -131,7 +131,7 @@ export default function CrewDirectory(){
                   </div>
                   <div>
                     <h3 style={{fontFamily:'Playfair Display,serif',fontSize:16,color:'#F0EBE0',margin:'0 0 2px',fontWeight:700}}>{member.full_name||'Anonymous Member'}</h3>
-                    <p style={{fontFamily:'Inter,monospace',fontSize:9,color:'#BCA88E',opacity:0.3,letterSpacing:3,margin:0}}>{member.st_id}</p>
+                    <p style={{fontFamily:'Inter,monospace',fontSize:9,color:'#BCA88E',opacity:0.3,letterSpacing:3,margin:0}}>{member.st_id ? (member.st_id.startsWith('SUPR-') ? member.st_id : 'SUPR-' + member.st_id) : 'NO-ID'}</p>
                   </div>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                     {member.roles?.map((role:string)=>(

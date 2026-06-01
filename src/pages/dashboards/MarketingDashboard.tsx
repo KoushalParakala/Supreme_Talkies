@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -61,6 +61,15 @@ export default function MarketingDashboard() {
   });
   const [editingReach, setEditingReach] = useState<string | null>(null);
   const [reachUpdateValue, setReachUpdateValue] = useState('');
+  const [myAssignments, setMyAssignments] = useState<Record<string, any>>({});
+
+  /* Collab Brief States */
+  const [collabForm, setCollabForm] = useState({
+    platform: '',
+    follower_count: '',
+    collab_idea: ''
+  });
+  const [collabSubmitting, setCollabSubmitting] = useState(false);
 
   /* Content Kit States */
   const [expandedHashtags, setExpandedHashtags] = useState(false);
@@ -74,17 +83,30 @@ export default function MarketingDashboard() {
     fetchData();
   }, [user]);
 
+  const fetchIdRef = useRef(0);
+
   const fetchData = async () => {
+    const fetchId = ++fetchIdRef.current;
     setLoading(true);
     try {
-      // 1. Fetch All Active Campaigns + User's Own Campaigns
       const { data: allCampaigns } = await supabase
         .from('campaigns')
         .select('*')
         .or(`status.eq.active,created_by.eq.${user?.id}`)
         .order('created_at', { ascending: false });
       
+      if (fetchId !== fetchIdRef.current) return;
       setCampaigns(allCampaigns || []);
+
+      const { data: assigns } = await supabase
+        .from('campaign_assignments')
+        .select('*')
+        .eq('user_id', user?.id);
+        
+      if (fetchId !== fetchIdRef.current) return;
+      const assignMap: Record<string, any> = {};
+      assigns?.forEach(a => { assignMap[a.campaign_id] = a; });
+      setMyAssignments(assignMap);
 
       // 2. Fetch Leaderboard (Top 20)
       const { data: lbData } = await supabase
@@ -93,7 +115,9 @@ export default function MarketingDashboard() {
         .order('points', { ascending: false })
         .limit(20);
 
+      if (fetchId !== fetchIdRef.current) return;
       const leaderboardProfiles = await fetchMemberDirectoryByIds((lbData || []).map((row: any) => row.user_id));
+      if (fetchId !== fetchIdRef.current) return;
       const lb = (lbData || []).map((row: any) => ({
         ...row,
         profiles: leaderboardProfiles.get(row.user_id) || null
@@ -109,9 +133,42 @@ export default function MarketingDashboard() {
       }
 
     } catch (err) {
+      if (fetchId !== fetchIdRef.current) return;
       console.error('Error fetching dashboard data:', err);
     } finally {
-      setLoading(false);
+      if (fetchId === fetchIdRef.current) setLoading(false);
+    }
+  };
+
+  const handleCollabSubmit = async () => {
+    if (!user) {
+      alert('You must be logged in to submit a proposal.');
+      return;
+    }
+    if (!collabForm.platform || !collabForm.collab_idea) {
+      alert('Please fill out your platform and collab idea.');
+      return;
+    }
+    setCollabSubmitting(true);
+    try {
+      const { error } = await supabase.from('submissions').insert({
+        user_id: user.id,
+        type: 'collab',
+        data: {
+          platform: collabForm.platform,
+          follower_count: collabForm.follower_count,
+          collab_idea: collabForm.collab_idea
+        },
+        status: 'submitted'
+      });
+      if (error) throw error;
+      setCollabForm({ platform: '', follower_count: '', collab_idea: '' });
+      alert('Proposal submitted to database! Our marketing lead will reach out. ✦');
+    } catch (err: any) {
+      console.error('Error submitting collab brief:', err);
+      alert(`FAILED TO SUBMIT: ${err.message}`);
+    } finally {
+      setCollabSubmitting(false);
     }
   };
 
@@ -149,6 +206,38 @@ export default function MarketingDashboard() {
       const { error } = await supabase.from('campaigns').update({ status: 'completed' }).eq('id', id);
       if (error) throw error;
       fetchData();
+    } catch (err: any) { alert(err.message); }
+  };
+
+  const handleJoinCampaign = async (campaignId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase.from('campaign_assignments').insert({
+        campaign_id: campaignId,
+        user_id: user.id,
+        posts_count: 0
+      });
+      if (error) throw error;
+      fetchData();
+      alert('JOINED CAMPAIGN ✦');
+    } catch (err: any) { alert(err.message); }
+  };
+
+  const handleLogPost = async (campaignId: string) => {
+    if (!user) return;
+    const assignment = myAssignments[campaignId];
+    if (!assignment) return;
+    
+    try {
+      const { error } = await supabase.from('campaign_assignments').update({
+        posts_count: (assignment.posts_count || 0) + 1,
+        points: (assignment.points || 0) + 10,
+        reach: (assignment.reach || 0) + 100
+      }).eq('id', assignment.id);
+      if (error) throw error;
+      
+      fetchData();
+      alert('POST LOGGED ✦');
     } catch (err: any) { alert(err.message); }
   };
 
@@ -286,6 +375,25 @@ export default function MarketingDashboard() {
                           <button onClick={() => handleCloseCampaign(c.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', opacity: 0.5, fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>CLOSE CAMPAIGN</button>
                         </div>
                       )}
+                      
+                      {!isOwner && c.status === 'active' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
+                          {myAssignments[c.id] ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
+                                JOINED ({myAssignments[c.id].posts_count || 0} POSTS)
+                              </span>
+                              <button onClick={() => handleLogPost(c.id)} style={{ background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '6px 16px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>
+                                + LOG POST
+                              </button>
+                            </div>
+                          ) : (
+                            <button onClick={() => handleJoinCampaign(c.id)} style={{ background: '#BCA88E', border: 'none', color: '#0a0a0a', padding: '8px 24px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>
+                              JOIN MISSION
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -301,11 +409,11 @@ export default function MarketingDashboard() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-                <CinemaInput label="YOUR PLATFORM" placeholder="Instagram / YouTube / X" value={newCampaign.niche} onChange={(v) => setNewCampaign({ ...newCampaign, niche: v })} />
-                <CinemaInput label="FOLLOWER COUNT" placeholder="e.g. 12,000" value={newCampaign.reach_target} onChange={(v) => setNewCampaign({ ...newCampaign, reach_target: v })} />
+                <CinemaInput label="YOUR PLATFORM" placeholder="Instagram / YouTube / X" value={collabForm.platform} onChange={(v) => setCollabForm({ ...collabForm, platform: v })} />
+                <CinemaInput label="FOLLOWER COUNT" placeholder="e.g. 12,000" value={collabForm.follower_count} onChange={(v) => setCollabForm({ ...collabForm, follower_count: v })} />
               </div>
-              <CinemaTextarea label="YOUR COLLAB IDEA" placeholder="Tell us what you have in mind..." value={newCampaign.title} onChange={(v) => setNewCampaign({ ...newCampaign, title: v })} rows={4} />
-              <CinemaButton onClick={() => alert('Proposal received. Our marketing lead will reach out.')}>SUBMIT PROPOSAL  →</CinemaButton>
+              <CinemaTextarea label="YOUR COLLAB IDEA" placeholder="Tell us what you have in mind..." value={collabForm.collab_idea} onChange={(v) => setCollabForm({ ...collabForm, collab_idea: v })} rows={4} />
+              <CinemaButton onClick={handleCollabSubmit} loading={collabSubmitting} disabled={collabSubmitting}>SUBMIT PROPOSAL  →</CinemaButton>
             </div>
           </div>
         </div>
@@ -414,7 +522,7 @@ export default function MarketingDashboard() {
                         <span style={{ fontSize: 24 }}>{row.profiles?.avatar_symbol}</span>
                         <div>
                           <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: 0 }}>{row.profiles?.full_name}</p>
-                          <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.4, background: 'rgba(188,168,142,0.1)', padding: '1px 6px', letterSpacing: 2 }}>{row.profiles?.st_id}</span>
+                          <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.4, background: 'rgba(188,168,142,0.1)', padding: '1px 6px', letterSpacing: 2 }}>{row.profiles?.st_id ? (row.profiles.st_id.startsWith('SUPR-') ? row.profiles.st_id : 'SUPR-' + row.profiles.st_id) : 'NO-ID'}</span>
                         </div>
                       </div>
                       <span style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 16, color: '#BCA88E', fontWeight: 700 }}>{row.points}</span>

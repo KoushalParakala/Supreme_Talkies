@@ -216,6 +216,13 @@ export default function RoleSelection() {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
 
+  // Session guard
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
@@ -261,14 +268,33 @@ export default function RoleSelection() {
     setLoading(true);
     try {
       setLastConfirmed(roleId);
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
+      
+      const payload = {
         roles: merged,
         role: merged[0],
-        full_name: profile?.full_name || user.user_metadata?.full_name || 'Anonymous Creator',
+        full_name: displayName || 'Anonymous Creator',
         avatar_symbol: profile?.avatar_symbol || '🎬',
-      } as any);
-      if (error) throw error;
+        updated_at: new Date().toISOString()
+      };
+
+      // Try UPDATE first and demand a return row. If no row exists, fall back to INSERT.
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(payload)
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        if (updateError.code === 'PGRST116' || updateError.message?.includes('no rows')) {
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({ id: user.id, ...payload });
+          if (insertError) throw insertError;
+        } else {
+          throw updateError;
+        }
+      }
 
       // Ensure profile is refreshed before navigating
       await refreshProfile(user.id);

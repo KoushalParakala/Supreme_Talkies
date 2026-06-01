@@ -246,6 +246,17 @@ export default function FilmDetail() {
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', lineHeight: 1.8, opacity: 0.7, margin: 0 }}>{film.synopsis}</p>
           </motion.div>
 
+          {film.stills && film.stills.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} style={{ marginTop: 40, width: '100%' }}>
+              <div style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 8, fontWeight: 700, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, marginBottom: 16 }}>STILLS</div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16 }}>
+                {film.stills.slice(0, 3).map((still, idx) => (
+                  <img key={idx} src={still} alt={`Still ${idx + 1}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 4, border: '1px solid rgba(188,168,142,0.2)', opacity: 0.9 }} />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }} style={{ marginTop: 48 }}>
             {film.videoLink ? (
               <a href={film.videoLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>

@@ -276,9 +276,6 @@ export default function Auth(){
                     </button>
                   </div>
                 </div>
-                <div style={{marginTop:12,textAlign:'center',opacity:0.3}}>
-                  <p style={{fontFamily:'Inter,monospace',fontSize:8,color:'#BCA88E',letterSpacing:3,margin:0}}>DEMO PASS: test@supremetalkies.com / password123</p>
-                </div>
               </motion.div>
             ):mode==='signup'?(
               <motion.div key="signup" initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-16}} transition={{duration:0.35}} style={{display:'flex',flexDirection:'column',gap:28}}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -149,6 +149,7 @@ export default function WriterDashboard() {
   // Open Briefs State
   const [openBriefs, setOpenBriefs] = useState<any[]>([]);
   const [expressingBriefId, setExpressingBriefId] = useState<string | null>(null);
+  const [userInterests, setUserInterests] = useState<string[]>([]);
 
   useEffect(() => { 
     if (!user) return;
@@ -157,13 +158,41 @@ export default function WriterDashboard() {
     fetchVersionHistory();
     fetchInspirationPins();
     fetchOpenBriefs();
+    fetchUserInterests();
   }, [user]);
 
+  const fetchUserInterestsRef = useRef(0);
+  const fetchOpenBriefsRef = useRef(0);
+  const fetchVersionHistoryRef = useRef(0);
+  const fetchInspirationPinsRef = useRef(0);
+  const fetchSubmissionsRef = useRef(0);
+  const fetchChallengesRef = useRef(0);
+
+  const fetchUserInterests = async () => {
+    if (!user) return;
+    const fetchId = ++fetchUserInterestsRef.current;
+    try {
+      const { data, error } = await supabase
+        .from('brief_interests')
+        .select('brief_id')
+        .eq('user_id', user.id);
+      if (fetchId !== fetchUserInterestsRef.current) return;
+      if (!error && data) {
+        setUserInterests(data.map((i: any) => i.brief_id));
+      }
+    } catch (err) {
+      if (fetchId !== fetchUserInterestsRef.current) return;
+      console.error('Error fetching user interests:', err);
+    }
+  };
+
   const fetchOpenBriefs = async () => {
+    const fetchId = ++fetchOpenBriefsRef.current;
     const { data } = await supabase.from('film_briefs')
       .select('*, profiles(full_name, avatar_symbol, st_id)')
       .eq('is_open', true)
       .order('created_at', { ascending: false });
+    if (fetchId !== fetchOpenBriefsRef.current) return;
     setOpenBriefs(data || []);
   };
 
@@ -171,6 +200,19 @@ export default function WriterDashboard() {
     if (!user) return;
     setExpressingBriefId(brief.id);
     try {
+      // 0. Check for existing interest
+      const { data: existing } = await supabase.from('brief_interests')
+        .select('id')
+        .eq('brief_id', brief.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (existing) {
+        alert('You have already expressed interest in this brief ✦');
+        setUserInterests(prev => [...prev, brief.id]);
+        return;
+      }
+
       // 1. Record interest in brief_interests table
       const { error: interestError } = await supabase.from('brief_interests').insert({
         brief_id: brief.id,
@@ -178,6 +220,9 @@ export default function WriterDashboard() {
         note: `Writer interest`
       });
       if (interestError) throw interestError;
+
+      // Update local state immediately
+      setUserInterests(prev => [...prev, brief.id]);
 
       // 2. Send a collab request notification to the producer
       await supabase.from('collab_requests').insert({
@@ -194,20 +239,25 @@ export default function WriterDashboard() {
   };
 
   const fetchVersionHistory = async () => {
+    const fetchId = ++fetchVersionHistoryRef.current;
     const { data } = await supabase.from('script_versions')
       .select('*')
       .eq('user_id', user?.id)
       .order('version_number', { ascending: false });
+    if (fetchId !== fetchVersionHistoryRef.current) return;
     setVersionHistory(data || []);
   };
 
   const fetchInspirationPins = async () => {
+    const fetchId = ++fetchInspirationPinsRef.current;
     const { data } = await supabase.from('inspiration_pins').select('*').eq('user_id', user?.id).order('created_at', { ascending: false });
+    if (fetchId !== fetchInspirationPinsRef.current) return;
     setInspirationPins(data || []);
   };
 
   const fetchSubmissions = async () => {
     if (!user) return;
+    const fetchId = ++fetchSubmissionsRef.current;
     try {
       const { data: scriptsData, error: scriptsError } = await supabase
         .from('scripts')
@@ -215,19 +265,24 @@ export default function WriterDashboard() {
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
 
+      if (fetchId !== fetchSubmissionsRef.current) return;
       if (scriptsError) throw scriptsError;
       setSubmissions(scriptsData || []);
     } catch (err: any) {
+      if (fetchId !== fetchSubmissionsRef.current) return;
       console.error('Error fetching scripts:', err);
     } finally {
-      setLoading(false);
+      if (fetchId === fetchSubmissionsRef.current) setLoading(false);
     }
   };
 
   const fetchChallenges = async () => {
     if (!user) return;
+    const fetchId = ++fetchChallengesRef.current;
     const { data: c } = await supabase.from('writing_challenges').select('*').eq('is_active', true).order('deadline', { ascending: true });
+    if (fetchId !== fetchChallengesRef.current) return;
     const { data: e } = await supabase.from('challenge_submissions').select('*').eq('user_id', user.id);
+    if (fetchId !== fetchChallengesRef.current) return;
     setChallenges(c || []);
     setUserEntries(e || []);
   };
@@ -275,6 +330,7 @@ export default function WriterDashboard() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'scripts' }, () => fetchSubmissions())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'writing_challenges' }, () => fetchChallenges())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'film_briefs' }, () => fetchOpenBriefs())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brief_interests' }, () => fetchUserInterests())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -625,8 +681,12 @@ export default function WriterDashboard() {
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', opacity: 0.5, letterSpacing: 2 }}>PRODUCER</span>
                       <span style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0' }}>{brief.profiles?.full_name}</span>
                     </div>
-                    <CinemaButton onClick={() => handleInterestInBrief(brief)} loading={expressingBriefId === brief.id}>
-                      {expressingBriefId === brief.id ? 'LOGGING...' : 'EXPRESS INTEREST'}
+                    <CinemaButton 
+                      onClick={() => !userInterests.includes(brief.id) && handleInterestInBrief(brief)} 
+                      disabled={userInterests.includes(brief.id)}
+                      loading={expressingBriefId === brief.id}
+                    >
+                      {expressingBriefId === brief.id ? 'LOGGING...' : userInterests.includes(brief.id) ? 'INTEREST LOGGED ✓' : 'EXPRESS INTEREST'}
                     </CinemaButton>
                   </div>
                 </div>

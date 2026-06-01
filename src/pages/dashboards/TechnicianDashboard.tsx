@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -105,7 +105,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
 }
 
 export default function TechnicianDashboard() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, displayName } = useAuth();
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'briefs' | 'collab'>('portfolio');
   const [formData, setFormData] = useState({ 
@@ -145,20 +145,28 @@ export default function TechnicianDashboard() {
     }
   }, [user, profile]);
 
+  const fetchOtherCrewRef = useRef(0);
+  const fetchOpenBriefsRef = useRef(0);
+  const fetchRequestsRef = useRef(0);
+
   const fetchOtherCrew = async () => {
+    const fetchId = ++fetchOtherCrewRef.current;
     const { data } = await supabase.from('member_directory')
       .select('id, full_name, avatar_symbol, st_id, st_verified, role, roles, skills, niche')
       .eq('availability', true)
       .contains('roles', ['technician'])
       .neq('id', user?.id);
+    if (fetchId !== fetchOtherCrewRef.current) return;
     setOtherCrew(data || []);
   };
 
   const fetchOpenBriefs = async () => {
+    const fetchId = ++fetchOpenBriefsRef.current;
     const { data } = await supabase.from('film_briefs')
       .select('*, profiles(full_name, avatar_symbol, st_id)')
       .eq('is_open', true)
       .order('created_at', { ascending: false });
+    if (fetchId !== fetchOpenBriefsRef.current) return;
     setOpenBriefs(data || []);
   };
 
@@ -188,6 +196,7 @@ export default function TechnicianDashboard() {
 
   const fetchRequests = async () => {
     if (!user) return;
+    const fetchId = ++fetchRequestsRef.current;
     // Received
     const { data: rec } = await supabase.from('collab_requests')
       .select('*')
@@ -200,11 +209,13 @@ export default function TechnicianDashboard() {
       .eq('sender_id', user.id)
       .order('created_at', { ascending: false });
 
+    if (fetchId !== fetchRequestsRef.current) return;
     const profileMap = await fetchMemberDirectoryByIds([
       ...(rec || []).map((request: any) => request.sender_id),
       ...(sent || []).map((request: any) => request.receiver_id)
     ]);
 
+    if (fetchId !== fetchRequestsRef.current) return;
     setReceivedRequests((rec || []).map((request: any) => ({
       ...request,
       sender: profileMap.get(request.sender_id) || null
@@ -363,7 +374,7 @@ export default function TechnicianDashboard() {
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, letterSpacing: 5, color: '#BCA88E', margin: '0 0 8px' }}>SUPR VERIFICATION PENDING</p>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', margin: 0 }}>Complete your portfolio and submit a work sample to apply for verification.</p>
                   </div>
-                  <CinemaButton onClick={() => window.location.href = `mailto:verify@supremetalkies.com?subject=Verification Request: ${profile?.full_name} (${profile?.st_id})`}>
+                  <CinemaButton onClick={() => window.location.href = `mailto:verify@supremetalkies.com?subject=Verification Request: ${displayName} (${profile?.st_id ? (profile.st_id.startsWith('SUPR-') ? profile.st_id : 'SUPR-' + profile.st_id) : 'NO-ID'})`}>
                     REQUEST VERIFICATION
                   </CinemaButton>
                 </div>
@@ -530,7 +541,7 @@ export default function TechnicianDashboard() {
                           }}>{req.status.toUpperCase()}</span>
                         )}
                       </div>
-                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{req.sender?.st_id}</p>
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{req.sender?.st_id ? (req.sender.st_id.startsWith('SUPR-') ? req.sender.st_id : `SUPR-${req.sender.st_id}`) : 'Pending'}</p>
                     </div>
                   </div>
                 ))}
@@ -550,7 +561,7 @@ export default function TechnicianDashboard() {
                       <span style={{ fontSize: 24 }}>{req.receiver?.avatar_symbol || '👤'}</span>
                       <div>
                         <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: '0 0 2px' }}>{req.receiver?.full_name}</p>
-                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{req.receiver?.st_id}</p>
+                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{req.receiver?.st_id ? (req.receiver.st_id.startsWith('SUPR-') ? req.receiver.st_id : `SUPR-${req.receiver.st_id}`) : 'Pending'}</p>
                       </div>
                     </div>
                     <span style={{ 
@@ -572,7 +583,7 @@ export default function TechnicianDashboard() {
                   <div key={tech.id} style={{ border: '1px solid rgba(188,168,142,0.1)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 20 }}>{tech.avatar_symbol}</span>
-                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{tech.st_id}</p>
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{tech.st_id ? (tech.st_id.startsWith('SUPR-') ? tech.st_id : `SUPR-${tech.st_id}`) : 'Pending'}</p>
                     </div>
                     <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: 0 }}>{tech.full_name}</p>
                     <button 

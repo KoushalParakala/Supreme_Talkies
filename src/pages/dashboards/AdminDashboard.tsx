@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -110,7 +110,10 @@ export default function AdminDashboard() {
   const [roomMemberId, setRoomMemberId] = useState<Record<string, string>>({}); // {roomId: stId}
   const [creatingRoom, setCreatingRoom] = useState(false);
 
+  const fetchIdRef = useRef(0);
+
   const fetchData = async () => {
+    const fetchId = ++fetchIdRef.current;
     try {
       setDebugStep('Started fetchData');
       setLoading(true);
@@ -119,31 +122,38 @@ export default function AdminDashboard() {
       if (section === 'INBOX') {
         setDebugStep('Fetching INBOX submissions...');
         const { data, error: err } = await supabase.from('submissions').select('*, profiles(full_name, avatar_symbol)').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         setDebugStep('INBOX fetch complete');
         if (err) throw err;
         setSubmissions(data || []);
       } else if (section === 'SCRIPTS') {
         const { data, error: err } = await supabase.from('scripts').select('*, user:profiles(full_name, avatar_symbol, st_id, role)').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setScripts(data || []);
       } else if (section === 'BRIEFS') {
         const { data, error: err } = await supabase.from('film_briefs').select('*, producer:profiles(full_name, avatar_symbol)').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setBriefs(data || []);
       } else if (section === 'PROJECT ROOMS') {
-        const { data, error: err } = await supabase.from('project_rooms').select('*, project_room_members(*, profiles(full_name, avatar_symbol))').order('created_at', { ascending: false });
+        const { data, error: err } = await supabase.from('project_rooms').select('*, project_room_members(*, profiles(id, full_name, avatar_symbol, avatar_url, st_id))').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setProjectRooms(data || []);
       } else if (section === 'CAMPAIGNS') {
         const { data, error: err } = await supabase.from('campaigns').select('*, campaign_assignments(count)').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         if (err) {
           const { data: fallbackData } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false });
+          if (fetchId !== fetchIdRef.current) return;
           setCampaigns(fallbackData || []);
         } else {
           setCampaigns(data || []);
         }
       } else if (section === 'CREW') {
         const { data, error: err } = await supabase.from('profiles').select('*, submissions(*)').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         const sortedCrew = (data || []).sort((a, b) => {
           const aRecent = a.submissions?.length ? new Date(a.submissions[0].created_at).getTime() : 0;
@@ -153,27 +163,33 @@ export default function AdminDashboard() {
         setCrew(sortedCrew);
       } else if (section === 'FILMS') {
         const { data, error: err } = await supabase.from('films').select('*').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setFilms(data || []);
       } else if (section === 'TEMPLATES') {
         const { data, error: err } = await supabase.from('admin_templates').select('*').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setDbTemplates(data || []);
       }
 
       setDebugStep('Checking PROJECT ROOMS secondary fetch');
       if (section === 'PROJECT ROOMS') {
-        const { data: scripts } = await supabase.from('scripts').select('id, title').eq('status', 'accepted');
+        const { data: scripts } = await supabase.from('scripts').select('id, title').eq('kanban_stage', 'accepted');
+        if (fetchId !== fetchIdRef.current) return;
         setAcceptedScripts(scripts || []);
       }
       setDebugStep('Try block complete');
     } catch (err: any) {
+      if (fetchId !== fetchIdRef.current) return;
       setDebugStep('Caught error: ' + err.message);
       console.error('Error fetching dashboard data:', err);
       setError(err.message);
     } finally {
-      setDebugStep(prev => prev + ' -> Finally block');
-      setLoading(false);
+      if (fetchId === fetchIdRef.current) {
+        setDebugStep(prev => prev + ' -> Finally block');
+        setLoading(false);
+      }
     }
   };
 
@@ -208,25 +224,89 @@ export default function AdminDashboard() {
   }, [section]);
 
 
+  const toggleVerification = async (memberId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ st_verified: !currentStatus })
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      // Update local state
+      setCrew(prev => prev.map(c => c.id === memberId ? { ...c, st_verified: !currentStatus } : c));
+      if (selectedCrew?.id === memberId) {
+        setSelectedCrew((prev: any) => prev ? { ...prev, st_verified: !currentStatus } : null);
+      }
+    } catch (err: any) {
+      console.error('Failed to toggle verification:', err);
+      alert(`VERIFICATION ERROR: ${err.message}`);
+    }
+  };
+
   const updateSubStatus = async (id: string, status: string) => {
     const { error } = await supabase.from('submissions').update({ status }).eq('id', id);
     if (error) alert(`Error: ${error.message}`);
     fetchData();
   };
 
+  const toggleBriefStatus = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase.from('film_briefs').update({ is_open: !currentStatus }).eq('id', id);
+    if (error) alert(`Error: ${error.message}`);
+    else fetchData();
+  };
+
   const createRoom = async () => {
     if (!newRoom.title || !adminUser) return;
     setCreatingRoom(true);
     try {
-      const { error } = await supabase.from('project_rooms').insert({ 
-        title: newRoom.title,
-        script_id: (newRoom as any).script_id,
-        notes: newRoom.brief,
-        status: 'active', 
-        created_by: adminUser.id,
-        member_ids: [adminUser.id] 
-      });
+      let scriptWriterId: string | null = null;
+      const scriptId = (newRoom as any).script_id;
+      if (scriptId) {
+        const { data: scriptData } = await supabase
+          .from('scripts')
+          .select('user_id')
+          .eq('id', scriptId)
+          .single();
+        if (scriptData && scriptData.user_id) {
+          scriptWriterId = scriptData.user_id;
+        }
+      }
+
+      const memberIds = [adminUser.id];
+      if (scriptWriterId && scriptWriterId !== adminUser.id) {
+        memberIds.push(scriptWriterId);
+      }
+
+      const { data: insertedRoom, error } = await supabase
+        .from('project_rooms')
+        .insert({ 
+          title: newRoom.title,
+          script_id: scriptId || null,
+          notes: newRoom.brief,
+          status: 'active', 
+          created_by: adminUser.id,
+          member_ids: memberIds
+        })
+        .select()
+        .single();
+      
       if (error) throw error;
+
+      if (insertedRoom) {
+        // Insert member rows into project_room_members join table
+        const memberRows = memberIds.map(uid => ({
+          room_id: insertedRoom.id,
+          user_id: uid
+        }));
+        const { error: membersErr } = await supabase
+          .from('project_room_members')
+          .insert(memberRows);
+        if (membersErr) {
+          console.error("Failed to insert project room members:", membersErr);
+        }
+      }
+
       setNewRoom({ title: '', script_id: '', brief: '' }); 
       fetchData();
     } catch (err: any) { alert(err.message); }
@@ -254,7 +334,14 @@ export default function AdminDashboard() {
   const addMemberToRoom = async (roomId: string, stId: string, existingMembers: string[]) => {
     if (!stId) return;
     try {
-      const { data: profile, error } = await supabase.from('profiles').select('id').eq('st_id', stId.toUpperCase()).single();
+      let cleanedId = stId.trim().toUpperCase();
+      if (cleanedId.startsWith('ST-')) {
+        cleanedId = cleanedId.substring(3);
+      }
+      if (!cleanedId.startsWith('SUPR-')) {
+        cleanedId = `SUPR-${cleanedId}`;
+      }
+      const { data: profile, error } = await supabase.from('profiles').select('id').eq('st_id', cleanedId).single();
       if (error || !profile) throw new Error("Member not found.");
       if (existingMembers.includes(profile.id)) throw new Error("Already a member.");
 
@@ -263,6 +350,16 @@ export default function AdminDashboard() {
       }).eq('id', roomId);
       
       if (updErr) throw updErr;
+
+      // Also insert into project_room_members join table
+      const { error: joinErr } = await supabase.from('project_room_members').insert({
+        room_id: roomId,
+        user_id: profile.id
+      });
+      if (joinErr) {
+        console.error("Failed to insert member into project_room_members join table:", joinErr);
+      }
+
       setRoomMemberId({ ...roomMemberId, [roomId]: '' });
       fetchData();
     } catch (err: any) { alert(err.message); }
@@ -289,8 +386,14 @@ export default function AdminDashboard() {
   };
 
   const createCampaign = async () => {
-    if (!newCampaign.title) return;
-    const { error } = await supabase.from('campaigns').insert([newCampaign]);
+    if (!newCampaign.title || !adminUser) return;
+    const payload = {
+      ...newCampaign,
+      created_by: adminUser.id,
+      deadline: newCampaign.deadline || null,
+      group_sync_at: newCampaign.group_sync_at || null,
+    };
+    const { error } = await supabase.from('campaigns').insert([payload]);
     if (error) alert(error.message);
     else { setNewCampaign({ title: '', goal: '', deadline: '', status: 'active', kit_captions: '', kit_hashtags: '', kit_drive_link: '', group_sync_at: '' }); fetchData(); }
   };
@@ -681,9 +784,9 @@ export default function AdminDashboard() {
                   <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, maxWidth: 500, lineHeight: 1.5 }}>{b.description}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: 9, color: b.is_open ? '#4ade80' : '#BCA88E', border: '1px solid currentColor', padding: '2px 8px', letterSpacing: 2 }}>
+                  <button onClick={() => toggleBriefStatus(b.id, b.is_open)} style={{ background: 'none', border: `1px solid ${b.is_open ? '#4ade80' : '#BCA88E'}`, color: b.is_open ? '#4ade80' : '#BCA88E', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer' }}>
                     {b.is_open ? 'OPEN' : 'CLOSED'}
-                  </span>
+                  </button>
                 </div>
               </div>
             ))}
@@ -756,12 +859,50 @@ export default function AdminDashboard() {
                   <div style={{ borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 20 }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#BCA88E', marginBottom: 16 }}>TEAM MEMBERS</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
-                      <div style={{ display: 'flex', gap: -8 }}>
-                        {room.member_ids?.map((mId: string, idx: number) => {
-                          // Note: In real query we'd join, but member_ids is UUID array. 
-                          // The profile fetch in fetchData should handle this or we can map local profile cache
-                          return <div key={mId} style={{ width: 28, height: 28, background: '#16181f', border: '1px solid #BCA88E', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: idx > 0 ? -10 : 0, zIndex: 10 - idx }}>👤</div>
-                        })}
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {room.project_room_members && room.project_room_members.length > 0 ? (
+                          room.project_room_members.map((m: any, idx: number) => {
+                            const prof = m?.profiles;
+                            if (!prof) return null;
+                            const displayName = prof.full_name || 'Member';
+                            const displayStId = prof.st_id ? (prof.st_id.startsWith('SUPR-') ? prof.st_id : `SUPR-${prof.st_id}`) : 'Pending';
+                            const hoverTitle = `${displayName} (${displayStId})`;
+                            
+                            return (
+                              <div 
+                                key={prof.id || idx} 
+                                title={hoverTitle}
+                                style={{ 
+                                  width: 28, 
+                                  height: 28, 
+                                  background: '#16181f', 
+                                  border: '1px solid #BCA88E', 
+                                  borderRadius: '50%', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center', 
+                                  fontSize: 10, 
+                                  fontWeight: 600,
+                                  color: '#BCA88E',
+                                  marginLeft: idx > 0 ? -10 : 0, 
+                                  zIndex: 10 - idx,
+                                  overflow: 'hidden',
+                                  cursor: 'default'
+                                }}
+                              >
+                                {prof.avatar_url ? (
+                                  <img src={prof.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <span>{prof.avatar_symbol || (prof.full_name ? prof.full_name.substring(0, 1).toUpperCase() : '👤')}</span>
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          room.member_ids?.map((mId: string, idx: number) => (
+                            <div key={mId} style={{ width: 28, height: 28, background: '#16181f', border: '1px solid #BCA88E', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: idx > 0 ? -10 : 0, zIndex: 10 - idx }}>👤</div>
+                          ))
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <input 
@@ -859,7 +1000,7 @@ export default function AdminDashboard() {
                   <div>
                     <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: '0 0 4px' }}>{c.full_name}</p>
                     <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
-                      {c.st_id || 'NO-ID'} · {c.role?.toUpperCase()} · {c.st_verified ? 'VERIFIED' : 'UNVERIFIED'}
+                      {c.st_id ? (c.st_id.startsWith('SUPR-') ? c.st_id : 'SUPR-' + c.st_id) : 'NO-ID'} · {c.role?.toUpperCase()} · {c.st_verified ? 'VERIFIED' : 'UNVERIFIED'}
                     </p>
                     {c.submissions?.length > 0 && (
                       <p style={{ fontSize: 9, color: '#4ade80', margin: '4px 0 0', letterSpacing: 1 }}>{c.submissions.length} SUBMISSION(S)</p>
@@ -874,7 +1015,7 @@ export default function AdminDashboard() {
               <div style={{ flex: 1, padding: 32, background: 'rgba(14,15,20,0.95)', border: '1px solid rgba(188,168,142,0.2)' }}>
                 <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, color: '#F0EBE0', margin: '0 0 8px' }}>{selectedCrew.full_name}</h3>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 3, color: '#BCA88E', margin: '0 0 24px' }}>
-                  {selectedCrew.role?.toUpperCase()} · {selectedCrew.st_id}
+                  {selectedCrew.role?.toUpperCase()} · {selectedCrew.st_id ? (selectedCrew.st_id.startsWith('SUPR-') ? selectedCrew.st_id : 'SUPR-' + selectedCrew.st_id) : 'NO-ID'}
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
@@ -910,12 +1051,18 @@ export default function AdminDashboard() {
                   <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.4 }}>No submissions found for this user.</p>
                 )}
                 
-                <button onClick={() => {
-                   setSection('TEMPLATES');
-                   setTemplateVars({ ...templateVars, writer_name: selectedCrew.full_name });
-                }} style={{ marginTop: 24, width: '100%', background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '12px', fontSize: 10, letterSpacing: 2, cursor: 'pointer' }}>
-                  SEND MESSAGE / TEMPLATE
-                </button>
+                <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                  <button onClick={() => {
+                     setSection('TEMPLATES');
+                     setTemplateVars({ ...templateVars, writer_name: selectedCrew.full_name });
+                  }} style={{ flex: 1, background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '12px', fontSize: 10, letterSpacing: 2, cursor: 'pointer' }}>
+                    SEND TEMPLATE
+                  </button>
+                  <button onClick={() => toggleVerification(selectedCrew.id, !!selectedCrew.st_verified)} 
+                    style={{ flex: 1, background: selectedCrew.st_verified ? 'rgba(255,80,80,0.1)' : 'rgba(188,168,142,0.1)', border: `1px solid ${selectedCrew.st_verified ? '#ff5050' : '#BCA88E'}`, color: selectedCrew.st_verified ? '#ff5050' : '#BCA88E', padding: '12px', fontSize: 10, letterSpacing: 2, cursor: 'pointer', transition: 'all 0.3s ease' }}>
+                    {selectedCrew.st_verified ? 'REVOKE VERIFICATION' : 'VERIFY CREW'}
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>

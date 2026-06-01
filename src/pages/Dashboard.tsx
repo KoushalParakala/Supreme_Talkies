@@ -1,4 +1,4 @@
-import {useState,useEffect,useMemo,lazy,Suspense} from 'react';
+import {useState,useEffect,useMemo,lazy,Suspense,ComponentType} from 'react';
 import {motion,AnimatePresence} from 'framer-motion';
 import {useAuth} from '../context/AuthContext';
 import {useNavigate,useLocation} from 'react-router-dom';
@@ -33,7 +33,7 @@ const ROLE_SUBTITLES:Record<string,string>={
   admin:'The whole picture.',
 };
 
-const DASHBOARD_COMPONENTS:Record<string,React.ComponentType>={
+const DASHBOARD_COMPONENTS:Record<string,ComponentType<any>>={
   writer:WriterDashboard,
   technician:TechnicianDashboard,
   producer:ProducerDashboard,
@@ -72,32 +72,6 @@ export default function Dashboard(){
 
   const requestedRole =location.state?.activeRole as string |undefined;
 
-  useEffect(()=>{
-    if (loading) return;
-    if (!session){
-      navigate('/auth',{replace:true});
-      return;
-    }
-    if (session &&profileAttempted &&!profile &&!isAdmin){
-      navigate('/role-select',{replace:true});
-    }
-  },[loading,session,profile,profileAttempted,isAdmin,navigate]);
-
-  if (!session ||!user) return null;
-
-  if (!profileAttempted &&!isAdmin){
-    return (
-      <div style={{height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#0e0f13'}}>
-        <motion.p animate={{opacity:[0.4,1,0.4]}} transition={{repeat:Infinity,duration:1.5}} style={{color:'#BCA88E',fontFamily:'Montserrat,sans-serif',letterSpacing:4}}>
-          LOADING PROFILE...
-        </motion.p>
-        <button onClick={()=>{localStorage.clear();window.location.href='/auth';}} style={{marginTop:40,background:'none',border:'1px solid rgba(188,168,142,0.3)',color:'rgba(188,168,142,0.6)',padding:'10px 20px',fontSize:9,letterSpacing:3,cursor:'pointer'}}>
-          STUCK? RE-AUTHENTICATE
-        </button>
-      </div>
-    );
-  }
-
   const roles =useMemo(()=>{
     if (isAdmin) return ['admin'];
     if (!profile) return [];
@@ -116,6 +90,14 @@ export default function Dashboard(){
 
   const [activeRole,setActiveRole]=useState(initialRole ||roles[0]||'writer');
 
+  // Sync activeRole when initialRole or roles changes (e.g. after profile loads)
+  useEffect(()=>{
+    const target =initialRole ||roles[0];
+    if (target){
+      setActiveRole(prev=>prev!==target?target:prev);
+    }
+  },[initialRole,roles]);
+
   useEffect(()=>{
     if (requestedRole){
       const valid =[...Object.keys(ROLE_LABELS),'admin'];
@@ -126,10 +108,36 @@ export default function Dashboard(){
   },[requestedRole,roles]);
 
   useEffect(()=>{
-    if (roles.length===0 &&!isAdmin){
+    if (loading) return;
+    if (!session){
+      navigate('/auth',{replace:true});
+      return;
+    }
+    if (session &&profileAttempted &&!profile &&!isAdmin){
       navigate('/role-select',{replace:true});
     }
-  },[roles,isAdmin,navigate]);
+  },[loading,session,profile,profileAttempted,isAdmin,navigate]);
+
+  useEffect(()=>{
+    if (profileAttempted &&roles.length===0 &&!isAdmin){
+      navigate('/role-select',{replace:true});
+    }
+  },[profileAttempted,roles,isAdmin,navigate]);
+
+  if (!session ||!user) return null;
+
+  if (!profileAttempted &&!isAdmin){
+    return (
+      <div style={{height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#0e0f13'}}>
+        <motion.p animate={{opacity:[0.4,1,0.4]}} transition={{repeat:Infinity,duration:1.5}} style={{color:'#BCA88E',fontFamily:'Montserrat,sans-serif',letterSpacing:4}}>
+          LOADING PROFILE...
+        </motion.p>
+        <button onClick={()=>{localStorage.clear();window.location.href='/auth';}} style={{marginTop:40,background:'none',border:'1px solid rgba(188,168,142,0.3)',color:'rgba(188,168,142,0.6)',padding:'10px 20px',fontSize:9,letterSpacing:3,cursor:'pointer'}}>
+          STUCK? RE-AUTHENTICATE
+        </button>
+      </div>
+    );
+  }
 
   if (roles.length===0 &&!isAdmin) return null;
 
@@ -153,19 +161,63 @@ export default function Dashboard(){
             <div style={{flex:1,height:1,background:'rgba(188,168,142,0.25)'}}/>
             {Array.from({length:6}).map((_,i)=><div key={i} style={{width:14,height:10,background:'#0e0f13',border:'1px solid rgba(255,255,255,0.1)',borderRadius:2,flexShrink:0,marginLeft:5}}/>)}
           </div>
-          {roles.length>1 &&!isAdmin &&(
-            <div style={{display:'flex',gap:12,marginBottom:24}}>
-              {roles.map(r=>(
-                <motion.button key={r} type="button" onClick={()=>setActiveRole(r)}
-                  animate={{background:r===activeRole?'#BCA88E':'transparent',color:r===activeRole?'#0e0f13':'#BCA88E',borderColor:r===activeRole?'#BCA88E':'rgba(188,168,142,0.25)'}}
-                  whileHover={{borderColor:'#BCA88E'}}
-                  transition={{duration:0.2}}
-                  style={{border:'1px solid',padding:'8px 20px',fontFamily:'Montserrat,sans-serif',fontSize:10,fontWeight:600,letterSpacing:3,cursor:'pointer',textTransform:'uppercase'}}>
-                  {ROLE_LABELS[r]??r}
-                </motion.button>
-              ))}
+
+          {roles.length > 1 && !isAdmin && (
+            <div style={{ 
+              display: 'inline-flex', 
+              background: 'rgba(0, 0, 0, 0.4)', 
+              border: '1px solid rgba(188, 168, 142, 0.15)', 
+              padding: 4, 
+              borderRadius: 0,
+              gap: 4, 
+              marginBottom: 32,
+              position: 'relative',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
+            }}>
+              {roles.map(r => {
+                const isActive = r === activeRole;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setActiveRole(r)}
+                    style={{
+                      position: 'relative',
+                      border: 'none',
+                      background: 'none',
+                      padding: '10px 24px',
+                      fontFamily: '"Montserrat", sans-serif',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: 3,
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      color: isActive ? '#0e0f13' : 'rgba(188, 168, 142, 0.6)',
+                      transition: 'color 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                      outline: 'none',
+                      zIndex: 2,
+                    }}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeRoleGlow"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: '#BCA88E',
+                          zIndex: -1,
+                          boxShadow: '0 0 12px rgba(188, 168, 142, 0.3)',
+                        }}
+                      />
+                    )}
+                    {ROLE_LABELS[r] ?? r}
+                  </button>
+                );
+              })}
             </div>
           )}
+
           <AnimatePresence mode="wait">
             <motion.div key={activeRole} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} exit={{opacity:0,x:10}} transition={{duration:0.4,ease:'easeOut'}}>
               <h1 style={{fontFamily:'Playfair Display,sans-serif',fontSize:'clamp(36px,5vw,72px)',color:'#BCA88E',lineHeight:0.95,margin:'0 0 14px',letterSpacing:2,textTransform:'uppercase'}}>{title}</h1>
@@ -173,9 +225,9 @@ export default function Dashboard(){
                 <span style={{fontFamily:'Montserrat,sans-serif',fontSize:10,fontWeight:600,color:'#F0EBE0',opacity:0.8,letterSpacing:4}}>{subtitle.toUpperCase()}</span>
                 <span style={{fontFamily:'Montserrat,sans-serif',fontSize:9,color:'rgba(188,168,142,0.5)'}}>|</span>
                 <span style={{fontFamily:'Montserrat,sans-serif',fontSize:9,fontWeight:700,color:'#BCA88E',opacity:0.7,letterSpacing:3}}>{displayName.toUpperCase()}</span>
-                {profile?.st_id &&(
+                {profile?.st_id && (
                   <span style={{fontFamily:'Inter,monospace',fontSize:8,color:'#BCA88E',opacity:0.4,border:'1px solid rgba(188,168,142,0.15)',padding:'2px 8px',letterSpacing:2}}>
-                    ST-{profile.st_id}
+                    {profile.st_id.startsWith('SUPR-') ? profile.st_id : 'SUPR-' + profile.st_id}
                   </span>
                 )}
               </div>

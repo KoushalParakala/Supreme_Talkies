@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -125,7 +125,10 @@ export default function PresenterDashboard() {
     fetchData();
   }, [user]);
 
+  const fetchIdRef = useRef(0);
+
   const fetchData = async () => {
+    const fetchId = ++fetchIdRef.current;
     setLoading(true);
     try {
       if (!user) return;
@@ -135,6 +138,7 @@ export default function PresenterDashboard() {
         .eq('user_id', user.id)
         .order('screening_date', { ascending: false });
       
+      if (fetchId !== fetchIdRef.current) return;
       const allPresentations = presData || [];
       setFilms(allPresentations);
 
@@ -162,6 +166,8 @@ export default function PresenterDashboard() {
         .eq('presentations.user_id', user.id)
         .order('created_at', { ascending: false });
 
+      if (fetchId !== fetchIdRef.current) return;
+
       if (reactData) {
         const counts: Record<string, number> = { '🔥': 0, '👏': 0, '😮': 0, '❤️': 0 };
         reactData.forEach(r => {
@@ -173,9 +179,10 @@ export default function PresenterDashboard() {
         setTimeline(reactData.slice(0, 20));
       }
     } catch (err) {
+      if (fetchId !== fetchIdRef.current) return;
       console.error(err);
     } finally {
-      setLoading(false);
+      if (fetchId === fetchIdRef.current) setLoading(false);
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -117,6 +117,9 @@ export default function ProducerDashboard() {
   const [interests, setInterests] = useState<Record<string, any[]>>({});
   const [loadingInterests, setLoadingInterests] = useState<string | null>(null);
 
+  const fetchDataRef = useRef(0);
+  const fetchBriefsRef = useRef(0);
+
   useEffect(() => {
     fetchData();
     if (user) fetchBriefs();
@@ -124,6 +127,7 @@ export default function ProducerDashboard() {
 
   const fetchBriefs = async () => {
     if (!user) return;
+    const fetchId = ++fetchBriefsRef.current;
     try {
       const { data, error } = await supabase
         .from('film_briefs')
@@ -131,9 +135,11 @@ export default function ProducerDashboard() {
         .eq('producer_id', user.id)
         .order('created_at', { ascending: false });
       
+      if (fetchId !== fetchBriefsRef.current) return;
       if (error) throw error;
       setBriefs(data || []);
     } catch (err) {
+      if (fetchId !== fetchBriefsRef.current) return;
       console.error('Error fetching briefs:', err);
     }
   };
@@ -164,6 +170,7 @@ export default function ProducerDashboard() {
   };
 
   const fetchData = async () => {
+    const fetchId = ++fetchDataRef.current;
     setLoading(true);
     try {
       const [sRes, tRes, rRes] = await Promise.all([
@@ -172,7 +179,10 @@ export default function ProducerDashboard() {
         supabase.from('audience_reactions').select('submission_id, user_id').eq('reaction', 'fire')
       ]);
 
+      if (fetchId !== fetchDataRef.current) return;
+
       const writerProfiles = await fetchMemberDirectoryByIds((sRes.data || []).map((script: any) => script.user_id));
+      if (fetchId !== fetchDataRef.current) return;
       setScripts((sRes.data || []).map((script: any) => ({
         ...script,
         user: writerProfiles.get(script.user_id) || null
@@ -188,9 +198,10 @@ export default function ProducerDashboard() {
       setUserFires(fires);
       setFireCounts(counts);
     } catch (err) {
+      if (fetchId !== fetchDataRef.current) return;
       console.error(err);
     } finally {
-      setLoading(false);
+      if (fetchId === fetchDataRef.current) setLoading(false);
     }
   };
 
@@ -478,7 +489,7 @@ export default function ProducerDashboard() {
                                         {interest.user?.st_verified && <span style={{ color: '#BCA88E', fontSize: 10 }}>✦</span>}
                                       </div>
                                       <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
-                                        {interest.user?.role?.toUpperCase()} • SUPR ID: {interest.user?.st_id}
+                                        {interest.user?.role?.toUpperCase()} • SUPR ID: {interest.user?.st_id ? (interest.user.st_id.startsWith('SUPR-') ? interest.user.st_id : 'SUPR-' + interest.user.st_id) : 'NO-ID'}
                                       </p>
                                       {interest.note && (
                                         <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.5, fontStyle: 'italic', margin: '4px 0 0' }}>
