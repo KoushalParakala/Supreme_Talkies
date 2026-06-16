@@ -149,7 +149,6 @@ export default function WriterDashboard() {
   const [expandingId, setExpandingId] = useState<string | null>(null);
   const [revisionData, setRevisionData] = useState({ pdfLink: '', note: '' });
   const [submittingRev, setSubmittingRev] = useState(false);
-  const [versionsExpanded, setVersionsExpanded] = useState(false);
   const [versionNote, setVersionNote] = useState('');
   const [versionHistory, setVersionHistory] = useState<any[]>([]);
   const [savingVersion, setSavingVersion] = useState(false);
@@ -542,50 +541,42 @@ export default function WriterDashboard() {
                   {submitting ? 'SENDING TO SET' : 'LAUNCH SCRIPT  →'}
                 </CinemaButton>
 
-                {/* Feature 2: Draft Versions Panel */}
+                {/* Feature 2: Draft Versions Panel - Always Visible */}
                 <div style={{ borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 32 }}>
-                  <button 
-                    onClick={() => setVersionsExpanded(!versionsExpanded)}
-                    style={{ background: 'none', border: 'none', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: 0 }}
-                  >
-                    {versionsExpanded ? '[-] DRAFT VERSIONS' : '[+] DRAFT VERSIONS'}
-                  </button>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5, color: '#BCA88E', marginBottom: 20 }}>DRAFT VERSIONS</p>
 
-                  <AnimatePresence>
-                    {versionsExpanded && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingTop: 28, maxWidth: 680 }}>
-                          {/* A) Version Form */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            <CinemaTextarea label="VERSION NOTES" placeholder="What changed in this draft?" value={versionNote} onChange={setVersionNote} rows={2} />
-                            <CinemaButton onClick={handleSaveVersionNote} loading={savingVersion} disabled={!versionNote || submissions.length === 0}>
-                              SAVE VERSION NOTE
-                            </CinemaButton>
-                          </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
+                    {/* A) Version Form */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <CinemaTextarea label="VERSION NOTES" placeholder="What changed in this draft?" value={versionNote} onChange={setVersionNote} rows={2} />
+                      <CinemaButton onClick={handleSaveVersionNote} loading={savingVersion} disabled={!versionNote || submissions.length === 0}>
+                        SAVE VERSION NOTE
+                      </CinemaButton>
+                    </div>
 
-                          {/* B) Version History List */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                            {versionHistory.slice(0, 6).map((v, i) => {
-                              const vColor = VERSION_PALETTE[i % VERSION_PALETTE.length];
-                              return (
-                              <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 12, paddingTop: 12, borderBottom: i < Math.min(versionHistory.slice(0,6).length,5) ? '1px solid rgba(188,168,142,0.05)' : 'none' }}>
-                                <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 9, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '3px 8px', letterSpacing: 1, flexShrink: 0 }}>V{v.version_number}</span>
-                                <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: vColor, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                  {new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}
-                                </span>
-                                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.65, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                                  {v.version_notes || '—'}
-                                </p>
-                              </div>
-                            );})}  
-                            {versionHistory.length > 6 && (
-                              <button style={{ background: 'none', border: 'none', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 4, cursor: 'pointer', textAlign: 'left', padding: '8px 0 0', opacity: 0.5 }}>+ {versionHistory.length - 6} MORE VERSIONS</button>
+                    {/* B) Version History List - always visible */}
+                    {versionHistory.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#BCA88E', opacity: 0.5, marginBottom: 12 }}>VERSION HISTORY ({versionHistory.length})</p>
+                        {versionHistory.map((v, i) => {
+                          const vColor = VERSION_PALETTE[i % VERSION_PALETTE.length];
+                          return (
+                          <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 12, paddingTop: 12, borderBottom: i < versionHistory.length - 1 ? '1px solid rgba(188,168,142,0.05)' : 'none' }}>
+                            <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 9, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '3px 8px', letterSpacing: 1, flexShrink: 0 }}>V{v.version_number}</span>
+                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: vColor, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                              {new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}
+                            </span>
+                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.65, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                              {v.version_notes || '—'}
+                            </p>
+                            {v.pdf_url && (
+                              <a href={v.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 1, textDecoration: 'underline', flexShrink: 0, whiteSpace: 'nowrap' }}>READ</a>
                             )}
                           </div>
-                        </div>
-                      </motion.div>
+                        );})}  
+                      </div>
                     )}
-                  </AnimatePresence>
+                  </div>
                 </div>
               </div>
             </div>
@@ -607,12 +598,14 @@ export default function WriterDashboard() {
                     const stKey = script.kanban_stage || script.status || 'inbox';
                     const statusMeta = STATUS_COLORS[stKey] || STATUS_COLORS['inbox'];
                     const statusLabel = STATUS_LABELS[stKey] || stKey.replace('_',' ').toUpperCase();
+                    // Gather per-script versions from the fetched versions relation
+                    const scriptVersions: any[] = (script.versions || []).slice().sort((a: any, b: any) => b.version_number - a.version_number);
                     return (
                     <div key={script.id} style={{ borderBottom: '1px solid rgba(188,168,142,0.06)', paddingBottom: 28, paddingTop: scriptIdx > 0 ? 28 : 0 }}>
                       {/* Script Row: title + status */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <p style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: 18, color: '#F0EBE0', letterSpacing: 1, margin: 0, lineHeight: 1.2 }}>{script.title}</p>
+                          <p style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', letterSpacing: 1, margin: 0, lineHeight: 1.2 }}>{script.title}</p>
                           <p style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 4, opacity: 0.45, margin: 0, textTransform: 'uppercase' }}>
                             {script.dna_format || 'SCRIPT'} · {new Date(script.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
                           </p>
@@ -641,7 +634,7 @@ export default function WriterDashboard() {
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                         style={{ background: 'rgba(255,255,255,0.015)', padding: '14px 18px', borderLeft: '1px solid rgba(188,168,142,0.1)' }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: scriptVersions.length > 0 ? 14 : 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <span style={{
                               fontFamily: '"Montserrat", sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 2,
@@ -656,9 +649,33 @@ export default function WriterDashboard() {
                           </div>
                           <a href={script.pdf_url} target="_blank" rel="noopener noreferrer"
                             style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, textDecoration: 'underline' }}>
-                            READ LATEST →
+                            READ LATEST
                           </a>
                         </div>
+
+                        {/* Previous Versions - always visible */}
+                        {scriptVersions.length > 0 && (
+                          <div style={{ borderTop: '1px solid rgba(188,168,142,0.06)', paddingTop: 12 }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 4, color: '#BCA88E', opacity: 0.4, marginBottom: 10 }}>VERSION HISTORY</p>
+                            {scriptVersions.map((v: any, i: number) => {
+                              const vColor = VERSION_PALETTE[i % VERSION_PALETTE.length];
+                              return (
+                                <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 8, paddingBottom: 8, borderBottom: i < scriptVersions.length - 1 ? '1px solid rgba(188,168,142,0.04)' : 'none' }}>
+                                  <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 8, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '2px 6px', letterSpacing: 1, flexShrink: 0 }}>V{v.version_number}</span>
+                                  <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: vColor, opacity: 0.6, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                    {new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}
+                                  </span>
+                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F0EBE0', opacity: 0.55, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                    {v.version_notes || '—'}
+                                  </p>
+                                  {v.pdf_url && (
+                                    <a href={v.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.4, textDecoration: 'underline', flexShrink: 0 }}>READ</a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
 
                         {/* Submit Revision Expander */}
                         {(script.status === 'feedback' || script.status === 'submitted' || script.status === 'under_review') && (
@@ -709,7 +726,7 @@ export default function WriterDashboard() {
                 <div key={brief.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(188,168,142,0.15)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 18, color: '#F0EBE0', margin: 0 }}>{brief.title}</h3>
-                    <span style={{ fontSize: 20 }}>{brief.profiles?.avatar_symbol || '🎬'}</span>
+                    <span style={{ fontSize: 14, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', letterSpacing: 2, opacity: 0.5 }}>{brief.profiles?.st_id ? (brief.profiles.st_id.startsWith('SUPR-') ? brief.profiles.st_id : 'SUPR-' + brief.profiles.st_id) : 'PRODUCER'}</span>
                   </div>
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.6, margin: 0 }}>{brief.description}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -749,7 +766,7 @@ export default function WriterDashboard() {
             
             {challenges.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '80px 0', opacity: 0.5 }}>
-                <span style={{ fontSize: 48 }}>🎬</span>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#BCA88E" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M7 2H3a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V9l-6-7H7z"/><polyline points="13 2 13 9 20 9"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
                 <p style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 16, color: '#F0EBE0', textAlign: 'center' }}>
                   No active challenges right now. Check back soon.
                 </p>
@@ -812,7 +829,7 @@ export default function WriterDashboard() {
                             transition: 'all 0.2s ease'
                           }}
                         >
-                          {entered ? 'ENTERED ✓' : 'ENTER CHALLENGE'}
+                          {entered ? 'ENTERED' : 'ENTER CHALLENGE'}
                         </button>
                       </div>
                     </div>

@@ -154,14 +154,6 @@ export default function Dashboard(){
       <div aria-hidden="true" style={{position:'fixed',top:0,left:'50%',transform:'translateX(-50%)',width:'30vw',height:'45vh',background:'radial-gradient(ellipse at top,rgba(188,168,142,0.04)0%,transparent 70%)',pointerEvents:'none',zIndex:1}}/>
       <div style={{paddingTop:96,paddingBottom:80,paddingLeft:'clamp(32px,6vw,100px)',paddingRight:'clamp(52px,7vw,120px)',position:'relative',zIndex:2}}>
         <div style={{marginBottom:52,position:'relative'}}>
-          <div style={{display:'flex',alignItems:'center',gap:0,marginBottom:20,overflow:'hidden'}}>
-            {Array.from({length:6}).map((_,i)=><div key={i} style={{width:14,height:10,background:'#0e0f13',border:'1px solid rgba(255,255,255,0.07)',borderRadius:2,flexShrink:0,marginRight:5}}/>)}
-            <div style={{flex:1,height:1,background:'rgba(188,168,142,0.15)'}}/>
-            <span style={{fontFamily:'Montserrat,sans-serif',fontSize:8,fontWeight:700,color:'#BCA88E',letterSpacing:5,opacity:0.8,margin:'0 14px',whiteSpace:'nowrap'}}>NOW SCREENING</span>
-            <div style={{flex:1,height:1,background:'rgba(188,168,142,0.25)'}}/>
-            {Array.from({length:6}).map((_,i)=><div key={i} style={{width:14,height:10,background:'#0e0f13',border:'1px solid rgba(255,255,255,0.1)',borderRadius:2,flexShrink:0,marginLeft:5}}/>)}
-          </div>
-
           {roles.length > 1 && !isAdmin && (
             <div style={{ 
               display: 'inline-flex', 

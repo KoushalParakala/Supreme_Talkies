@@ -6,6 +6,7 @@ import { DirectoryProfile, fetchMemberByStId, fetchMemberDirectoryByIds } from '
 
 const SPECIALIZATIONS = ['Camera', 'Lighting', 'Sound', 'Editing', 'VFX', 'Production Design', 'Other'];
 
+
 function CinemaInput({ label, type = 'text', placeholder, value, onChange, required }: {
   label: string; type?: string; placeholder?: string; value: string;
   onChange: (v: string) => void; required?: boolean;
@@ -105,7 +106,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
 }
 
 export default function TechnicianDashboard() {
-  const { user, profile, refreshProfile, displayName } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'briefs' | 'collab'>('portfolio');
   const [formData, setFormData] = useState({ 
@@ -361,26 +362,6 @@ export default function TechnicianDashboard() {
               </div>
             </div>
 
-            {/* Feature 2: SUPR Verified Badge */}
-            <div style={{ maxWidth: 680 }}>
-              {profile?.st_verified ? (
-                <div style={{ background: 'rgba(188,168,142,0.1)', border: '1px solid #BCA88E', padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, letterSpacing: 5, color: '#BCA88E', margin: 0 }}>✓ SUPR VERIFIED</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.6, margin: 0 }}>Your profile is verified by Supreme Talkies.</p>
-                </div>
-              ) : (
-                <div style={{ border: '1px solid rgba(188,168,142,0.1)', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.5 }}>
-                  <div>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, letterSpacing: 5, color: '#BCA88E', margin: '0 0 8px' }}>SUPR VERIFICATION PENDING</p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', margin: 0 }}>Complete your portfolio and submit a work sample to apply for verification.</p>
-                  </div>
-                  <CinemaButton onClick={() => window.location.href = `mailto:verify@supremetalkies.com?subject=Verification Request: ${displayName} (${profile?.st_id ? (profile.st_id.startsWith('SUPR-') ? profile.st_id : 'SUPR-' + profile.st_id) : 'NO-ID'})`}>
-                    REQUEST VERIFICATION
-                  </CinemaButton>
-                </div>
-              )}
-            </div>
-
             {/* Portfolio Form */}
             <div>
               <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
@@ -388,17 +369,52 @@ export default function TechnicianDashboard() {
               <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.35, letterSpacing: 2, marginBottom: 40 }}>THE CRAFT BEHIND EVERY FRAME</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 680 }}>
-                {/* Niche Dropdown */}
+                {/* Specialization Toggle Buttons */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5, textTransform: 'uppercase' }}>NICHE / SPECIALISATION</label>
-                  <select 
-                    value={formData.specialization}
-                    onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                    style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(188,168,142,0.3)', padding: '8px 0', fontFamily: 'Inter, monospace', fontSize: 14, color: '#F0EBE0', outline: 'none' }}
-                  >
-                    <option value="" disabled style={{ background: '#0a0a0a' }}>Select your craft...</option>
-                    {SPECIALIZATIONS.map(s => <option key={s} value={s.toUpperCase()} style={{ background: '#0a0a0a' }}>{s}</option>)}
-                  </select>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {SPECIALIZATIONS.map(s => {
+                      const val = s.toUpperCase();
+                      const isSelected = formData.specialization === val || (s === 'Other' && formData.specialization !== '' && !SPECIALIZATIONS.slice(0,-1).map(x => x.toUpperCase()).includes(formData.specialization));
+                      return (
+                        <motion.button
+                          key={s} type="button" whileTap={{ scale: 0.97 }}
+                          onClick={() => setFormData({ ...formData, specialization: val })}
+                          style={{
+                            padding: '7px 16px', borderRadius: 2,
+                            background: isSelected ? 'rgba(188,168,142,0.18)' : 'transparent',
+                            border: `1px solid ${isSelected ? '#BCA88E' : 'rgba(188,168,142,0.2)'}`,
+                            color: isSelected ? '#F0EBE0' : 'rgba(188,168,142,0.5)',
+                            fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
+                            cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
+                          }}
+                        >
+                          {s}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                  {/* Show text input when 'Other' is selected */}
+                  {formData.specialization === 'OTHER' && (
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: 8 }}>
+                      <CinemaInput
+                        label="SPECIFY YOUR CRAFT"
+                        placeholder="e.g. Drone Operator, Colourist..."
+                        value={formData.specialization === 'OTHER' ? '' : formData.specialization}
+                        onChange={(v) => setFormData({ ...formData, specialization: v.toUpperCase() || 'OTHER' })}
+                      />
+                    </motion.div>
+                  )}
+                  {formData.specialization !== '' && formData.specialization !== 'OTHER' && !SPECIALIZATIONS.slice(0,-1).map(x => x.toUpperCase()).includes(formData.specialization) && (
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: 8 }}>
+                      <CinemaInput
+                        label="SPECIFY YOUR CRAFT"
+                        placeholder="e.g. Drone Operator, Colourist..."
+                        value={formData.specialization}
+                        onChange={(v) => setFormData({ ...formData, specialization: v.toUpperCase() })}
+                      />
+                    </motion.div>
+                  )}
                 </div>
 
                 <TagPicker label="TECHNICAL SKILLS" tags={['Directing', 'Cinematography', 'Editing', 'Sound', 'VFX', 'Stunts', 'Acting', 'Writing']} selected={Array.isArray(formData.skills) ? formData.skills : (formData.skills ? [formData.skills] : [])} onChange={(v) => setFormData({ ...formData, skills: v })} max={5} />
@@ -412,7 +428,7 @@ export default function TechnicianDashboard() {
 
                 <div style={{ marginTop: 8 }}>
                   <CinemaButton onClick={handleSave} loading={saving}>
-                    {saving ? 'COMMITTING' : 'COMMIT PORTFOLIO  ✦'}
+                    {saving ? 'COMMITTING' : 'COMMIT PORTFOLIO'}
                   </CinemaButton>
                 </div>
               </div>
@@ -508,7 +524,7 @@ export default function TechnicianDashboard() {
                   <div key={req.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(188,168,142,0.1)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <span style={{ fontSize: 32 }}>{req.sender?.avatar_symbol || '👤'}</span>
+                        <span style={{ fontSize: 24 }}>{req.sender?.avatar_symbol || req.sender?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                         <div>
                           <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 16, color: '#F0EBE0', margin: '0 0 4px' }}>{req.sender?.full_name}</p>
                           <span style={{ padding: '2px 8px', background: 'rgba(188,168,142,0.1)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 2 }}>{req.sender?.role?.toUpperCase()}</span>
@@ -558,7 +574,7 @@ export default function TechnicianDashboard() {
                 {sentRequests.map(req => (
                   <div key={req.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <span style={{ fontSize: 24 }}>{req.receiver?.avatar_symbol || '👤'}</span>
+                      <span style={{ fontSize: 20 }}>{req.receiver?.avatar_symbol || req.receiver?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                       <div>
                         <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: '0 0 2px' }}>{req.receiver?.full_name}</p>
                         <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{req.receiver?.st_id ? (req.receiver.st_id.startsWith('SUPR-') ? req.receiver.st_id : `SUPR-${req.receiver.st_id}`) : 'Pending'}</p>
@@ -582,7 +598,7 @@ export default function TechnicianDashboard() {
                 {otherCrew.map(tech => (
                   <div key={tech.id} style={{ border: '1px solid rgba(188,168,142,0.1)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 20 }}>{tech.avatar_symbol}</span>
+                      <span style={{ fontSize: 16 }}>{tech.avatar_symbol || tech.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                       <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{tech.st_id ? (tech.st_id.startsWith('SUPR-') ? tech.st_id : `SUPR-${tech.st_id}`) : 'Pending'}</p>
                     </div>
                     <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: 0 }}>{tech.full_name}</p>

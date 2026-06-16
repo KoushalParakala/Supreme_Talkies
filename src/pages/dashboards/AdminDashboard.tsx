@@ -428,7 +428,7 @@ export default function AdminDashboard() {
       
       let finalPosterUrl = newFilm.poster_image;
       let finalReelUrl = newFilm.reel_image;
-      let finalStills = newFilm.stills || [];
+      const finalStills = newFilm.stills || [];
 
       // Helper function for uploading
       const uploadFile = async (file: File, folder: string) => {
@@ -552,7 +552,9 @@ export default function AdminDashboard() {
                   <div key={sub.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, marginBottom: 16 }}>
                       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <span style={{ fontSize: 24 }}>{sub.profiles?.avatar_symbol}</span>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.6 }}>{sub.profiles?.full_name || 'Unknown'}</span>
+                        </div>
                         <div>
                           <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: 0 }}>
                             {sub.type === 'collab' ? sub.data?.platform : sub.data?.title || sub.data?.genre || 'Untitled'}
@@ -655,9 +657,11 @@ export default function AdminDashboard() {
                 {scripts.map(s => (
                   <div key={s.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', gap: 20 }}>
-                      <span style={{ fontSize: 24 }}>{s.user?.avatar_symbol}</span>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, flexShrink: 0 }}>
+                        {s.user?.full_name?.substring(0,1).toUpperCase() || '?'}
+                      </div>
                       <div>
-                        <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: '0 0 4px' }}>{s.title}</p>
+                        <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 4px' }}>{s.title}</p>
                         <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
                           BY {s.user?.full_name} · V{s.version_number} · {s.kanban_stage?.toUpperCase() || 'INBOX'}
                         </p>
@@ -666,30 +670,35 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
-                      <a href={s.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: '#BCA88E', textDecoration: 'underline', letterSpacing: 2 }}>READ SCRIPT →</a>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end', minWidth: 200 }}>
+                      <a href={s.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: '#BCA88E', textDecoration: 'underline', letterSpacing: 2 }}>READ SCRIPT</a>
                       
-                      {/* Stage Selector */}
-                      <select
-                        value={s.kanban_stage || 'inbox'}
-                        onChange={(e) => moveScriptStage(s.id, e.target.value)}
-                        style={{
-                          background: 'rgba(14,15,20,0.95)',
-                          border: '1px solid rgba(188,168,142,0.25)',
-                          color: '#BCA88E',
-                          fontFamily: '"Montserrat", sans-serif',
-                          fontSize: 9,
-                          letterSpacing: 3,
-                          padding: '6px 10px',
-                          cursor: 'pointer',
-                          outline: 'none',
-                          marginTop: 4
-                        }}
-                      >
-                        {KANBAN_STAGES.map(st => (
-                          <option key={st.id} value={st.id}>{st.label}</option>
-                        ))}
-                      </select>
+                      {/* Stage Toggle Buttons */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
+                        {KANBAN_STAGES.map(st => {
+                          const isActive = (s.kanban_stage || 'inbox') === st.id;
+                          return (
+                            <button
+                              key={st.id}
+                              onClick={() => moveScriptStage(s.id, st.id)}
+                              style={{
+                                background: isActive ? st.color : 'transparent',
+                                border: `1px solid ${isActive ? 'rgba(255,255,255,0.3)' : 'rgba(188,168,142,0.15)'}`,
+                                color: isActive ? '#F0EBE0' : 'rgba(188,168,142,0.4)',
+                                fontFamily: '"Montserrat", sans-serif',
+                                fontSize: 7,
+                                letterSpacing: 2,
+                                padding: '4px 8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                fontWeight: isActive ? 700 : 400
+                              }}
+                            >
+                              {st.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -732,7 +741,9 @@ export default function AdminDashboard() {
                               {script.title}
                             </h4>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                              <span style={{ fontSize: 16 }}>{script.user?.avatar_symbol || '👤'}</span>
+                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, flexShrink: 0 }}>
+                                {script.user?.full_name?.substring(0,1).toUpperCase() || '?'}
+                              </div>
                               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', margin: 0 }}>{script.user?.full_name}</p>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -746,26 +757,32 @@ export default function AdminDashboard() {
 
                             {/* Stage Selector */}
                             <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
-                              <select
-                                value={script.kanban_stage || 'inbox'}
-                                onChange={(e) => moveScriptStage(script.id, e.target.value)}
-                                style={{
-                                  width: '100%',
-                                  background: 'rgba(14,15,20,0.95)',
-                                  border: '1px solid rgba(188,168,142,0.2)',
-                                  color: '#BCA88E',
-                                  fontFamily: '"Montserrat", sans-serif',
-                                  fontSize: 9,
-                                  letterSpacing: 2,
-                                  padding: '7px 10px',
-                                  cursor: 'pointer',
-                                  outline: 'none',
-                                }}
-                              >
-                                {KANBAN_STAGES.map(st => (
-                                  <option key={st.id} value={st.id}>{st.label}</option>
-                                ))}
-                              </select>
+                              {/* Stage Toggle Buttons in Kanban card */}
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                {KANBAN_STAGES.map(st => {
+                                  const isActive = (script.kanban_stage || 'inbox') === st.id;
+                                  return (
+                                    <button
+                                      key={st.id}
+                                      onClick={() => moveScriptStage(script.id, st.id)}
+                                      style={{
+                                        background: isActive ? st.color : 'transparent',
+                                        border: `1px solid ${isActive ? 'rgba(255,255,255,0.2)' : 'rgba(188,168,142,0.1)'}`,
+                                        color: isActive ? '#F0EBE0' : 'rgba(188,168,142,0.35)',
+                                        fontFamily: '"Montserrat", sans-serif',
+                                        fontSize: 7,
+                                        letterSpacing: 1,
+                                        padding: '3px 7px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        fontWeight: isActive ? 700 : 400
+                                      }}
+                                    >
+                                      {st.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -783,12 +800,9 @@ export default function AdminDashboard() {
             {briefs.map(b => (
               <div key={b.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                    <span style={{ fontSize: 20 }}>{b.producer?.avatar_symbol}</span>
-                    <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: 0 }}>{b.title}</p>
-                  </div>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 6px' }}>{b.title}</p>
                   <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
-                    PRODUCER: {b.producer?.full_name} · BUDGET: {b.budget_range}
+                    BY {b.producer?.full_name} · BUDGET: {b.budget_range}
                   </p>
                   <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, maxWidth: 500, lineHeight: 1.5 }}>{b.description}</p>
                 </div>
@@ -1000,16 +1014,18 @@ export default function AdminDashboard() {
                 <div key={c.id} 
                   onClick={() => setSelectedCrew(c)}
                   style={{ 
-                    padding: 24, border: '1px solid', borderColor: selectedCrew?.id === c.id ? '#BCA88E' : 'rgba(188,168,142,0.1)', 
+                    padding: 20, border: '1px solid', borderColor: selectedCrew?.id === c.id ? '#BCA88E' : 'rgba(188,168,142,0.1)', 
                     background: selectedCrew?.id === c.id ? 'rgba(188,168,142,0.05)' : 'rgba(0,0,0,0.2)', 
-                    display: 'flex', alignItems: 'center', gap: 20, cursor: 'pointer', transition: 'all 0.2s' 
+                    display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'all 0.2s' 
                   }}
                 >
-                  <span style={{ fontSize: 24 }}>{c.avatar_symbol}</span>
-                  <div>
-                    <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: '0 0 4px' }}>{c.full_name}</p>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: selectedCrew?.id === c.id ? 'rgba(188,168,142,0.2)' : 'rgba(188,168,142,0.08)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#BCA88E', flexShrink: 0 }}>
+                    {c.avatar_symbol || c.full_name?.substring(0,1).toUpperCase() || '?'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 15, color: '#F0EBE0', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.full_name}</p>
                     <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
-                      {c.st_id ? (c.st_id.startsWith('SUPR-') ? c.st_id : 'SUPR-' + c.st_id) : 'NO-ID'} · {c.role?.toUpperCase()} · {c.st_verified ? 'VERIFIED' : 'UNVERIFIED'}
+                      {c.st_id ? (c.st_id.startsWith('SUPR-') ? c.st_id : 'SUPR-' + c.st_id) : 'NO-ID'} · {(c.roles?.join(', ') || c.role || 'MEMBER').toUpperCase()} · {c.st_verified ? 'VERIFIED' : 'UNVERIFIED'}
                     </p>
                     {c.submissions?.length > 0 && (
                       <p style={{ fontSize: 9, color: '#4ade80', margin: '4px 0 0', letterSpacing: 1 }}>{c.submissions.length} SUBMISSION(S)</p>
@@ -1021,20 +1037,87 @@ export default function AdminDashboard() {
             
             {/* Crew Details */}
             {selectedCrew && (
-              <div style={{ flex: 1, padding: 32, background: 'rgba(14,15,20,0.95)', border: '1px solid rgba(188,168,142,0.2)' }}>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, color: '#F0EBE0', margin: '0 0 8px' }}>{selectedCrew.full_name}</h3>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 3, color: '#BCA88E', margin: '0 0 24px' }}>
-                  {selectedCrew.role?.toUpperCase()} · {selectedCrew.st_id ? (selectedCrew.st_id.startsWith('SUPR-') ? selectedCrew.st_id : 'SUPR-' + selectedCrew.st_id) : 'NO-ID'}
-                </p>
+              <div style={{ flex: 1, padding: 32, background: 'rgba(14,15,20,0.95)', border: '1px solid rgba(188,168,142,0.2)', overflowY: 'auto', maxHeight: '80vh' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+                  {selectedCrew.avatar_url ? (
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', overflow: 'hidden', border: '1.5px solid rgba(188,168,142,0.3)', flexShrink: 0 }}>
+                      <img src={selectedCrew.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ) : (
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1.5px solid rgba(188,168,142,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#BCA88E', flexShrink: 0 }}>
+                      {selectedCrew.avatar_symbol || selectedCrew.full_name?.substring(0,1).toUpperCase() || '?'}
+                    </div>
+                  )}
+                  <div>
+                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 22, color: '#F0EBE0', margin: '0 0 4px' }}>{selectedCrew.full_name}</h3>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, color: '#BCA88E', margin: 0 }}>
+                      {(selectedCrew.roles?.join(' / ') || selectedCrew.role || 'MEMBER').toUpperCase()} · {selectedCrew.st_id ? (selectedCrew.st_id.startsWith('SUPR-') ? selectedCrew.st_id : 'SUPR-' + selectedCrew.st_id) : 'NO-ID'}
+                    </p>
+                  </div>
+                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
+                {/* All Profile Fields */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                   <div>
                     <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>EMAIL</p>
-                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.email || 'Not Provided'}</p>
+                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0, wordBreak: 'break-all' }}>{selectedCrew.email || 'Not Provided'}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>PHONE</p>
-                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.phone || 'Not Provided'}</p>
+                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>PHONE / CONTACT</p>
+                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.contact || selectedCrew.phone || 'Not Provided'}</p>
+                  </div>
+                  {selectedCrew.niche && (
+                    <div>
+                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>NICHE / SPECIALISATION</p>
+                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.niche}</p>
+                    </div>
+                  )}
+                  {selectedCrew.experience && (
+                    <div>
+                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>EXPERIENCE</p>
+                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.experience}</p>
+                    </div>
+                  )}
+                  {selectedCrew.portfolio_url && (
+                    <div>
+                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>PORTFOLIO</p>
+                      <a href={selectedCrew.portfolio_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#c9a84c', textDecoration: 'underline', wordBreak: 'break-all' }}>{selectedCrew.portfolio_url}</a>
+                    </div>
+                  )}
+                  {selectedCrew.social_handle && (
+                    <div>
+                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>SOCIAL</p>
+                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.social_handle}</p>
+                    </div>
+                  )}
+                  {selectedCrew.bio && (
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>BIO</p>
+                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0, lineHeight: 1.6, opacity: 0.8 }}>{selectedCrew.bio}</p>
+                    </div>
+                  )}
+                  {selectedCrew.skills && selectedCrew.skills.length > 0 && (
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 8px' }}>SKILLS</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {selectedCrew.skills.map((sk: string) => (
+                          <span key={sk} style={{ fontSize: 8, background: 'rgba(188,168,142,0.08)', border: '1px solid rgba(188,168,142,0.2)', padding: '2px 8px', color: '#BCA88E', letterSpacing: 1 }}>{sk.toUpperCase()}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>AVAILABILITY</p>
+                    <p style={{ fontSize: 13, margin: 0, color: selectedCrew.availability ? '#4ade80' : 'rgba(188,168,142,0.5)' }}>{selectedCrew.availability ? 'AVAILABLE' : 'NOT AVAILABLE'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>VERIFICATION</p>
+                    <p style={{ fontSize: 13, margin: 0, color: selectedCrew.st_verified ? '#c9a84c' : 'rgba(188,168,142,0.5)' }}>{selectedCrew.st_verified ? 'SUPR VERIFIED' : 'NOT VERIFIED'}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>JOINED</p>
+                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.created_at ? new Date(selectedCrew.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown'}</p>
                   </div>
                 </div>
 
@@ -1047,7 +1130,16 @@ export default function AdminDashboard() {
                           <span style={{ fontSize: 10, color: '#F0EBE0', fontWeight: 'bold' }}>{sub.type?.toUpperCase()}</span>
                           <span style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 6px' }}>{sub.status?.toUpperCase()}</span>
                         </div>
-                        <p style={{ fontSize: 12, color: '#F0EBE0', opacity: 0.8, margin: '0 0 8px' }}>{sub.data?.title || sub.data?.platform || sub.data?.genre || 'Untitled'}</p>
+                        <p style={{ fontSize: 13, color: '#F0EBE0', opacity: 0.8, margin: '0 0 8px' }}>{sub.data?.title || sub.data?.platform || sub.data?.genre || 'Untitled'}</p>
+                        {/* Show all submitted data */}
+                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', marginBottom: 8 }}>
+                          {Object.entries(sub.data || {}).map(([key, val]: [string, any]) => val && (
+                            <div key={key} style={{ display: 'flex', gap: 12, paddingTop: 4, paddingBottom: 4, borderBottom: '1px solid rgba(188,168,142,0.04)' }}>
+                              <span style={{ fontSize: 8, color: '#BCA88E', opacity: 0.5, letterSpacing: 2, textTransform: 'uppercase', minWidth: 100, flexShrink: 0 }}>{key.replace(/_/g,' ')}</span>
+                              <span style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, wordBreak: 'break-all' }}>{typeof val === 'object' ? JSON.stringify(val) : String(val)}</span>
+                            </div>
+                          ))}
+                        </div>
                         <div style={{ display: 'flex', gap: 12 }}>
                           {sub.data?.driveLink && <a href={sub.data.driveLink} target="_blank" rel="noreferrer" style={{ fontSize: 10, color: '#c9a84c', textDecoration: 'underline' }}>Drive Link</a>}
                           {sub.data?.pdfLink && <a href={sub.data.pdfLink} target="_blank" rel="noreferrer" style={{ fontSize: 10, color: '#c9a84c', textDecoration: 'underline' }}>PDF Link</a>}
