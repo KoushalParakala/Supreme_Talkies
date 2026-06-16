@@ -1,0 +1,317 @@
+import {useState,useEffect} from 'react';
+import {motion,AnimatePresence} from 'framer-motion';
+import {useNavigate,useLocation} from 'react-router-dom';
+import {useAuth} from '../context/AuthContext';
+
+interface NavProps {scrolled:boolean;}
+interface NavItem {label:string;route?:string;action?:string;state?:Record<string,unknown>}
+
+function NavLink({item,onClick,isMobileView=false}:{item:NavItem;onClick:()=>void;isMobileView?:boolean}){
+  const [hov,setHov]=useState(false);
+  const location=useLocation();
+  const isActive=(item.route&&location.pathname===item.route)||(item.action==='join'&&location.pathname==='/join');
+  return (
+    <button onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{
+        fontFamily:isMobileView?'"Playfair Display",serif':'"Montserrat",sans-serif',
+        fontSize:isMobileView?28:13,fontWeight:isMobileView?700:500,
+        color:isActive?'#F0EBE0':hov?'#F0EBE0':'#BCA88E',
+        letterSpacing:4,background:'none',border:'none',
+        padding:isMobileView?'12px 0':'4px 0',
+        position:'relative',transition:'color 0.25s ease',
+        cursor:'pointer',textTransform:'uppercase',
+      }}>
+      {item.label}
+      {!isMobileView&&(
+        <>
+          <motion.span aria-hidden="true" style={{position:'absolute',bottom:0,left:0,right:0,height:2,background:'#BCA88E',transformOrigin:'left center',display:'block'}}
+            animate={{scaleX:hov||isActive?1:0,opacity:hov||isActive?1:0}} transition={{duration:0.25,ease:[0.25,0.1,0.25,1]}}/>
+          <motion.span aria-hidden="true" style={{position:'absolute',bottom:0,left:0,right:0,height:2,background:'linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.4)40%,transparent 80%)',transformOrigin:'left center',display:'block'}}
+            animate={{scaleX:hov||isActive?1:0,opacity:hov||isActive?1:0}} transition={{duration:0.25,ease:[0.25,0.1,0.25,1],delay:0.05}}/>
+        </>
+      )}
+    </button>
+  );
+}
+
+function UserIndicator({isMobileView=false}:{isMobileView?:boolean}){
+  const {user,profile,signOut,loading,displayName,isAdmin}=useAuth();
+  const navigate=useNavigate();
+  const [hov,setHov]=useState(false);
+  const [isExiting,setIsExiting]=useState(false);
+  const [imgError,setImgError]=useState(false);
+
+  useEffect(()=>{setImgError(false);},[profile?.avatar_url]);
+
+  if(loading) return <div style={{width:42,height:42}}/>;
+
+  if(!user){
+    return(
+      <button onClick={()=>navigate('/auth')}
+        style={{fontFamily:'"Montserrat",sans-serif',fontSize:isMobileView?11:13,fontWeight:600,color:'#BCA88E',letterSpacing:4,background:'none',border:'1px solid rgba(188,168,142,0.3)',padding:isMobileView?'12px 32px':'8px 24px',cursor:'pointer',transition:'all 0.3s ease'}}
+        onMouseEnter={(e)=>{(e.currentTarget as HTMLElement).style.background='#BCA88E';(e.currentTarget as HTMLElement).style.color='#0e0f13';}}
+        onMouseLeave={(e)=>{(e.currentTarget as HTMLElement).style.background='none';(e.currentTarget as HTMLElement).style.color='#BCA88E';}}>
+        LOG IN
+      </button>
+    );
+  }
+
+  const handleLogout=async()=>{
+    setIsExiting(true);
+    try{await signOut();}catch(err){console.error('Logout error:',err);}
+    finally{navigate('/auth',{replace:true});}
+  };
+
+  const emailStr=user.email||'member@cinema.com';
+  const sampleIdx=(emailStr.charCodeAt(0)+(emailStr.charCodeAt(1)||0))%6+1;
+  const fallbackAvatar=`/Sample${sampleIdx}.webp`;
+  const avatarSrc=(!imgError&&profile?.avatar_url)?profile.avatar_url:fallbackAvatar;
+
+  const rawId=profile?.st_id||'';
+  const suprId=rawId?(rawId.startsWith('SUPR-')?rawId:`SUPR-${rawId}`):'';
+
+  const primaryRole=isAdmin
+    ?'ADMIN'
+    :(()=>{
+        const r=profile?.roles?.[0]||profile?.role||'MEMBER';
+        return r.toLowerCase()==='amplifier'?'MEMBER':r.toUpperCase();
+      })();
+
+  const roleColor=primaryRole==='ADMIN'?'#c9a84c':primaryRole==='MEMBER'?'rgba(188,168,142,0.7)':'#BCA88E';
+  const AVATAR_SIZE=isMobileView?36:38;
+  const isVerified=profile?.st_verified===true;
+
+  return(
+    <div style={{position:'relative',zIndex:100}} onMouseEnter={()=>!isMobileView&&setHov(true)} onMouseLeave={()=>!isMobileView&&setHov(false)}>
+      <div
+        style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer',padding:'4px 0'}}
+        onClick={()=>isMobileView?setHov(!hov):navigate('/profile')}
+      >
+        {!isMobileView&&(
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2,pointerEvents:'none'}}>
+            <span style={{fontFamily:'"Montserrat",sans-serif',fontSize:11,color:'#F0EBE0',letterSpacing:2,fontWeight:600,whiteSpace:'nowrap',maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}}>
+              {displayName}
+            </span>
+            {suprId&&(
+              <span style={{fontFamily:'"Courier New",monospace',fontSize:8,color:'#BCA88E',letterSpacing:2,opacity:0.65,whiteSpace:'nowrap'}}>
+                {suprId}
+              </span>
+            )}
+            <span style={{
+              fontFamily:'"Montserrat",sans-serif',fontSize:7,fontWeight:700,letterSpacing:2,
+              color:roleColor,
+              background:`rgba(188,168,142,0.06)`,
+              border:`1px solid ${roleColor}30`,
+              padding:'1px 6px',
+              textTransform:'uppercase',
+              whiteSpace:'nowrap',
+            }}>
+              {primaryRole}
+            </span>
+          </div>
+        )}
+
+        <div style={{position:'relative',flexShrink:0}}>
+          <motion.div
+            animate={{
+              borderColor:hov?'rgba(188,168,142,0.7)':'rgba(188,168,142,0.3)',
+              boxShadow:hov?'0 0 14px rgba(188,168,142,0.18)':'none',
+            }}
+            style={{
+              width:AVATAR_SIZE,height:AVATAR_SIZE,borderRadius:'50%',
+              border:'1.5px solid',
+              background:'rgba(188,168,142,0.08)',
+              overflow:'hidden',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              transition:'all 0.3s ease',
+            }}>
+            <img
+              src={avatarSrc}
+              alt="Profile"
+              onError={()=>setImgError(true)}
+              style={{width:'100%',height:'100%',objectFit:'cover'}}
+            />
+          </motion.div>
+          {isVerified&&(
+            <div style={{position:'absolute',top:-1,right:-1,width:9,height:9,borderRadius:'50%',background:'#BCA88E',border:'1.5px solid #0a0a0a',zIndex:2}}/>
+          )}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {hov&&(
+          <motion.div
+            initial={{opacity:0,y:8,scale:0.96}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:8,scale:0.96}}
+            transition={{duration:0.18,ease:[0.23,1,0.32,1]}}
+            style={{position:'absolute',top:'calc(100% + 10px)',right:0,minWidth:200,zIndex:1000}}>
+            <div style={{background:'rgba(8,8,10,0.97)',border:'1px solid rgba(188,168,142,0.12)',backdropFilter:'blur(20px)',boxShadow:'0 24px 48px rgba(0,0,0,0.7)',overflow:'hidden'}}>
+
+              <div style={{padding:'16px 20px 12px',borderBottom:'1px solid rgba(188,168,142,0.08)',display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:32,height:32,borderRadius:'50%',overflow:'hidden',border:'1px solid rgba(188,168,142,0.25)',flexShrink:0}}>
+                  <img src={avatarSrc} alt="" onError={()=>setImgError(true)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:'"Montserrat",sans-serif',fontSize:11,color:'#F0EBE0',fontWeight:600,letterSpacing:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                    {displayName}
+                  </div>
+                  {suprId&&(
+                    <div style={{fontFamily:'"Courier New",monospace',fontSize:8,color:'#BCA88E',opacity:0.6,letterSpacing:2,marginTop:2}}>
+                      {suprId}
+                    </div>
+                  )}
+                  <div style={{display:'inline-block',marginTop:4,fontSize:7,fontFamily:'"Montserrat",sans-serif',fontWeight:700,letterSpacing:2,color:roleColor,background:`${roleColor}18`,border:`1px solid ${roleColor}25`,padding:'1px 6px'}}>
+                    {primaryRole}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{padding:'6px 0'}}>
+                {[{label:'MY PROFILE',route:'/profile'},{label:'DASHBOARD',route:'/dashboard'}].map((item)=>(
+                  <button key={item.label} onClick={()=>{navigate(item.route);setHov(false);}}
+                    style={{width:'100%',textAlign:'left',padding:'11px 20px',background:'none',border:'none',fontFamily:'"Montserrat",sans-serif',fontSize:10,color:'#BCA88E',letterSpacing:3,cursor:'pointer',transition:'background 0.2s'}}
+                    onMouseEnter={(e)=>((e.currentTarget as HTMLElement).style.background='rgba(188,168,142,0.07)')}
+                    onMouseLeave={(e)=>((e.currentTarget as HTMLElement).style.background='none')}>
+                    {item.label}
+                  </button>
+                ))}
+                <div style={{height:1,background:'rgba(188,168,142,0.08)',margin:'4px 0'}}/>
+                <button onClick={handleLogout} disabled={isExiting}
+                  style={{width:'100%',textAlign:'left',padding:'11px 20px',background:'none',border:'none',fontFamily:'"Montserrat",sans-serif',fontSize:10,color:'#ff4d4d',letterSpacing:3,cursor:isExiting?'not-allowed':'pointer',opacity:isExiting?0.5:1}}
+                  onMouseEnter={(e)=>{if(!isExiting)(e.currentTarget as HTMLElement).style.background='rgba(255,77,77,0.06)';}}
+                  onMouseLeave={(e)=>((e.currentTarget as HTMLElement).style.background='none')}>
+                  {isExiting?'EXITING…':'SIGN OUT'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function Hamburger({isOpen,onClick}:{isOpen:boolean;onClick:()=>void}){
+  return(
+    <button onClick={onClick} style={{width:40,height:40,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',padding:0,zIndex:1000}}>
+      <motion.div animate={{rotate:isOpen?45:0,y:isOpen?6.5:0}} style={{width:20,height:1.5,background:'#BCA88E'}}/>
+      <motion.div animate={{opacity:isOpen?0:1}} style={{width:20,height:1.5,background:'#BCA88E'}}/>
+      <motion.div animate={{rotate:isOpen?-45:0,y:isOpen?-6.5:0}} style={{width:20,height:1.5,background:'#BCA88E'}}/>
+    </button>
+  );
+}
+
+export default function Nav({scrolled}:NavProps){
+  const {user,profile,isAdmin,signOut,displayName}=useAuth();
+  const navigate=useNavigate();
+  const location=useLocation();
+  const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
+  const [isMenuOpen,setIsMenuOpen]=useState(false);
+  const [showLogo]=useState(true);
+  const [imgError,setImgError]=useState(false);
+
+  const hasRoles=!!(profile?.roles?.length||profile?.role);
+
+  useEffect(()=>{
+    const handleResize=()=>setIsMobile(window.innerWidth<768);
+    window.addEventListener('resize',handleResize);
+    return()=>window.removeEventListener('resize',handleResize);
+  },[]);
+
+  useEffect(()=>{setIsMenuOpen(false);},[location.pathname]);
+  useEffect(()=>{setImgError(false);},[profile?.avatar_url]);
+
+  const navItems:NavItem[]=[];
+  if(user){
+    navItems.push({label:'HOME',route:'/'});
+    if(isAdmin){
+      navItems.push({label:'CREW',route:'/crew'});
+      navItems.push({label:'DASHBOARD',route:'/dashboard',state:{activeRole:'admin'}});
+    }else{
+      navItems.push({label:'DASHBOARD',route:'/dashboard'});
+      navItems.push({label:hasRoles?'ADD ROLE':'ROLES',route:'/role-select'});
+    }
+    navItems.push({label:'ABOUT',route:'/about'});
+    if(isMobile){
+      navItems.push({label:'MY PROFILE',route:'/profile'});
+      navItems.push({label:'SIGN OUT',action:'signout'});
+    }
+  }else{
+    navItems.push({label:'HOME',route:'/'});
+    navItems.push({label:'WORKS',action:'cinema'});
+    navItems.push({label:'JOIN',action:'join',route:'/about'});
+    navItems.push({label:'ABOUT',route:'/about'});
+  }
+
+  const handleNav=(item:NavItem)=>{
+    setIsMenuOpen(false);
+    if(item.action==='signout'){
+      signOut().then(()=>navigate('/auth',{replace:true}));
+    }else if(item.route){
+      navigate(item.route,item.state?{state:item.state}:undefined);
+    }else if(item.action==='cinema'){
+      if(location.pathname!=='/')navigate('/',{state:{scrollTo:'reel-section'}});
+      else document.getElementById('reel-section')?.scrollIntoView({behavior:'smooth'});
+    }else if(item.action==='join'){
+      if(location.pathname!=='/')navigate('/',{state:{scrollTo:'join-section'}});
+      else document.getElementById('join-section')?.scrollIntoView({behavior:'smooth'});
+    }
+  };
+
+  const emailStr=user?.email||'member@cinema.com';
+  const sampleIdx=(emailStr.charCodeAt(0)+(emailStr.charCodeAt(1)||0))%6+1;
+  const fallbackAvatar=`/Sample${sampleIdx}.webp`;
+  const mobileAvatarSrc=(!imgError&&profile?.avatar_url)?profile.avatar_url:fallbackAvatar;
+  const primaryRole=isAdmin?'ADMIN':(()=>{
+    const r=profile?.roles?.[0]||profile?.role||'MEMBER';
+    return r.toLowerCase()==='amplifier'?'MEMBER':r.toUpperCase();
+  })();
+  const rawId=profile?.st_id||'';
+  const suprId=rawId?(rawId.startsWith('SUPR-')?rawId:`SUPR-${rawId}`):'';
+
+  return(
+    <>
+      <motion.header style={{position:'fixed',top:0,left:0,right:0,height:90,display:'flex',alignItems:'center',justifyContent:'space-between',paddingLeft:isMobile?12:28,paddingRight:isMobile?12:48,zIndex:500,background:'transparent'}}
+        initial={{opacity:0,y:-20}} animate={{opacity:1,y:0}} transition={{duration:0.8,delay:0.6}}>
+        <motion.a href="/" onClick={(e)=>{e.preventDefault();navigate('/');window.dispatchEvent(new CustomEvent('lenis-scroll-to',{detail:{target:0}}));setIsMenuOpen(false);}}
+          style={{display:'flex',alignItems:'center',textDecoration:'none',flexShrink:0,pointerEvents:showLogo?'auto':'none'}}
+          aria-label="Supreme Talkies — home" initial={{opacity:0,x:-20}} animate={{opacity:showLogo?1:0,x:showLogo?0:-20}} transition={{duration:0.5,ease:'easeOut'}}>
+          <img src="/logo-main.webp" alt="Supreme Talkies" draggable={false} style={{height:isMobile?60:75,width:'auto',mixBlendMode:'screen',filter:'brightness(1.1) saturate(1.2)'}}/>
+        </motion.a>
+        {!isMobile&&(
+          <nav style={{position:'absolute',left:'50%',transform:'translateX(-50%)',display:'flex',alignItems:'center',gap:48}}>
+            {navItems.map((item)=><NavLink key={item.label} item={item} onClick={()=>handleNav(item)}/>)}
+          </nav>
+        )}
+        {isMobile?<Hamburger isOpen={isMenuOpen} onClick={()=>setIsMenuOpen(!isMenuOpen)}/>:<UserIndicator/>}
+      </motion.header>
+
+      <AnimatePresence>
+        {isMobile&&isMenuOpen&&(
+          <motion.div initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}} transition={{duration:0.45,ease:[0.76,0,0.24,1]}}
+            style={{position:'fixed',inset:0,background:'rgba(6,6,6,0.97)',backdropFilter:'blur(16px)',zIndex:1000,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'120px 40px'}}>
+            <nav style={{display:'flex',flexDirection:'column',alignItems:'center',gap:32,marginBottom:40}}>
+              {navItems.map((item)=><NavLink key={item.label} item={item} onClick={()=>handleNav(item)} isMobileView={true}/>)}
+            </nav>
+            {user&&profile&&(
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'20px',border:'1px solid rgba(188,168,142,0.12)',background:'rgba(188,168,142,0.04)'}}>
+                <div style={{width:52,height:52,borderRadius:'50%',border:'1.5px solid rgba(188,168,142,0.4)',overflow:'hidden'}}>
+                  <img src={mobileAvatarSrc} alt="" onError={()=>setImgError(true)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                </div>
+                <span style={{fontFamily:'"Montserrat",sans-serif',fontSize:13,color:'#F0EBE0',letterSpacing:2,fontWeight:600,marginTop:4}}>{displayName}</span>
+                {suprId&&<span style={{fontFamily:'"Courier New",monospace',fontSize:9,color:'#BCA88E',letterSpacing:2,opacity:0.6}}>{suprId}</span>}
+                <span style={{fontFamily:'"Montserrat",sans-serif',fontSize:8,fontWeight:700,letterSpacing:2,color:'#BCA88E',border:'1px solid rgba(188,168,142,0.2)',padding:'2px 8px'}}>{primaryRole}</span>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {scrolled&&(
+          <motion.div key="nav-scrolled-bg" style={{position:'fixed',top:0,left:0,right:0,height:90,background:'rgba(6,6,6,0.82)',backdropFilter:'blur(12px)',borderBottom:'1px solid rgba(188,168,142,0.08)',zIndex:49,pointerEvents:'none'}}
+            initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.35}}/>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
