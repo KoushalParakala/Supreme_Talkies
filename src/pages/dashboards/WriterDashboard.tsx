@@ -145,14 +145,6 @@ export default function WriterDashboard() {
   // Tab State
   const [activeTab, setActiveTab] = useState<'scripts' | 'briefs' | 'challenges' | 'inspiration'>('scripts');
   
-  // Revision & Versions State
-  const [expandingId, setExpandingId] = useState<string | null>(null);
-  const [revisionData, setRevisionData] = useState({ pdfLink: '', note: '' });
-  const [submittingRev, setSubmittingRev] = useState(false);
-  const [versionNote, setVersionNote] = useState('');
-  const [versionHistory, setVersionHistory] = useState<any[]>([]);
-  const [savingVersion, setSavingVersion] = useState(false);
-
   // Challenge State
   const [challenges, setChallenges] = useState<any[]>([]);
   const [userEntries, setUserEntries] = useState<any[]>([]);
@@ -171,15 +163,15 @@ export default function WriterDashboard() {
     if (!user) return;
     fetchSubmissions();
     fetchChallenges();
-    fetchVersionHistory();
     fetchInspirationPins();
     fetchOpenBriefs();
     fetchUserInterests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchUserInterestsRef = useRef(0);
   const fetchOpenBriefsRef = useRef(0);
-  const fetchVersionHistoryRef = useRef(0);
+
   const fetchInspirationPinsRef = useRef(0);
   const fetchSubmissionsRef = useRef(0);
   const fetchChallengesRef = useRef(0);
@@ -254,15 +246,7 @@ export default function WriterDashboard() {
     finally { setExpressingBriefId(null); }
   };
 
-  const fetchVersionHistory = async () => {
-    const fetchId = ++fetchVersionHistoryRef.current;
-    const { data } = await supabase.from('script_versions')
-      .select('*')
-      .eq('user_id', user?.id)
-      .order('version_number', { ascending: false });
-    if (fetchId !== fetchVersionHistoryRef.current) return;
-    setVersionHistory(data || []);
-  };
+
 
   const fetchInspirationPins = async () => {
     const fetchId = ++fetchInspirationPinsRef.current;
@@ -341,7 +325,7 @@ export default function WriterDashboard() {
   };
 
   useEffect(() => {
-    if (!user) return;      // Don't subscribe until user is available
+    if (!user) return;
 
     const channel = supabase
       .channel('writer_live_updates')
@@ -352,7 +336,8 @@ export default function WriterDashboard() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); 
 
   const handleSubmit = async () => {
     if (!user || !formData.title || !formData.pdfLink) return;
@@ -391,84 +376,12 @@ export default function WriterDashboard() {
         contact: '' 
       });
       fetchSubmissions();
-      fetchVersionHistory();
+
     } catch (err: any) { 
       alert(err.message); 
     } finally { 
       setSubmitting(false); 
     }
-  };
-
-  const handleRevision = async (script: any) => {
-    if (!user || !revisionData.pdfLink) return;
-    setSubmittingRev(true);
-    
-    const nextVersion = (script.version_number || 1) + 1;
-
-    try {
-      // 1. Create new version record
-      const { error: verError } = await supabase.from('script_versions').insert({
-        script_id: script.id,
-        user_id: user.id,
-        version_number: nextVersion,
-        title: script.title,
-        logline: script.logline,
-        pdf_url: revisionData.pdfLink,
-        version_notes: revisionData.note
-      });
-      if (verError) throw verError;
-
-      // 2. Update main script record
-      const { error: scriptError } = await supabase.from('scripts').update({
-        pdf_url: revisionData.pdfLink,
-        version_number: nextVersion,
-        version_notes: revisionData.note,
-        updated_at: new Date().toISOString()
-      }).eq('id', script.id);
-      
-      if (scriptError) throw scriptError;
-
-      setExpandingId(null);
-      setRevisionData({ pdfLink: '', note: '' });
-      fetchSubmissions();
-      fetchVersionHistory();
-    } catch (err: any) { 
-      alert(err.message); 
-    } finally { 
-      setSubmittingRev(false); 
-    }
-  };
-
-  const handleSaveVersionNote = async () => {
-    if (!user || !versionNote || submissions.length === 0) return;
-    setSavingVersion(true);
-    const latestScript = submissions[0];
-    const nextVer = (latestScript.version_number || 1) + 1;
-
-    try {
-      const { error } = await supabase.from('script_versions').insert({
-        script_id: latestScript.id,
-        user_id: user.id,
-        version_number: nextVer,
-        title: latestScript.title,
-        logline: latestScript.logline,
-        pdf_url: latestScript.pdf_url,
-        version_notes: versionNote
-      });
-      if (error) throw error;
-
-      await supabase.from('scripts').update({
-        version_number: nextVer,
-        version_notes: versionNote,
-        updated_at: new Date().toISOString()
-      }).eq('id', latestScript.id);
-
-      setVersionNote('');
-      fetchVersionHistory();
-      fetchSubmissions();
-      alert('Version note saved ✦');
-    } catch (err: any) { alert(err.message); }
-    finally { setSavingVersion(false); }
   };
 
 
@@ -541,168 +454,50 @@ export default function WriterDashboard() {
                   {submitting ? 'SENDING TO SET' : 'LAUNCH SCRIPT  →'}
                 </CinemaButton>
 
-                {/* Feature 2: Draft Versions Panel - Always Visible */}
+                {/* Feature 2: Submitted Scripts */}
                 <div style={{ borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 32 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5, color: '#BCA88E', marginBottom: 20 }}>DRAFT VERSIONS</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5, color: '#BCA88E', marginBottom: 20 }}>SUBMITTED SCRIPTS</p>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
-                    {/* A) Version Form */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                      <CinemaTextarea label="VERSION NOTES" placeholder="What changed in this draft?" value={versionNote} onChange={setVersionNote} rows={2} />
-                      <CinemaButton onClick={handleSaveVersionNote} loading={savingVersion} disabled={!versionNote || submissions.length === 0}>
-                        SAVE VERSION NOTE
-                      </CinemaButton>
-                    </div>
-
-                    {/* B) Version History List - always visible */}
-                    {versionHistory.length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#BCA88E', opacity: 0.5, marginBottom: 12 }}>VERSION HISTORY ({versionHistory.length})</p>
-                        {versionHistory.map((v, i) => {
-                          const vColor = VERSION_PALETTE[i % VERSION_PALETTE.length];
-                          return (
-                          <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 12, paddingTop: 12, borderBottom: i < versionHistory.length - 1 ? '1px solid rgba(188,168,142,0.05)' : 'none' }}>
-                            <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 9, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '3px 8px', letterSpacing: 1, flexShrink: 0 }}>V{v.version_number}</span>
-                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: vColor, opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                              {new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}
-                            </span>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.65, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                              {v.version_notes || '—'}
-                            </p>
-                            {v.pdf_url && (
-                              <a href={v.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 1, textDecoration: 'underline', flexShrink: 0, whiteSpace: 'nowrap' }}>READ</a>
-                            )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {loading ? (
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2 }}>SCANNING THE ARCHIVES...</p>
+                    ) : submissions.length === 0 ? (
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic' }}>
+                        "The first draft is just you telling yourself the story." — No submissions yet.
+                      </p>
+                    ) : (
+                      submissions.map((script: any) => {
+                        const stKey = script.kanban_stage || script.status || 'inbox';
+                        const statusMeta = STATUS_COLORS[stKey] || STATUS_COLORS['inbox'];
+                        const statusLabel = STATUS_LABELS[stKey] || stKey.replace('_',' ').toUpperCase();
+                        const vColor = VERSION_PALETTE[(script.version_number || 1) - 1 < VERSION_PALETTE.length ? (script.version_number || 1) - 1 : 0];
+                        return (
+                          <div key={script.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                              <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '4px 10px', letterSpacing: 1 }}>V{script.version_number || 1}</span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: 0 }}>{script.title}</p>
+                                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.5, margin: 0 }}>
+                                  {new Date(script.updated_at || script.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
+                                </p>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                              <span style={{
+                                fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 4,
+                                color: statusMeta.text, textShadow: `0 0 12px ${statusMeta.glow}`, background: statusMeta.bg,
+                                padding: '5px 12px', borderLeft: `2px solid ${statusMeta.text}`, lineHeight: 1
+                              }}>
+                                {statusLabel}
+                              </span>
+                            </div>
                           </div>
-                        );})}  
-                      </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Submissions list */}
-            <div>
-              <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
-              <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 20 }}>SCRIPT STATUS</p>
-              
-              {loading ? (
-                <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2 }}>SCANNING THE ARCHIVES...</p>
-              ) : submissions.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic' }}>
-                  "The first draft is just you telling yourself the story." — No submissions yet.
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {submissions.map((script: any, scriptIdx: number) => {
-                    const stKey = script.kanban_stage || script.status || 'inbox';
-                    const statusMeta = STATUS_COLORS[stKey] || STATUS_COLORS['inbox'];
-                    const statusLabel = STATUS_LABELS[stKey] || stKey.replace('_',' ').toUpperCase();
-                    // Gather per-script versions from the fetched versions relation
-                    const scriptVersions: any[] = (script.versions || []).slice().sort((a: any, b: any) => b.version_number - a.version_number);
-                    return (
-                    <div key={script.id} style={{ borderBottom: '1px solid rgba(188,168,142,0.06)', paddingBottom: 28, paddingTop: scriptIdx > 0 ? 28 : 0 }}>
-                      {/* Script Row: title + status */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <p style={{ fontFamily: '"Playfair Display", serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', letterSpacing: 1, margin: 0, lineHeight: 1.2 }}>{script.title}</p>
-                          <p style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 4, opacity: 0.45, margin: 0, textTransform: 'uppercase' }}>
-                            {script.dna_format || 'SCRIPT'} · {new Date(script.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
-                          </p>
-                        </div>
-                        {/* Coloured status text */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                          <span style={{
-                            fontFamily: '"Montserrat", sans-serif',
-                            fontSize: 10,
-                            fontWeight: 700,
-                            letterSpacing: 4,
-                            color: statusMeta.text,
-                            textShadow: `0 0 12px ${statusMeta.glow}`,
-                            background: statusMeta.bg,
-                            padding: '5px 12px',
-                            borderLeft: `2px solid ${statusMeta.text}`,
-                            lineHeight: 1,
-                          }}>
-                            {statusLabel}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Version + Actions */}
-                      <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                        style={{ background: 'rgba(255,255,255,0.015)', padding: '14px 18px', borderLeft: '1px solid rgba(188,168,142,0.1)' }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: scriptVersions.length > 0 ? 14 : 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <span style={{
-                              fontFamily: '"Montserrat", sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 2,
-                              background: VERSION_PALETTE[(script.version_number || 1) - 1 < VERSION_PALETTE.length ? (script.version_number || 1) - 1 : 0],
-                              color: '#0e0f13', padding: '3px 8px'
-                            }}>
-                              V{script.version_number || 1}
-                            </span>
-                            <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.45, letterSpacing: 2, margin: 0 }}>
-                              {new Date(script.updated_at || script.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
-                            </p>
-                          </div>
-                          <a href={script.pdf_url} target="_blank" rel="noopener noreferrer"
-                            style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, textDecoration: 'underline' }}>
-                            READ LATEST
-                          </a>
-                        </div>
-
-                        {/* Previous Versions - always visible */}
-                        {scriptVersions.length > 0 && (
-                          <div style={{ borderTop: '1px solid rgba(188,168,142,0.06)', paddingTop: 12 }}>
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 4, color: '#BCA88E', opacity: 0.4, marginBottom: 10 }}>VERSION HISTORY</p>
-                            {scriptVersions.map((v: any, i: number) => {
-                              const vColor = VERSION_PALETTE[i % VERSION_PALETTE.length];
-                              return (
-                                <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 8, paddingBottom: 8, borderBottom: i < scriptVersions.length - 1 ? '1px solid rgba(188,168,142,0.04)' : 'none' }}>
-                                  <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 8, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '2px 6px', letterSpacing: 1, flexShrink: 0 }}>V{v.version_number}</span>
-                                  <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: vColor, opacity: 0.6, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                    {new Date(v.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}
-                                  </span>
-                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F0EBE0', opacity: 0.55, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                                    {v.version_notes || '—'}
-                                  </p>
-                                  {v.pdf_url && (
-                                    <a href={v.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.4, textDecoration: 'underline', flexShrink: 0 }}>READ</a>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Submit Revision Expander */}
-                        {(script.status === 'feedback' || script.status === 'submitted' || script.status === 'under_review') && (
-                          <div style={{ marginTop: 18 }}>
-                            <button
-                              onClick={() => setExpandingId(expandingId === script.id ? null : script.id)}
-                              style={{ background: 'none', border: 'none', fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', letterSpacing: 2, cursor: 'pointer', opacity: 0.8, padding: 0 }}
-                            >
-                              {expandingId === script.id ? '[-] CANCEL REVISION' : '[+] SUBMIT REVISION'}
-                            </button>
-                            
-                            {expandingId === script.id && (
-                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} style={{ overflow: 'hidden', marginTop: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                                <CinemaInput label="NEW DRIVE LINK" value={revisionData.pdfLink} onChange={(v) => setRevisionData({ ...revisionData, pdfLink: v })} required />
-                                <CinemaTextarea label="REVISION NOTE" placeholder="What changed in this draft?" value={revisionData.note} onChange={(v) => setRevisionData({ ...revisionData, note: v })} rows={2} />
-                                <CinemaButton onClick={() => handleRevision(script)} loading={submittingRev} disabled={!revisionData.pdfLink}>
-                                  SUBMIT V{(script.version_number || 1) + 1}
-                                </CinemaButton>
-                              </motion.div>
-                            )}
-                          </div>
-                        )}
-                      </motion.div>
-                    </div>
-                  );})}
-                </div>
-              )}
             </div>
           </motion.div>
         )}

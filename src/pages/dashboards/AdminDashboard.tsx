@@ -82,9 +82,7 @@ export default function AdminDashboard() {
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [newCampaign, setNewCampaign] = useState({ title: '', goal: '', deadline: '', status: 'active', kit_captions: '', kit_hashtags: '', kit_drive_link: '', group_sync_at: '' });
 
-  // CREW state
-  const [crew, setCrew] = useState<any[]>([]);
-  const [selectedCrew, setSelectedCrew] = useState<any>(null);
+
   // FILMS state
   const [films, setFilms] = useState<any[]>([]);
   const [editingFilm, setEditingFilm] = useState<any>(null);
@@ -154,16 +152,7 @@ export default function AdminDashboard() {
         } else {
           setCampaigns(data || []);
         }
-      } else if (section === 'CREW') {
-        const { data, error: err } = await supabase.from('profiles').select('*, submissions(*)').order('created_at', { ascending: false });
-        if (fetchId !== fetchIdRef.current) return;
-        if (err) throw err;
-        const sortedCrew = (data || []).sort((a, b) => {
-          const aRecent = a.submissions?.length ? new Date(a.submissions[0].created_at).getTime() : 0;
-          const bRecent = b.submissions?.length ? new Date(b.submissions[0].created_at).getTime() : 0;
-          return bRecent - aRecent;
-        });
-        setCrew(sortedCrew);
+
       } else if (section === 'FILMS') {
         const { data, error: err } = await supabase.from('films').select('*').order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
@@ -196,6 +185,7 @@ export default function AdminDashboard() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { 
     if (adminUser && isAdmin) fetchData(); 
     else if (!authLoading) setLoading(false);
@@ -227,25 +217,7 @@ export default function AdminDashboard() {
   }, [section]);
 
 
-  const toggleVerification = async (memberId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ st_verified: !currentStatus })
-        .eq('id', memberId);
 
-      if (error) throw error;
-
-      // Update local state
-      setCrew(prev => prev.map(c => c.id === memberId ? { ...c, st_verified: !currentStatus } : c));
-      if (selectedCrew?.id === memberId) {
-        setSelectedCrew((prev: any) => prev ? { ...prev, st_verified: !currentStatus } : null);
-      }
-    } catch (err: any) {
-      console.error('Failed to toggle verification:', err);
-      alert(`VERIFICATION ERROR: ${err.message}`);
-    }
-  };
 
   const updateSubStatus = async (id: string, status: string) => {
     const { error } = await supabase.from('submissions').update({ status }).eq('id', id);
@@ -489,7 +461,7 @@ export default function AdminDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
       {/* Top Section Tabs */}
       <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0, overflowX: 'auto' }}>
-        {['INBOX', 'SCRIPTS', 'BRIEFS', 'PROJECT ROOMS', 'CAMPAIGNS', 'CREW', 'TEMPLATES', 'FILMS'].map(s => (
+        {['INBOX', 'SCRIPTS', 'BRIEFS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS'].map(s => (
           <button key={s} onClick={() => setSection(s as any)}
             style={{ 
               background: 'none', border: 'none', borderBottom: section === s ? '2px solid #BCA88E' : '2px solid transparent',
@@ -1006,168 +978,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {section === 'CREW' && (
-          <motion.div key="crew" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', gap: 24, flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
-            {/* Crew List */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', maxHeight: '80vh' }}>
-              {crew.map(c => (
-                <div key={c.id} 
-                  onClick={() => setSelectedCrew(c)}
-                  style={{ 
-                    padding: 20, border: '1px solid', borderColor: selectedCrew?.id === c.id ? '#BCA88E' : 'rgba(188,168,142,0.1)', 
-                    background: selectedCrew?.id === c.id ? 'rgba(188,168,142,0.05)' : 'rgba(0,0,0,0.2)', 
-                    display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'all 0.2s' 
-                  }}
-                >
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: selectedCrew?.id === c.id ? 'rgba(188,168,142,0.2)' : 'rgba(188,168,142,0.08)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#BCA88E', flexShrink: 0 }}>
-                    {c.avatar_symbol || c.full_name?.substring(0,1).toUpperCase() || '?'}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 15, color: '#F0EBE0', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.full_name}</p>
-                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
-                      {c.st_id ? (c.st_id.startsWith('SUPR-') ? c.st_id : 'SUPR-' + c.st_id) : 'NO-ID'} · {(c.roles?.join(', ') || c.role || 'MEMBER').toUpperCase()} · {c.st_verified ? 'VERIFIED' : 'UNVERIFIED'}
-                    </p>
-                    {c.submissions?.length > 0 && (
-                      <p style={{ fontSize: 9, color: '#4ade80', margin: '4px 0 0', letterSpacing: 1 }}>{c.submissions.length} SUBMISSION(S)</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Crew Details */}
-            {selectedCrew && (
-              <div style={{ flex: 1, padding: 32, background: 'rgba(14,15,20,0.95)', border: '1px solid rgba(188,168,142,0.2)', overflowY: 'auto', maxHeight: '80vh' }}>
-                {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-                  {selectedCrew.avatar_url ? (
-                    <div style={{ width: 56, height: 56, borderRadius: '50%', overflow: 'hidden', border: '1.5px solid rgba(188,168,142,0.3)', flexShrink: 0 }}>
-                      <img src={selectedCrew.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1.5px solid rgba(188,168,142,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#BCA88E', flexShrink: 0 }}>
-                      {selectedCrew.avatar_symbol || selectedCrew.full_name?.substring(0,1).toUpperCase() || '?'}
-                    </div>
-                  )}
-                  <div>
-                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 22, color: '#F0EBE0', margin: '0 0 4px' }}>{selectedCrew.full_name}</h3>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, color: '#BCA88E', margin: 0 }}>
-                      {(selectedCrew.roles?.join(' / ') || selectedCrew.role || 'MEMBER').toUpperCase()} · {selectedCrew.st_id ? (selectedCrew.st_id.startsWith('SUPR-') ? selectedCrew.st_id : 'SUPR-' + selectedCrew.st_id) : 'NO-ID'}
-                    </p>
-                  </div>
-                </div>
 
-                {/* All Profile Fields */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-                  <div>
-                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>EMAIL</p>
-                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0, wordBreak: 'break-all' }}>{selectedCrew.email || 'Not Provided'}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>PHONE / CONTACT</p>
-                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.contact || selectedCrew.phone || 'Not Provided'}</p>
-                  </div>
-                  {selectedCrew.niche && (
-                    <div>
-                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>NICHE / SPECIALISATION</p>
-                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.niche}</p>
-                    </div>
-                  )}
-                  {selectedCrew.experience && (
-                    <div>
-                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>EXPERIENCE</p>
-                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.experience}</p>
-                    </div>
-                  )}
-                  {selectedCrew.portfolio_url && (
-                    <div>
-                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>PORTFOLIO</p>
-                      <a href={selectedCrew.portfolio_url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#c9a84c', textDecoration: 'underline', wordBreak: 'break-all' }}>{selectedCrew.portfolio_url}</a>
-                    </div>
-                  )}
-                  {selectedCrew.social_handle && (
-                    <div>
-                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>SOCIAL</p>
-                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.social_handle}</p>
-                    </div>
-                  )}
-                  {selectedCrew.bio && (
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>BIO</p>
-                      <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0, lineHeight: 1.6, opacity: 0.8 }}>{selectedCrew.bio}</p>
-                    </div>
-                  )}
-                  {selectedCrew.skills && selectedCrew.skills.length > 0 && (
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 8px' }}>SKILLS</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {selectedCrew.skills.map((sk: string) => (
-                          <span key={sk} style={{ fontSize: 8, background: 'rgba(188,168,142,0.08)', border: '1px solid rgba(188,168,142,0.2)', padding: '2px 8px', color: '#BCA88E', letterSpacing: 1 }}>{sk.toUpperCase()}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div>
-                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>AVAILABILITY</p>
-                    <p style={{ fontSize: 13, margin: 0, color: selectedCrew.availability ? '#4ade80' : 'rgba(188,168,142,0.5)' }}>{selectedCrew.availability ? 'AVAILABLE' : 'NOT AVAILABLE'}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>VERIFICATION</p>
-                    <p style={{ fontSize: 13, margin: 0, color: selectedCrew.st_verified ? '#c9a84c' : 'rgba(188,168,142,0.5)' }}>{selectedCrew.st_verified ? 'SUPR VERIFIED' : 'NOT VERIFIED'}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>JOINED</p>
-                    <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0 }}>{selectedCrew.created_at ? new Date(selectedCrew.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown'}</p>
-                  </div>
-                </div>
-
-                <h4 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, letterSpacing: 4, color: '#BCA88E', borderBottom: '1px solid rgba(188,168,142,0.2)', paddingBottom: 8, marginBottom: 16 }}>SUBMISSION HISTORY</h4>
-                {selectedCrew.submissions?.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {selectedCrew.submissions.map((sub: any) => (
-                      <div key={sub.id} style={{ padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                          <span style={{ fontSize: 10, color: '#F0EBE0', fontWeight: 'bold' }}>{sub.type?.toUpperCase()}</span>
-                          <span style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 6px' }}>{sub.status?.toUpperCase()}</span>
-                        </div>
-                        <p style={{ fontSize: 13, color: '#F0EBE0', opacity: 0.8, margin: '0 0 8px' }}>{sub.data?.title || sub.data?.platform || sub.data?.genre || 'Untitled'}</p>
-                        {/* Show all submitted data */}
-                        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 14px', marginBottom: 8 }}>
-                          {Object.entries(sub.data || {}).map(([key, val]: [string, any]) => val && (
-                            <div key={key} style={{ display: 'flex', gap: 12, paddingTop: 4, paddingBottom: 4, borderBottom: '1px solid rgba(188,168,142,0.04)' }}>
-                              <span style={{ fontSize: 8, color: '#BCA88E', opacity: 0.5, letterSpacing: 2, textTransform: 'uppercase', minWidth: 100, flexShrink: 0 }}>{key.replace(/_/g,' ')}</span>
-                              <span style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, wordBreak: 'break-all' }}>{typeof val === 'object' ? JSON.stringify(val) : String(val)}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ display: 'flex', gap: 12 }}>
-                          {sub.data?.driveLink && <a href={sub.data.driveLink} target="_blank" rel="noreferrer" style={{ fontSize: 10, color: '#c9a84c', textDecoration: 'underline' }}>Drive Link</a>}
-                          {sub.data?.pdfLink && <a href={sub.data.pdfLink} target="_blank" rel="noreferrer" style={{ fontSize: 10, color: '#c9a84c', textDecoration: 'underline' }}>PDF Link</a>}
-                          {sub.data?.portfolioUrl && <a href={sub.data.portfolioUrl} target="_blank" rel="noreferrer" style={{ fontSize: 10, color: '#c9a84c', textDecoration: 'underline' }}>Portfolio Link</a>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.4 }}>No submissions found for this user.</p>
-                )}
-                
-                <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                  <button onClick={() => {
-                     setSection('TEMPLATES');
-                     setTemplateVars({ ...templateVars, writer_name: selectedCrew.full_name });
-                  }} style={{ flex: 1, background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '12px', fontSize: 10, letterSpacing: 2, cursor: 'pointer' }}>
-                    SEND TEMPLATE
-                  </button>
-                  <button onClick={() => toggleVerification(selectedCrew.id, !!selectedCrew.st_verified)} 
-                    style={{ flex: 1, background: selectedCrew.st_verified ? 'rgba(255,80,80,0.1)' : 'rgba(188,168,142,0.1)', border: `1px solid ${selectedCrew.st_verified ? '#ff5050' : '#BCA88E'}`, color: selectedCrew.st_verified ? '#ff5050' : '#BCA88E', padding: '12px', fontSize: 10, letterSpacing: 2, cursor: 'pointer', transition: 'all 0.3s ease' }}>
-                    {selectedCrew.st_verified ? 'REVOKE VERIFICATION' : 'VERIFY CREW'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
 
         {section === 'TEMPLATES' && (
           <motion.div key="templates" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
