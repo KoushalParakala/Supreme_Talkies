@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import {useState,useEffect,useMemo} from 'react';
 import {motion} from 'framer-motion';
 import {useNavigate} from 'react-router-dom';
@@ -83,9 +84,9 @@ export default function CrewDirectory(){
       if (error) throw error;
       setCrew(prev => prev.filter(c => c.id !== id));
       if (selectedCrew?.id === id) setSelectedCrew(null);
-      alert('Account deleted successfully.');
+      toast('Account deleted successfully.');
     } catch (err: any) {
-      alert('Error deleting account: ' + err.message);
+      toast('Error deleting account: ' + err.message);
     }
   };
 
@@ -140,7 +141,7 @@ export default function CrewDirectory(){
           ) : (
             <div style={{ display: 'flex', gap: 24, flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
               {/* Crew List */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', maxHeight: 'calc(100vh - 350px)', paddingRight: 16 }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 16 }}>
                 {filteredCrew.map(c => (
                   <div key={c.id} 
                     onClick={() => setSelectedCrew(c)}

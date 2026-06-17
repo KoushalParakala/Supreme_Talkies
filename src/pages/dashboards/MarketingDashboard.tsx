@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -142,11 +143,11 @@ export default function MarketingDashboard() {
 
   const handleCollabSubmit = async () => {
     if (!user) {
-      alert('You must be logged in to submit a proposal.');
+      toast('You must be logged in to submit a proposal.');
       return;
     }
     if (!collabForm.platform || !collabForm.collab_idea) {
-      alert('Please fill out your platform and collab idea.');
+      toast('Please fill out your platform and collab idea.');
       return;
     }
     setCollabSubmitting(true);
@@ -163,10 +164,10 @@ export default function MarketingDashboard() {
       });
       if (error) throw error;
       setCollabForm({ platform: '', follower_count: '', collab_idea: '' });
-      alert('Proposal submitted to database! Our marketing lead will reach out. ✦');
+      toast('Proposal submitted to database! Our marketing lead will reach out. ✦');
     } catch (err: any) {
       console.error('Error submitting collab brief:', err);
-      alert(`FAILED TO SUBMIT: ${err.message}`);
+      toast(`FAILED TO SUBMIT: ${err.message}`);
     } finally {
       setCollabSubmitting(false);
     }
@@ -186,8 +187,8 @@ export default function MarketingDashboard() {
       setNewCampaign({ title: '', platform: [], niche: '', start_date: '', end_date: '', reach_target: '' });
       setShowNewCampaign(false);
       fetchData();
-      alert('CAMPAIGN LAUNCHED ✦');
-    } catch (err: any) { alert(err.message); }
+      toast('CAMPAIGN LAUNCHED ✦');
+    } catch (err: any) { toast(err.message); }
     finally { setSubmitting(false); }
   };
 
@@ -197,7 +198,7 @@ export default function MarketingDashboard() {
       if (error) throw error;
       setEditingReach(null);
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   const handleCloseCampaign = async (id: string) => {
@@ -206,7 +207,7 @@ export default function MarketingDashboard() {
       const { error } = await supabase.from('campaigns').update({ status: 'completed' }).eq('id', id);
       if (error) throw error;
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   const handleJoinCampaign = async (campaignId: string) => {
@@ -219,8 +220,8 @@ export default function MarketingDashboard() {
       });
       if (error) throw error;
       fetchData();
-      alert('JOINED CAMPAIGN ✦');
-    } catch (err: any) { alert(err.message); }
+      toast('JOINED CAMPAIGN ✦');
+    } catch (err: any) { toast(err.message); }
   };
 
   const handleLogPost = async (campaignId: string) => {
@@ -237,8 +238,8 @@ export default function MarketingDashboard() {
       if (error) throw error;
       
       fetchData();
-      alert('POST LOGGED ✦');
-    } catch (err: any) { alert(err.message); }
+      toast('POST LOGGED ✦');
+    } catch (err: any) { toast(err.message); }
   };
 
   const TABS = [

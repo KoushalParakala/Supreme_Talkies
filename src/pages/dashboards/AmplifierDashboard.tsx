@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -90,7 +91,7 @@ export default function AmplifierDashboard() {
     const isToday = lastShare && lastShare.toDateString() === new Date().toDateString();
     
     if (isToday) {
-      alert('Already logged today ✦');
+      toast('Already logged today ✦');
       return;
     }
 
@@ -104,7 +105,7 @@ export default function AmplifierDashboard() {
       if (error) throw error;
       await refreshProfile();
       fetchGroups();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
     finally { setLoggingShare(false); }
   };
 
@@ -121,7 +122,7 @@ export default function AmplifierDashboard() {
       setShoutoutMsg('');
       setShoutoutLink('');
       fetchShoutouts();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
     finally { setPostingShoutout(false); }
   };
 
@@ -149,7 +150,7 @@ export default function AmplifierDashboard() {
       if (error) throw error;
       setNewGroup({ name: '', description: '' });
       fetchGroups();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
     finally { setCreatingGroup(false); }
   };
 
@@ -165,10 +166,10 @@ export default function AmplifierDashboard() {
       }).eq('id', groupId);
       
       if (error) throw error;
-      alert('Member added! ✦');
+      toast('Member added! ✦');
       setInviteId({ ...inviteId, [groupId]: '' });
       fetchGroups();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   const streak = profile?.share_streak || 0;
@@ -383,7 +384,7 @@ export default function AmplifierDashboard() {
                       />
                       <button onClick={() => handleInvite(g.id, inviteId[g.id], g.member_ids)} style={{ background: 'none', border: '1px solid #BCA88E', color: '#BCA88E', padding: '4px 12px', fontSize: 9, fontFamily: 'Montserrat, sans-serif', letterSpacing: 2, cursor: 'pointer' }}>INVITE</button>
                     </div>
-                    <button onClick={() => alert('Group sync coming soon. Stay tuned.')} style={{ background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '10px', fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>SYNC</button>
+                    <button onClick={() => toast('Group sync coming soon. Stay tuned.')} style={{ background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '10px', fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>SYNC</button>
                   </div>
                 </div>
               ))}

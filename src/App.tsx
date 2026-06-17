@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import GlobalGrain from './components/GlobalGrain';
 import ProtectedRoute from './components/ProtectedRoute';
+import { Toaster } from 'react-hot-toast';
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
@@ -97,6 +98,10 @@ function App() {
   return (
     <>
       <GlobalGrain />
+      <Toaster position="bottom-right" toastOptions={{ 
+        style: { background: 'rgba(30,32,41,0.9)', color: '#F0EBE0', border: '1px solid #BCA88E', fontFamily: 'Inter, monospace', fontSize: '12px' },
+        success: { iconTheme: { primary: '#BCA88E', secondary: '#1e2029' } }
+      }} />
       <FilmBurn key={`burn-${location.pathname}`} />
       <Suspense fallback={
         <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', 

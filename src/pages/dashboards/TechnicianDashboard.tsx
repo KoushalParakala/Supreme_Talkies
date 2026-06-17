@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -27,8 +28,8 @@ function CinemaInput({ label, type = 'text', placeholder, value, onChange, requi
   );
 }
 
-function CinemaButton({ children, onClick, disabled, loading }: {
-  children: React.ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean;
+function CinemaButton({ children, onClick, disabled, loading, style }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean; style?: any;
 }) {
   const [hov, setHov] = useState(false);
   return (
@@ -36,7 +37,7 @@ function CinemaButton({ children, onClick, disabled, loading }: {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       animate={{ background: hov && !disabled ? '#BCA88E' : 'transparent', color: hov && !disabled ? '#1e2029' : '#BCA88E', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer' }}
+      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -189,9 +190,9 @@ export default function TechnicianDashboard() {
         message: `I am interested in your film brief: "${brief.title}". I'd love to discuss my technical services.`
       });
 
-      alert('INTEREST LOGGED ✦ The producer has been notified.');
+      toast('INTEREST LOGGED ✦ The producer has been notified.');
       fetchOpenBriefs();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
     finally { setExpressingBriefId(null); }
   };
 
@@ -251,8 +252,8 @@ export default function TechnicianDashboard() {
       
       if (error) throw error;
       refreshProfile();
-      alert('Crew Card updated.');
-    } catch (err: any) { alert(err.message); }
+      toast('Crew Card updated.');
+    } catch (err: any) { toast(err.message); }
     finally { setSaving(false); }
   };
 
@@ -275,8 +276,8 @@ export default function TechnicianDashboard() {
       setNewCollab({ stId: '', title: '', message: '' });
       setExpandingNewCollab(false);
       fetchRequests();
-      alert('Collaboration request sent! ✦');
-    } catch (err: any) { alert(err.message); }
+      toast('Collaboration request sent! ✦');
+    } catch (err: any) { toast(err.message); }
     finally { setSendingCollab(false); }
   };
 

@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -199,7 +200,7 @@ export default function AdminDashboard() {
 
     const { error } = await supabase.from('scripts').update({ kanban_stage: newStage }).eq('id', scriptId);
     if (error) {
-      alert(`Error moving script: ${error.message}`);
+      toast(`Error moving script: ${error.message}`);
       setScripts(oldScripts);
     }
   };
@@ -221,13 +222,13 @@ export default function AdminDashboard() {
 
   const updateSubStatus = async (id: string, status: string) => {
     const { error } = await supabase.from('submissions').update({ status }).eq('id', id);
-    if (error) alert(`Error: ${error.message}`);
+    if (error) toast(`Error: ${error.message}`);
     fetchData();
   };
 
   const toggleBriefStatus = async (id: string, currentStatus: boolean) => {
     const { error } = await supabase.from('film_briefs').update({ is_open: !currentStatus }).eq('id', id);
-    if (error) alert(`Error: ${error.message}`);
+    if (error) toast(`Error: ${error.message}`);
     else fetchData();
   };
 
@@ -284,7 +285,7 @@ export default function AdminDashboard() {
 
       setNewRoom({ title: '', script_id: '', brief: '' }); 
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
     finally { setCreatingRoom(false); }
   };
 
@@ -301,7 +302,7 @@ export default function AdminDashboard() {
   const awardBadge = async (roomId: string) => {
     const { error } = await supabase.from('project_rooms').update({ completion_badge_awarded: true }).eq('id', roomId);
     if (!error) {
-      alert("🎖 Completion badge awarded to all members");
+      toast("🎖 Completion badge awarded to all members");
       fetchData();
     }
   };
@@ -337,7 +338,7 @@ export default function AdminDashboard() {
 
       setRoomMemberId({ ...roomMemberId, [roomId]: '' });
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   const saveTemplate = async () => {
@@ -351,7 +352,7 @@ export default function AdminDashboard() {
       setNewTemplate({ label: '', type: 'REPLY', subject: '', body: '' });
       setEditingTemplateId(null);
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   const deleteTemplate = async (id: string) => {
@@ -369,14 +370,14 @@ export default function AdminDashboard() {
       group_sync_at: newCampaign.group_sync_at || null,
     };
     const { error } = await supabase.from('campaigns').insert([payload]);
-    if (error) alert(error.message);
+    if (error) toast(error.message);
     else { setNewCampaign({ title: '', goal: '', deadline: '', status: 'active', kit_captions: '', kit_hashtags: '', kit_drive_link: '', group_sync_at: '' }); fetchData(); }
   };
 
   const saveCampaignEdit = async () => {
     if (!editingCampaign) return;
     const { error } = await supabase.from('campaigns').update(editingCampaign).eq('id', editingCampaign.id);
-    if (error) alert(error.message);
+    if (error) toast(error.message);
     else { setEditingCampaign(null); fetchData(); }
   };
 
@@ -390,7 +391,7 @@ export default function AdminDashboard() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard. Send via your preferred channel (email/DM).");
+    toast("Copied to clipboard. Send via your preferred channel (email/DM).");
   };
 
   
@@ -440,7 +441,7 @@ export default function AdminDashboard() {
       setNewFilm({ title: '', logline: '', rating: 'UA', duration: '', director: '', producer: '', cast_members: '', synopsis: '', special_note: '', video_link: '', reel_image: '', poster_image: '', coming_soon: false, stills: [] });
       fetchData();
     } catch (e: any) { 
-      alert(e.message); 
+      toast(e.message); 
     } finally {
       setUploadingFilm(false);
     }
@@ -1169,7 +1170,7 @@ export default function AdminDashboard() {
                         .replace(/{script_title}/g, templateVars.script_title)
                         .replace(/{reviewer_name}/g, templateVars.reviewer_name);
                       navigator.clipboard.writeText(populated);
-                      alert("COPIED TO CLIPBOARD ✦");
+                      toast("COPIED TO CLIPBOARD ✦");
                     }}
                     style={{ background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '12px', fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 3, cursor: 'pointer' }}
                   >

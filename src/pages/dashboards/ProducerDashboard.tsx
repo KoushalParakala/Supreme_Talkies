@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -216,8 +217,8 @@ export default function ProducerDashboard() {
         project_title: scripts.find(s => s.id === scriptId)?.title,
         message: "A Producer has expressed interest in your script and would like to discuss potential development."
       });
-      alert('INTEREST LOGGED ✦ The writer has been notified.');
-    } catch (err: any) { alert(err.message); }
+      toast('INTEREST LOGGED ✦ The writer has been notified.');
+    } catch (err: any) { toast(err.message); }
     finally { setExpressing(null); }
   };
 
@@ -243,7 +244,7 @@ export default function ProducerDashboard() {
       if (error) throw error;
       fetchBriefs();
     } catch (err: any) {
-      alert(err.message);
+      toast(err.message);
     }
   };
 
@@ -254,7 +255,7 @@ export default function ProducerDashboard() {
       if (error) throw error;
       fetchBriefs();
     } catch (err: any) {
-      alert(err.message);
+      toast(err.message);
     }
   };
 
@@ -271,8 +272,8 @@ export default function ProducerDashboard() {
       setNewBrief({ title: '', description: '', genre: [], budget_range: '', timeline: '', looking_for: [] });
       setShowNewBriefForm(false);
       fetchBriefs();
-      alert('BRIEF PUBLISHED ✦');
-    } catch (err: any) { alert(err.message); }
+      toast('BRIEF PUBLISHED ✦');
+    } catch (err: any) { toast(err.message); }
     finally { setSubmittingBrief(false); }
   };
 

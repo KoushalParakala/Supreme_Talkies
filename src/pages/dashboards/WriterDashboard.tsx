@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -38,8 +39,8 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: {
   );
 }
 
-function CinemaButton({ children, onClick, disabled, loading }: {
-  children: React.ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean;
+function CinemaButton({ children, onClick, disabled, loading, style }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean; style?: any;
 }) {
   const [hov, setHov] = useState(false);
   return (
@@ -47,7 +48,7 @@ function CinemaButton({ children, onClick, disabled, loading }: {
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       animate={{ background: hov && !disabled ? '#BCA88E' : 'transparent', color: hov && !disabled ? '#1e2029' : '#BCA88E', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer' }}
+      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -216,7 +217,7 @@ export default function WriterDashboard() {
         .maybeSingle();
       
       if (existing) {
-        alert('You have already expressed interest in this brief ✦');
+        toast('You have already expressed interest in this brief ✦');
         setUserInterests(prev => [...prev, brief.id]);
         return;
       }
@@ -240,9 +241,9 @@ export default function WriterDashboard() {
         message: `I am interested in your film brief: "${brief.title}". I'd love to discuss my writing services.`
       });
 
-      alert('INTEREST LOGGED ✦ The producer has been notified.');
+      toast('INTEREST LOGGED ✦ The producer has been notified.');
       fetchOpenBriefs();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
     finally { setExpressingBriefId(null); }
   };
 
@@ -296,9 +297,9 @@ export default function WriterDashboard() {
         script_id: null
       });
       if (error) throw error;
-      alert('ENTRY CONFIRMED ✦');
+      toast('ENTRY CONFIRMED ✦');
       fetchChallenges();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   const handlePinSubmit = async () => {
@@ -312,7 +313,7 @@ export default function WriterDashboard() {
       if (error) throw error;
       setPinForm({ title: '', url: '', note: '', type: 'LINK' });
       fetchInspirationPins();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
     finally { setSubmittingPin(false); }
   };
 
@@ -321,7 +322,7 @@ export default function WriterDashboard() {
       const { error } = await supabase.from('inspiration_pins').delete().eq('id', id);
       if (error) throw error;
       fetchInspirationPins();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   useEffect(() => {
@@ -378,7 +379,7 @@ export default function WriterDashboard() {
       fetchSubmissions();
 
     } catch (err: any) { 
-      alert(err.message); 
+      toast(err.message); 
     } finally { 
       setSubmitting(false); 
     }
@@ -538,8 +539,9 @@ export default function WriterDashboard() {
                       onClick={() => !userInterests.includes(brief.id) && handleInterestInBrief(brief)} 
                       disabled={userInterests.includes(brief.id)}
                       loading={expressingBriefId === brief.id}
+                      style={{ padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' }}
                     >
-                      {expressingBriefId === brief.id ? 'LOGGING...' : userInterests.includes(brief.id) ? 'INTEREST LOGGED ✓' : 'EXPRESS INTEREST'}
+                      {expressingBriefId === brief.id ? 'LOGGING...' : userInterests.includes(brief.id) ? 'LOGGED ✓' : 'EXPRESS INTEREST'}
                     </CinemaButton>
                   </div>
                 </div>

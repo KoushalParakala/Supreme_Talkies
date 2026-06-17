@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -198,8 +199,8 @@ export default function PresenterDashboard() {
       if (error) throw error;
       setForm({ title: '', synopsis: '', screening_date: '', territory: '', expected_reach: '' });
       fetchData();
-      alert('PRESENTATION SUBMITTED ✦');
-    } catch (err: any) { alert(err.message); }
+      toast('PRESENTATION SUBMITTED ✦');
+    } catch (err: any) { toast(err.message); }
     finally { setSubmitting(false); }
   };
 
@@ -209,7 +210,7 @@ export default function PresenterDashboard() {
       if (error) throw error;
       setEditingActual(null);
       fetchData();
-    } catch (err: any) { alert(err.message); }
+    } catch (err: any) { toast(err.message); }
   };
 
   const TABS = [

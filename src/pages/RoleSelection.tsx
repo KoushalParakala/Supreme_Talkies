@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -309,7 +310,7 @@ export default function RoleSelection() {
       }, 500);
     } catch (e: any) {
       console.error('Role Selection Error:', e);
-      alert(`CASTING ERROR: ${e.message}`);
+      toast(`CASTING ERROR: ${e.message}`);
       setLoading(false);
       setPendingRole(null);
     }
