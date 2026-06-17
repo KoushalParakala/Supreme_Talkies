@@ -694,8 +694,8 @@ export default function AdminDashboard() {
                         exit={{ height: 0, opacity: 0 }}
                         style={{ overflow: 'hidden' }}
                       >
-                        <div style={{ padding: '0 24px 24px', border: '1px solid rgba(188,168,142,0.1)', borderTop: 'none', background: 'rgba(0,0,0,0.1)' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                        <div style={{ padding: '24px', border: '1px solid rgba(188,168,142,0.1)', borderTop: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.1)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 48 }}>
                             <div>
                               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 2, marginBottom: 8 }}>LOGLINE</p>
                               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.8, lineHeight: 1.6 }}>{s.logline || 'N/A'}</p>

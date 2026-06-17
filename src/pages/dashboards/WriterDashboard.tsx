@@ -336,6 +336,50 @@ export default function WriterDashboard() {
     }
   };
 
+  const handleDeleteScript = async (id: string) => {
+    if (!confirm('Are you sure you want to completely delete this script? This action cannot be undone.')) return;
+    try {
+      const { error } = await supabase.from('scripts').delete().eq('id', id);
+      if (error) throw error;
+      toast('Script completely deleted from archives.');
+      fetchSubmissions();
+    } catch (err: any) {
+      toast(`Error deleting script: ${err.message}`);
+    }
+  };
+
+  const handleRevisionSubmit = async (scriptId: string, currentVersion: number) => {
+    if (!revisionForm.link) return;
+    setSubmittingRevision(true);
+    try {
+      const newVersion = currentVersion + 1;
+      const { error: insertError } = await supabase.from('script_versions').insert({
+        script_id: scriptId,
+        version_number: newVersion,
+        pdf_url: revisionForm.link,
+        notes: revisionForm.note
+      });
+      if (insertError) throw insertError;
+
+      const { error: updateError } = await supabase.from('scripts').update({
+        version_number: newVersion,
+        pdf_url: revisionForm.link,
+        updated_at: new Date().toISOString()
+      }).eq('id', scriptId);
+      
+      if (updateError) throw updateError;
+      
+      toast(`Version ${newVersion} launched successfully ✦`);
+      setRevisionScriptId(null);
+      setRevisionForm({ note: '', link: '' });
+      fetchSubmissions();
+    } catch (err: any) {
+      toast(`Error submitting revision: ${err.message}`);
+    } finally {
+      setSubmittingRevision(false);
+    }
+  };
+
   const fetchChallenges = async () => {
     if (!user) return;
     const fetchId = ++fetchChallengesRef.current;
