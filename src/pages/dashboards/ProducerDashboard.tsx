@@ -164,6 +164,8 @@ export default function ProducerDashboard() {
 
   // Briefs State
   const [briefs, setBriefs] = useState<any[]>([]);
+  const [allBriefs, setAllBriefs] = useState<any[]>([]);
+  const [briefSubView, setBriefSubView] = useState<'discover' | 'mine'>('discover');
   const [showNewBriefForm, setShowNewBriefForm] = useState(false);
   const [newBrief, setNewBrief] = useState({ 
     title: '', description: '', genre: [] as string[], budget_range: '', timeline: '', looking_for: [] as string[] 
@@ -172,13 +174,19 @@ export default function ProducerDashboard() {
   const [expandingBriefId, setExpandingBriefId] = useState<string | null>(null);
   const [interests, setInterests] = useState<Record<string, any[]>>({});
   const [loadingInterests, setLoadingInterests] = useState<string | null>(null);
+  const [userBriefInterests, setUserBriefInterests] = useState<Set<string>>(new Set());
+  const [togglingInterest, setTogglingInterest] = useState<string | null>(null);
 
   const fetchDataRef = useRef(0);
   const fetchBriefsRef = useRef(0);
 
   useEffect(() => {
     fetchData();
-    if (user) fetchBriefs();
+    if (user) {
+      fetchBriefs();
+      fetchAllBriefs();
+      fetchMyBriefInterests();
+    }
   }, [user]);
 
   const fetchBriefs = async () => {
@@ -200,6 +208,44 @@ export default function ProducerDashboard() {
     }
   };
 
+  const fetchAllBriefs = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('film_briefs')
+        .select('*, brief_interests(count)')
+        .eq('is_open', true)
+        .neq('producer_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+
+      // Fetch producer names
+      const producerIds = [...new Set((data || []).map((b: any) => b.producer_id))];
+      let producerMap = new Map();
+      if (producerIds.length > 0) {
+        const { data: producers } = await supabase.from('profiles').select('id, full_name').in('id', producerIds);
+        if (producers) producerMap = new Map(producers.map(p => [p.id, p]));
+      }
+
+      setAllBriefs((data || []).map((b: any) => ({
+        ...b,
+        producer: producerMap.get(b.producer_id) || null
+      })));
+    } catch (err) {
+      console.error('Error fetching all briefs:', err);
+    }
+  };
+
+  const fetchMyBriefInterests = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase.from('brief_interests').select('brief_id').eq('user_id', user.id);
+      setUserBriefInterests(new Set((data || []).map((i: any) => i.brief_id)));
+    } catch (err) {
+      console.error('Error fetching my interests:', err);
+    }
+  };
+
   const fetchInterests = async (briefId: string) => {
     setLoadingInterests(briefId);
     try {
@@ -214,9 +260,22 @@ export default function ProducerDashboard() {
       const userIds = (data || []).map((interest: any) => interest.user_id);
       let profileMap = new Map();
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase.from('profiles').select('id, full_name, avatar_symbol, st_id, role, st_verified, email, phone').in('id', userIds);
-        if (profiles) {
-          profileMap = new Map(profiles.map(p => [p.id, p]));
+        // Try fetching from member_directory first (has email/phone), fallback to profiles
+        const { data: dirProfiles } = await supabase
+          .from('member_directory')
+          .select('user_id, full_name, avatar_symbol, st_id, role, st_verified, email, phone')
+          .in('user_id', userIds);
+        if (dirProfiles && dirProfiles.length > 0) {
+          dirProfiles.forEach(p => profileMap.set(p.user_id, { ...p, id: p.user_id }));
+        }
+        // For any missing, try profiles table
+        const missing = userIds.filter(id => !profileMap.has(id));
+        if (missing.length > 0) {
+          const { data: pProfiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_symbol, st_id, role, st_verified, email, phone')
+            .in('id', missing);
+          if (pProfiles) pProfiles.forEach(p => profileMap.set(p.id, p));
         }
       }
 
@@ -295,6 +354,33 @@ export default function ProducerDashboard() {
       await supabase.from('audience_reactions').insert({ submission_id: scriptId, user_id: user.id, reaction: 'fire' });
     } catch (err) {
       fetchData();
+    }
+  };
+
+  const handleBriefInterest = async (briefId: string) => {
+    if (!user) return;
+    setTogglingInterest(briefId);
+    const alreadyInterested = userBriefInterests.has(briefId);
+    try {
+      if (alreadyInterested) {
+        // Withdraw interest
+        const { error } = await supabase.from('brief_interests').delete().eq('brief_id', briefId).eq('user_id', user.id);
+        if (error) throw error;
+        setUserBriefInterests(prev => { const next = new Set(prev); next.delete(briefId); return next; });
+        setAllBriefs(prev => prev.map(b => b.id === briefId ? { ...b, brief_interests: [{ count: Math.max(0, (b.brief_interests?.[0]?.count || 1) - 1) }] } : b));
+        toast('INTEREST WITHDRAWN');
+      } else {
+        // Log interest
+        const { error } = await supabase.from('brief_interests').insert({ brief_id: briefId, user_id: user.id });
+        if (error) throw error;
+        setUserBriefInterests(prev => new Set([...prev, briefId]));
+        setAllBriefs(prev => prev.map(b => b.id === briefId ? { ...b, brief_interests: [{ count: (b.brief_interests?.[0]?.count || 0) + 1 }] } : b));
+        toast('INTEREST LOGGED ✦');
+      }
+    } catch (err: any) {
+      toast(err.message || 'Error updating interest');
+    } finally {
+      setTogglingInterest(null);
     }
   };
 
@@ -407,190 +493,269 @@ export default function ProducerDashboard() {
         )
       ) : view === 'briefs' ? (
         /* FILM BRIEFS TAB */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 22, color: '#BCA88E', letterSpacing: 2, marginBottom: 6 }}>FILM BRIEFS</p>
-              <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>CALLING THE CREW TO THE SET</p>
-            </div>
-            <CinemaButton onClick={() => setShowNewBriefForm(!showNewBriefForm)}>
-              {showNewBriefForm ? 'CANCEL' : '+ NEW BRIEF'}
-            </CinemaButton>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          {/* Sub-nav */}
+          <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(188,168,142,0.12)' }}>
+            {(['discover', 'mine'] as const).map(sv => (
+              <button key={sv} type="button" onClick={() => setBriefSubView(sv)}
+                style={{ background: 'none', border: 'none', borderBottom: briefSubView === sv ? '2px solid #BCA88E' : '2px solid transparent', padding: '10px 24px', fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 4, color: briefSubView === sv ? '#BCA88E' : 'rgba(240,235,224,0.3)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1, textTransform: 'uppercase' }}>
+                {sv === 'discover' ? 'DISCOVER BRIEFS' : 'MY BRIEFS'}
+              </button>
+            ))}
           </div>
 
-          <AnimatePresence>
-            {showNewBriefForm && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                style={{ overflow: 'hidden', background: 'rgba(188,168,142,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 32 }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
-                  <CinemaInput label="PROJECT TITLE" placeholder="e.g. The Midnight Heist" value={newBrief.title} onChange={(v) => setNewBrief({ ...newBrief, title: v })} />
-                  <CinemaTextarea label="DESCRIPTION" placeholder="What's this project about?" value={newBrief.description} onChange={(v) => setNewBrief({ ...newBrief, description: v })} rows={4} />
-                  
-                  <TagPicker label="GENRE" tags={GENRE_OPTIONS} selected={newBrief.genre} onChange={(v) => setNewBrief({ ...newBrief, genre: v })} max={3} />
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-                    <TagPicker label="BUDGET RANGE" tags={BUDGET_OPTIONS} selected={newBrief.budget_range} onChange={(v) => setNewBrief({ ...newBrief, budget_range: v })} single />
-                    <TagPicker label="TIMELINE" tags={TIMELINE_OPTIONS} selected={newBrief.timeline} onChange={(v) => setNewBrief({ ...newBrief, timeline: v })} single />
-                  </div>
+          {briefSubView === 'discover' ? (
+            /* ─── DISCOVER: All open briefs from other producers ─── */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {allBriefs.length === 0 ? (
+                <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic', padding: '40px 0', textAlign: 'center' }}>
+                  "The stage is yours to claim." — No open briefs from other producers yet.
+                </p>
+              ) : (
+                allBriefs.map((b) => {
+                  const interestCount = b.brief_interests?.[0]?.count || 0;
+                  const hasInterested = userBriefInterests.has(b.id);
+                  return (
+                    <div key={b.id} style={{ background: 'rgba(30,32,41,0.4)', border: `1px solid ${hasInterested ? 'rgba(188,168,142,0.4)' : 'rgba(188,168,142,0.12)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: '0 0 6px' }}>{b.title}</h3>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {b.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
+                        </div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                          {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'BE FIRST'}
+                        </p>
+                      </div>
 
-                  <TagPicker label="LOOKING FOR" tags={LOOKING_FOR_OPTIONS} selected={newBrief.looking_for} onChange={(v) => setNewBrief({ ...newBrief, looking_for: v })} max={5} />
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{b.description}</p>
 
-                  <div style={{ marginTop: 16 }}>
-                    <CinemaButton onClick={submitBrief} loading={submittingBrief} style={{ padding: '14px 44px', fontSize: 14 }} disabled={!newBrief.title}>
-                      PUBLISH BRIEF
-                    </CinemaButton>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {briefs.length === 0 ? (
-              <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic', padding: '40px 0', textAlign: 'center' }}>
-                "Every great film starts with a clear vision." — No briefs published yet.
-              </p>
-            ) : (
-              briefs.map((b) => {
-                const interestCount = b.brief_interests?.[0]?.count || 0;
-                const maxInterests = Math.max(...briefs.map(br => br.brief_interests?.[0]?.count || 0), 0);
-                const isTrending = interestCount > 0 && interestCount === maxInterests;
-
-                return (
-                  <div key={b.id} style={{ background: 'rgba(30,32,41,0.4)', border: '1px solid rgba(188,168,142,0.12)', padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: 0 }}>{b.title}</h3>
-                        <span style={{ 
-                          fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 2, padding: '3px 10px', 
-                          background: b.is_open ? 'rgba(100,200,120,0.15)' : 'rgba(255,100,100,0.15)', 
-                          color: b.is_open ? '#64c878' : '#ff6464', border: `1px solid ${b.is_open ? '#64c878' : '#ff6464'}` 
-                        }}>
-                          {b.is_open ? 'OPEN' : 'CLOSED'}
-                        </span>
-                        {isTrending && (
-                          <motion.span 
-                            animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                            style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 800, color: '#BCA88E', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 4 }}
-                          >
-                            🔥 TRENDING
-                          </motion.span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+                        {b.genre?.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {b.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: '#F0EBE0', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', border: '1px solid rgba(188,168,142,0.1)' }}>{g}</span>)}
+                            </div>
+                          </div>
                         )}
-                      </div>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
-                        {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'NO INTERESTS YET'}
-                      </p>
-                    </div>
-
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{b.description}</p>
-
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          {b.genre?.map((g: string) => (
-                            <span key={g} style={{ fontSize: 9, color: '#F0EBE0', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', border: '1px solid rgba(188,168,142,0.1)' }}>{g}</span>
-                          ))}
+                        {b.looking_for?.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {b.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          {b.looking_for?.map((l: string) => (
-                            <span key={l} style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 8px' }}>{l.toUpperCase()}</span>
-                          ))}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
-                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
-                      </div>
-                    </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
-                      <div style={{ display: 'flex', gap: 16 }}>
-                        <CinemaButton onClick={() => {
-                          if (expandingBriefId === b.id) setExpandingBriefId(null);
-                          else { setExpandingBriefId(b.id); fetchInterests(b.id); }
-                        }}>
-                          {expandingBriefId === b.id ? 'HIDE INTERESTS' : 'VIEW INTERESTS'}
+                      <div style={{ paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+                        <CinemaButton
+                          onClick={() => handleBriefInterest(b.id)}
+                          loading={togglingInterest === b.id}
+                          style={hasInterested ? { borderColor: '#BCA88E', color: '#BCA88E', background: 'rgba(188,168,142,0.08)' } : {}}
+                        >
+                          {togglingInterest === b.id ? '...' : hasInterested ? '✦ INTERESTED — WITHDRAW' : '+ EXPRESS INTEREST'}
                         </CinemaButton>
-                        <button 
-                          onClick={() => handleToggleBriefStatus(b.id, b.is_open)}
-                          style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 3, padding: '10px 20px', cursor: 'pointer' }}
-                        >
-                          {b.is_open ? 'CLOSE BRIEF' : 'REOPEN BRIEF'}
-                        </button>
                       </div>
-                      <button 
-                        onClick={() => handleDeleteBrief(b.id)}
-                        style={{ background: 'none', border: 'none', color: '#ff4d4d', fontSize: 18, cursor: 'pointer', opacity: 0.6 }}
-                        title="Delete Brief"
-                      >✕</button>
                     </div>
+                  );
+                })
+              )}
+            </div>
+          ) : (
+            /* ─── MY BRIEFS: Producer manages their own ─── */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 22, color: '#BCA88E', letterSpacing: 2, marginBottom: 6 }}>MY BRIEFS</p>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>MANAGE YOUR OPEN CALLS</p>
+                </div>
+                <CinemaButton onClick={() => setShowNewBriefForm(!showNewBriefForm)}>
+                  {showNewBriefForm ? 'CANCEL' : '+ NEW BRIEF'}
+                </CinemaButton>
+              </div>
 
-                    {/* Interest Signals Expansion */}
-                    <AnimatePresence>
-                      {expandingBriefId === b.id && (
-                        <motion.div 
-                          initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                          style={{ overflow: 'hidden', marginTop: 12, borderTop: '1px solid rgba(188,168,142,0.05)', paddingTop: 20 }}
-                        >
-                          {loadingInterests === b.id ? (
-                            <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.4 }}>SCANNING SIGNALS...</p>
-                          ) : !interests[b.id] || interests[b.id].length === 0 ? (
-                            <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3 }}>No interests recorded yet.</p>
-                          ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                              {interests[b.id].map((interest) => (
-                                <div key={interest.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderLeft: '2px solid #BCA88E' }}>
-                                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                                    <span style={{ fontSize: 24 }}>{interest.user?.avatar_symbol}</span>
-                                    <div>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: 0 }}>{interest.user?.full_name}</p>
-                                        {interest.user?.st_verified && <span style={{ color: '#BCA88E', fontSize: 10 }}>✦</span>}
-                                      </div>
-                                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
-                                        {interest.user?.role?.toUpperCase()} • SUPR ID: {interest.user?.st_id ? (interest.user.st_id.startsWith('SUPR-') ? interest.user.st_id : 'SUPR-' + interest.user.st_id) : 'NO-ID'}
-                                      </p>
-                                      {interest.note && (
-                                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.5, fontStyle: 'italic', margin: '4px 0 0' }}>
-                                          "{interest.note}"
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div style={{ textAlign: 'right' }}>
-                                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.3, marginBottom: 8 }}>
-                                      {new Date(interest.created_at).toLocaleDateString()}
-                                    </p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                                      {interest.user?.email && (
-                                        <a href={`mailto:${interest.user.email}`} style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8, textDecoration: 'underline' }}>{interest.user.email}</a>
-                                      )}
-                                      {interest.user?.phone && (
-                                        <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8 }}>{interest.user.phone}</span>
-                                      )}
-                                      {!interest.user?.email && !interest.user?.phone && (
-                                        <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4 }}>NO CONTACT INFO</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
+              <AnimatePresence>
+                {showNewBriefForm && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                    style={{ overflow: 'hidden', background: 'rgba(188,168,142,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 32 }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
+                      <CinemaInput label="PROJECT TITLE" placeholder="e.g. The Midnight Heist" value={newBrief.title} onChange={(v) => setNewBrief({ ...newBrief, title: v })} />
+                      <CinemaTextarea label="DESCRIPTION" placeholder="What's this project about?" value={newBrief.description} onChange={(v) => setNewBrief({ ...newBrief, description: v })} rows={4} />
+                      
+                      <TagPicker label="GENRE" tags={GENRE_OPTIONS} selected={newBrief.genre} onChange={(v) => setNewBrief({ ...newBrief, genre: v })} max={3} />
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+                        <TagPicker label="BUDGET RANGE" tags={BUDGET_OPTIONS} selected={newBrief.budget_range} onChange={(v) => setNewBrief({ ...newBrief, budget_range: v })} single />
+                        <TagPicker label="TIMELINE" tags={TIMELINE_OPTIONS} selected={newBrief.timeline} onChange={(v) => setNewBrief({ ...newBrief, timeline: v })} single />
+                      </div>
+
+                      <TagPicker label="LOOKING FOR" tags={LOOKING_FOR_OPTIONS} selected={newBrief.looking_for} onChange={(v) => setNewBrief({ ...newBrief, looking_for: v })} max={5} />
+
+                      <div style={{ marginTop: 16 }}>
+                        <CinemaButton onClick={submitBrief} loading={submittingBrief} style={{ padding: '14px 44px', fontSize: 14 }} disabled={!newBrief.title}>
+                          PUBLISH BRIEF
+                        </CinemaButton>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {briefs.length === 0 ? (
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic', padding: '40px 0', textAlign: 'center' }}>
+                    "Every great film starts with a clear vision." — No briefs published yet.
+                  </p>
+                ) : (
+                  briefs.map((b) => {
+                    const interestCount = b.brief_interests?.[0]?.count || 0;
+                    const maxInterests = Math.max(...briefs.map(br => br.brief_interests?.[0]?.count || 0), 0);
+                    const isTrending = interestCount > 0 && interestCount === maxInterests;
+
+                    return (
+                      <div key={b.id} style={{ background: 'rgba(30,32,41,0.4)', border: '1px solid rgba(188,168,142,0.12)', padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: 0 }}>{b.title}</h3>
+                            <span style={{ 
+                              fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 2, padding: '3px 10px', 
+                              background: b.is_open ? 'rgba(100,200,120,0.15)' : 'rgba(255,100,100,0.15)', 
+                              color: b.is_open ? '#64c878' : '#ff6464', border: `1px solid ${b.is_open ? '#64c878' : '#ff6464'}` 
+                            }}>
+                              {b.is_open ? 'OPEN' : 'CLOSED'}
+                            </span>
+                            {isTrending && (
+                              <motion.span 
+                                animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}
+                                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 800, color: '#BCA88E', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 4 }}
+                              >
+                                🔥 TRENDING
+                              </motion.span>
+                            )}
+                          </div>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                            {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'NO INTERESTS YET'}
+                          </p>
+                        </div>
+
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{b.description}</p>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              {b.genre?.map((g: string) => (
+                                <span key={g} style={{ fontSize: 9, color: '#F0EBE0', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', border: '1px solid rgba(188,168,142,0.1)' }}>{g}</span>
                               ))}
                             </div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              {b.looking_for?.map((l: string) => (
+                                <span key={l} style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 8px' }}>{l.toUpperCase()}</span>
+                              ))}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                            <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+                          <div style={{ display: 'flex', gap: 16 }}>
+                            <CinemaButton onClick={() => {
+                              if (expandingBriefId === b.id) setExpandingBriefId(null);
+                              else { setExpandingBriefId(b.id); fetchInterests(b.id); }
+                            }}>
+                              {expandingBriefId === b.id ? 'HIDE INTERESTS' : 'VIEW INTERESTS'}
+                            </CinemaButton>
+                            <button 
+                              onClick={() => handleToggleBriefStatus(b.id, b.is_open)}
+                              style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 3, padding: '10px 20px', cursor: 'pointer' }}
+                            >
+                              {b.is_open ? 'CLOSE BRIEF' : 'REOPEN BRIEF'}
+                            </button>
+                          </div>
+                          <button 
+                            onClick={() => handleDeleteBrief(b.id)}
+                            style={{ background: 'none', border: 'none', color: '#ff4d4d', fontSize: 18, cursor: 'pointer', opacity: 0.6 }}
+                            title="Delete Brief"
+                          >✕</button>
+                        </div>
+
+                        {/* Interest Signals Expansion */}
+                        <AnimatePresence>
+                          {expandingBriefId === b.id && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                              style={{ overflow: 'hidden', marginTop: 12, borderTop: '1px solid rgba(188,168,142,0.05)', paddingTop: 20 }}
+                            >
+                              {loadingInterests === b.id ? (
+                                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.4 }}>SCANNING SIGNALS...</p>
+                              ) : !interests[b.id] || interests[b.id].length === 0 ? (
+                                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3 }}>No interests recorded yet.</p>
+                              ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                  {interests[b.id].map((interest) => (
+                                    <div key={interest.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderLeft: '2px solid #BCA88E' }}>
+                                      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                                        <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, flexShrink: 0 }}>
+                                          {interest.user?.full_name?.substring(0,1).toUpperCase() || '?'}
+                                        </span>
+                                        <div>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: 0 }}>{interest.user?.full_name || 'Unknown'}</p>
+                                            {interest.user?.st_verified && <span style={{ color: '#BCA88E', fontSize: 10 }}>✦</span>}
+                                          </div>
+                                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
+                                            {interest.user?.role?.toUpperCase()} • SUPR-{interest.user?.st_id || 'N/A'}
+                                          </p>
+                                          {interest.note && (
+                                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.5, fontStyle: 'italic', margin: '4px 0 0' }}>
+                                              "{interest.note}"
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div style={{ textAlign: 'right' }}>
+                                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.3, marginBottom: 8 }}>
+                                          {new Date(interest.created_at).toLocaleDateString()}
+                                        </p>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+                                          {interest.user?.email && (
+                                            <a href={`mailto:${interest.user.email}`} style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8, textDecoration: 'underline' }}>{interest.user.email}</a>
+                                          )}
+                                          {interest.user?.phone && (
+                                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8 }}>{interest.user.phone}</span>
+                                          )}
+                                          {!interest.user?.email && !interest.user?.phone && (
+                                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4 }}>NO CONTACT INFO</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </motion.div>
                           )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* THE ROSTER TAB */
