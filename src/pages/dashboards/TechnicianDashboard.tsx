@@ -178,7 +178,7 @@ export default function TechnicianDashboard() {
       const producerIds = [...new Set((data || []).map((b: any) => b.producer_id).filter(Boolean))];
       let producerMap = new Map();
       if (producerIds.length > 0) {
-        const { data: producers } = await supabase.from('profiles').select('id, full_name, avatar_symbol, st_id').in('id', producerIds);
+        const { data: producers } = await supabase.from('member_directory').select('id, full_name, avatar_symbol, st_id').in('id', producerIds);
         if (producers) producerMap = new Map(producers.map(p => [p.id, p]));
       }
       if (fetchId !== fetchOpenBriefsRef.current) return;

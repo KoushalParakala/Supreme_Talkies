@@ -213,7 +213,7 @@ export default function ProducerDashboard() {
     try {
       const { data, error } = await supabase
         .from('film_briefs')
-        .select('*, brief_interests(count)')
+        .select('*')
         .eq('is_open', true)
         .neq('producer_id', user.id)
         .order('created_at', { ascending: false });
@@ -223,7 +223,7 @@ export default function ProducerDashboard() {
       const producerIds = [...new Set((data || []).map((b: any) => b.producer_id))];
       let producerMap = new Map();
       if (producerIds.length > 0) {
-        const { data: producers } = await supabase.from('profiles').select('id, full_name').in('id', producerIds);
+        const { data: producers } = await supabase.from('member_directory').select('id, full_name').in('id', producerIds);
         if (producers) producerMap = new Map(producers.map(p => [p.id, p]));
       }
 
