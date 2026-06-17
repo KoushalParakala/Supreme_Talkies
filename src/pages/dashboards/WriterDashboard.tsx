@@ -80,8 +80,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 const VERSION_PALETTE = ['#BCA88E','#60A5FA','#FBBF24','#34D399','#F87171','#A78BFA','#FB923C','#E879F9'];
 
-const MOOD_TAGS = ['Dark', 'Hopeful', 'Tense', 'Melancholic', 'Surreal', 'Raw', 'Lyrical', 'Violent', 'Nostalgic', 'Comic'];
-const SETTING_TAGS = ['Urban', 'Rural', 'Period', 'Future', 'Road', 'Interior', 'Festival', 'Prison', 'Hospital', 'Campus'];
+const MOOD_TAGS = ['Dark', 'Hopeful', 'Tense', 'Melancholic', 'Surreal', 'Raw', 'Lyrical', 'Violent', 'Nostalgic', 'Comic', '+'];
+const SETTING_TAGS = ['Urban', 'Rural', 'Period', 'Future', 'Road', 'Interior', 'Festival', '+'];
 const FORMAT_OPTIONS = ['Feature Film', 'Short Film', 'Web Series', 'Documentary', 'Experimental'];
 
 function TagPicker({ label, tags, selected, onChange, max, single }: {
@@ -142,6 +142,10 @@ export default function WriterDashboard() {
     pdfLink: '', 
     contact: '' 
   });
+
+  const [revisionScriptId, setRevisionScriptId] = useState<string | null>(null);
+  const [revisionForm, setRevisionForm] = useState({ note: '', link: '' });
+  const [submittingRevision, setSubmittingRevision] = useState(false);
   
   // Tab State
   const [activeTab, setActiveTab] = useState<'scripts' | 'briefs' | 'challenges' | 'inspiration'>('scripts');
@@ -385,6 +389,52 @@ export default function WriterDashboard() {
     }
   };
 
+  const handleRevisionSubmit = async (scriptId: string, currentVersion: number) => {
+    if (!user || !revisionForm.link) return;
+    setSubmittingRevision(true);
+    try {
+      const newVersion = currentVersion + 1;
+      
+      const { error: versionError } = await supabase.from('script_versions').insert({
+        script_id: scriptId,
+        user_id: user.id,
+        version_number: newVersion,
+        pdf_url: revisionForm.link,
+        version_notes: revisionForm.note || 'New revision submitted',
+      });
+      if (versionError) throw versionError;
+
+      const { error: updateError } = await supabase.from('scripts').update({
+        version_number: newVersion,
+        pdf_url: revisionForm.link,
+        status: 'under_review',
+        updated_at: new Date().toISOString()
+      }).eq('id', scriptId);
+      if (updateError) throw updateError;
+
+      toast('NEW REVISION SUBMITTED ✦');
+      setRevisionScriptId(null);
+      setRevisionForm({ note: '', link: '' });
+      fetchSubmissions();
+    } catch (err: any) {
+      toast(err.message);
+    } finally {
+      setSubmittingRevision(false);
+    }
+  };
+
+  const handleDeleteScript = async (scriptId: string) => {
+    if (!window.confirm('Are you sure you want to delete this script?')) return;
+    try {
+      const { error } = await supabase.from('scripts').delete().eq('id', scriptId);
+      if (error) throw error;
+      toast('SCRIPT DELETED ✕');
+      fetchSubmissions();
+    } catch (err: any) {
+      toast(err.message);
+    }
+  };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 48, paddingBottom: 80 }}>
@@ -473,25 +523,61 @@ export default function WriterDashboard() {
                         const statusLabel = STATUS_LABELS[stKey] || stKey.replace('_',' ').toUpperCase();
                         const vColor = VERSION_PALETTE[(script.version_number || 1) - 1 < VERSION_PALETTE.length ? (script.version_number || 1) - 1 : 0];
                         return (
-                          <div key={script.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                              <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '4px 10px', letterSpacing: 1 }}>V{script.version_number || 1}</span>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: 0 }}>{script.title}</p>
-                                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.5, margin: 0 }}>
-                                  {new Date(script.updated_at || script.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
-                                </p>
+                          <div key={script.id} style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)', borderLeft: `4px solid ${vColor}` }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <span style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 700, color: '#0e0f13', background: vColor, padding: '4px 10px', letterSpacing: 1 }}>V{script.version_number || 1}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: 0 }}>{script.title}</p>
+                                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.5, margin: 0 }}>
+                                    {new Date(script.updated_at || script.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
+                                  </p>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                {script.pdf_url && (
+                                  <a href={script.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', textDecoration: 'none', letterSpacing: 2 }}>
+                                    READ SCRIPT
+                                  </a>
+                                )}
+                                <button
+                                  onClick={() => setRevisionScriptId(revisionScriptId === script.id ? null : script.id)}
+                                  style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 10, padding: '4px 8px', cursor: 'pointer', letterSpacing: 1 }}
+                                >
+                                  NEW REVISION
+                                </button>
+                                <span style={{
+                                  fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 4,
+                                  color: statusMeta.text, textShadow: `0 0 12px ${statusMeta.glow}`, background: statusMeta.bg,
+                                  padding: '5px 12px', borderLeft: `2px solid ${statusMeta.text}`, lineHeight: 1
+                                }}>
+                                  {statusLabel}
+                                </span>
+                                <button onClick={() => handleDeleteScript(script.id)} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: 14, opacity: 0.7 }} title="Delete Script">✕</button>
                               </div>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                              <span style={{
-                                fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 4,
-                                color: statusMeta.text, textShadow: `0 0 12px ${statusMeta.glow}`, background: statusMeta.bg,
-                                padding: '5px 12px', borderLeft: `2px solid ${statusMeta.text}`, lineHeight: 1
-                              }}>
-                                {statusLabel}
-                              </span>
-                            </div>
+                            
+                            {/* Revision Form */}
+                            <AnimatePresence>
+                              {revisionScriptId === script.id && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  style={{ overflow: 'hidden' }}
+                                >
+                                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(188,168,142,0.1)', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                      <CinemaInput label="NEW PDF LINK" type="url" placeholder="https://..." value={revisionForm.link} onChange={(v) => setRevisionForm({ ...revisionForm, link: v })} required />
+                                      <CinemaTextarea label="REVISION NOTES" placeholder="What changed in this version?" value={revisionForm.note} onChange={(v) => setRevisionForm({ ...revisionForm, note: v })} rows={2} />
+                                    </div>
+                                    <CinemaButton onClick={() => handleRevisionSubmit(script.id, script.version_number || 1)} loading={submittingRevision} disabled={!revisionForm.link} style={{ padding: '8px 24px', fontSize: 12, marginTop: 16 }}>
+                                      SUBMIT
+                                    </CinemaButton>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         );
                       })
