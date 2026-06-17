@@ -87,7 +87,14 @@ const FORMAT_OPTIONS = ['Feature Film', 'Short Film', 'Web Series', 'Documentary
 function TagPicker({ label, tags, selected, onChange, max, single }: {
   label: string; tags: string[]; selected: string | string[]; onChange: (v: any) => void; max?: number; single?: boolean;
 }) {
+  const [customTagMode, setCustomTagMode] = useState(false);
+  const [customTagValue, setCustomTagValue] = useState('');
+
   const toggleTag = (tag: string) => {
+    if (tag === '+') {
+      setCustomTagMode(true);
+      return;
+    }
     if (single) {
       onChange(tag);
       return;
@@ -100,14 +107,62 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
     }
   };
 
+  const handleCustomTagSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && customTagValue.trim()) {
+      e.preventDefault();
+      const newTag = customTagValue.trim();
+      if (!single) {
+        const current = selected as string[];
+        if (!current.includes(newTag) && (!max || current.length < max)) {
+          onChange([...current, newTag]);
+        }
+      } else {
+        onChange(newTag);
+      }
+      setCustomTagMode(false);
+      setCustomTagValue('');
+    }
+  };
+
+  const allTags = [...tags];
+  if (!single && Array.isArray(selected)) {
+    selected.forEach(t => {
+      if (!allTags.includes(t)) allTags.splice(allTags.length - 1, 0, t); // Insert before '+'
+    });
+  } else if (single && selected && !allTags.includes(selected as string)) {
+    allTags.splice(allTags.length - 1, 0, selected as string);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5, textTransform: 'uppercase' }}>
         {label} {max && !single && <span style={{ opacity: 0.4, fontSize: 8 }}> (MAX {max})</span>}
       </label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {tags.map(tag => {
+        {allTags.map(tag => {
           const isSelected = single ? selected === tag : (selected as string[]).includes(tag);
+          if (tag === '+') {
+            if (customTagMode) {
+              return (
+                <input
+                  key="custom-input"
+                  autoFocus
+                  type="text"
+                  placeholder="Type & Enter"
+                  value={customTagValue}
+                  onChange={(e) => setCustomTagValue(e.target.value)}
+                  onKeyDown={handleCustomTagSubmit}
+                  onBlur={() => setCustomTagMode(false)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 2, background: 'transparent',
+                    border: '1px dashed #BCA88E', color: '#F0EBE0',
+                    fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
+                    outline: 'none', width: 120, textTransform: 'uppercase'
+                  }}
+                />
+              );
+            }
+          }
           return (
             <motion.button
               key={tag} type="button" whileTap={{ scale: 0.97 }}

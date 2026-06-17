@@ -71,6 +71,7 @@ export default function AdminDashboard() {
   const [scriptViewMode, setScriptViewMode] = useState<'list' | 'kanban'>('list');
   const [scripts, setScripts] = useState<any[]>([]);
   const [draggingScriptId, setDraggingScriptId] = useState<string | null>(null);
+  const [expandedScriptId, setExpandedScriptId] = useState<string | null>(null);
   const [briefs, setBriefs] = useState<any[]>([]);
 
   // PROJECT ROOMS state
@@ -644,7 +645,15 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end', minWidth: 200 }}>
-                      <a href={s.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: '#BCA88E', textDecoration: 'underline', letterSpacing: 2 }}>READ SCRIPT</a>
+                      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                        <a href={s.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: '#BCA88E', textDecoration: 'underline', letterSpacing: 2 }}>READ SCRIPT</a>
+                        <button
+                          onClick={() => setExpandedScriptId(expandedScriptId === s.id ? null : s.id)}
+                          style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 9, padding: '4px 8px', cursor: 'pointer', letterSpacing: 1 }}
+                        >
+                          {expandedScriptId === s.id ? 'HIDE DETAILS' : 'VIEW DETAILS'}
+                        </button>
+                      </div>
                       
                       {/* Stage Toggle Buttons */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
@@ -674,10 +683,43 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Expanded Details */}
+                  <AnimatePresence>
+                    {expandedScriptId === s.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div style={{ padding: '0 24px 24px', border: '1px solid rgba(188,168,142,0.1)', borderTop: 'none', background: 'rgba(0,0,0,0.1)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                            <div>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 2, marginBottom: 8 }}>LOGLINE</p>
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.8, lineHeight: 1.6 }}>{s.logline || 'N/A'}</p>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                              <div>
+                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 2, marginBottom: 8 }}>SETTING</p>
+                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                  {s.dna_setting?.map((m: string) => <span key={m} style={{ fontSize: 9, background: 'rgba(188,168,142,0.05)', border: '1px solid rgba(188,168,142,0.1)', padding: '2px 8px', color: '#BCA88E', letterSpacing: 1 }}>{m.toUpperCase()}</span>) || 'N/A'}
+                                </div>
+                              </div>
+                              <div>
+                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 2, marginBottom: 8 }}>FORMAT</p>
+                                <span style={{ fontSize: 9, background: 'rgba(188,168,142,0.05)', border: '1px solid rgba(188,168,142,0.1)', padding: '2px 8px', color: '#BCA88E', letterSpacing: 1 }}>{s.dna_format?.toUpperCase() || 'N/A'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
                 ))}
               </div>
             ) : (
-              /* KANBAN VIEW */
               <div style={{ display: 'flex', gap: 20, overflowX: 'auto', paddingBottom: 20, minHeight: '600px' }}>
                 {KANBAN_STAGES.map((stage) => {
                   const stageScripts = scripts.filter(s => (s.kanban_stage || 'inbox') === stage.id);
