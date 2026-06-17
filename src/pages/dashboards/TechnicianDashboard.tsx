@@ -168,7 +168,7 @@ export default function TechnicianDashboard() {
     const fetchId = ++fetchOpenBriefsRef.current;
     try {
       const { data, error } = await supabase.from('film_briefs')
-        .select('*, brief_interests(count)')
+        .select('*')
         .eq('is_open', true)
         .order('created_at', { ascending: false });
       if (fetchId !== fetchOpenBriefsRef.current) return;
@@ -490,7 +490,6 @@ export default function TechnicianDashboard() {
               {openBriefs.length === 0 ? (
                 <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.25, fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>No active briefs right now.</p>
               ) : openBriefs.map(brief => {
-                const interestCount = brief.brief_interests?.[0]?.count || 0;
                 const hasInterested = userBriefInterests.has(brief.id);
                 return (
                   <div key={brief.id} style={{ background: 'rgba(30,32,41,0.4)', border: `1px solid ${hasInterested ? 'rgba(188,168,142,0.4)' : 'rgba(188,168,142,0.12)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
@@ -499,9 +498,11 @@ export default function TechnicianDashboard() {
                         <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: '0 0 6px' }}>{brief.title}</h3>
                         <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {brief.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
                       </div>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
-                        {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'BE FIRST'}
-                      </p>
+                      {hasInterested && (
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                          ✦ INTERESTED
+                        </p>
+                      )}
                     </div>
 
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{brief.description}</p>
