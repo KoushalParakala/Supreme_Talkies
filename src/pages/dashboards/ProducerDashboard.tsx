@@ -260,22 +260,12 @@ export default function ProducerDashboard() {
       const userIds = (data || []).map((interest: any) => interest.user_id);
       let profileMap = new Map();
       if (userIds.length > 0) {
-        // Try fetching from member_directory first (has email/phone), fallback to profiles
-        const { data: dirProfiles } = await supabase
-          .from('member_directory')
-          .select('user_id, full_name, avatar_symbol, st_id, role, st_verified, email, phone')
-          .in('user_id', userIds);
-        if (dirProfiles && dirProfiles.length > 0) {
-          dirProfiles.forEach(p => profileMap.set(p.user_id, { ...p, id: p.user_id }));
-        }
-        // For any missing, try profiles table
-        const missing = userIds.filter(id => !profileMap.has(id));
-        if (missing.length > 0) {
-          const { data: pProfiles } = await supabase
-            .from('profiles')
-            .select('id, full_name, avatar_symbol, st_id, role, st_verified, email, phone')
-            .in('id', missing);
-          if (pProfiles) pProfiles.forEach(p => profileMap.set(p.id, p));
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_symbol, st_id, role, st_verified, email, phone')
+          .in('id', userIds);
+        if (profiles) {
+          profileMap = new Map(profiles.map(p => [p.id, p]));
         }
       }
 

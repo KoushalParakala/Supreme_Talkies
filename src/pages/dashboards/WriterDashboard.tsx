@@ -256,12 +256,31 @@ export default function WriterDashboard() {
 
   const fetchOpenBriefs = async () => {
     const fetchId = ++fetchOpenBriefsRef.current;
-    const { data } = await supabase.from('film_briefs')
-      .select('*, profiles(full_name, avatar_symbol, st_id)')
-      .eq('is_open', true)
-      .order('created_at', { ascending: false });
-    if (fetchId !== fetchOpenBriefsRef.current) return;
-    setOpenBriefs(data || []);
+    try {
+      const { data, error } = await supabase.from('film_briefs')
+        .select('*, brief_interests(count)')
+        .eq('is_open', true)
+        .order('created_at', { ascending: false });
+      if (fetchId !== fetchOpenBriefsRef.current) return;
+      if (error) { console.error('Error fetching briefs:', error); return; }
+
+      // Manual join: fetch producer profiles separately
+      const producerIds = [...new Set((data || []).map((b: any) => b.producer_id).filter(Boolean))];
+      let producerMap = new Map();
+      if (producerIds.length > 0) {
+        const { data: producers } = await supabase.from('profiles').select('id, full_name, avatar_symbol, st_id').in('id', producerIds);
+        if (producers) producerMap = new Map(producers.map(p => [p.id, p]));
+      }
+      if (fetchId !== fetchOpenBriefsRef.current) return;
+
+      setOpenBriefs((data || []).map((b: any) => ({
+        ...b,
+        producer: producerMap.get(b.producer_id) || null
+      })));
+    } catch (err) {
+      if (fetchId !== fetchOpenBriefsRef.current) return;
+      console.error('Error fetching open briefs:', err);
+    }
   };
 
   const handleInterestInBrief = async (brief: any) => {
@@ -670,36 +689,67 @@ export default function WriterDashboard() {
             <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 22, color: '#BCA88E', letterSpacing: 2, marginBottom: 6 }}>OPEN FILM BRIEFS</p>
             <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>PROJECTS SEEKING WRITERS</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {openBriefs.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.25, fontStyle: 'italic' }}>No active briefs right now.</p>
-              ) : openBriefs.map(brief => (
-                <div key={brief.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(188,168,142,0.15)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 18, color: '#F0EBE0', margin: 0 }}>{brief.title}</h3>
-                    <span style={{ fontSize: 14, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', letterSpacing: 2, opacity: 0.5 }}>{brief.profiles?.st_id ? (brief.profiles.st_id.startsWith('SUPR-') ? brief.profiles.st_id : 'SUPR-' + brief.profiles.st_id) : 'PRODUCER'}</span>
-                  </div>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.6, margin: 0 }}>{brief.description}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {brief.genre?.map((g: string) => (
-                      <span key={g} style={{ fontSize: 9, color: '#BCA88E', background: 'rgba(188,168,142,0.05)', padding: '2px 8px', border: '1px solid rgba(188,168,142,0.1)' }}>{g}</span>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', opacity: 0.5, letterSpacing: 2 }}>PRODUCER</span>
-                      <span style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0' }}>{brief.profiles?.full_name}</span>
+                <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.25, fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>No active briefs right now.</p>
+              ) : openBriefs.map(brief => {
+                const interestCount = brief.brief_interests?.[0]?.count || 0;
+                const hasInterested = userInterests.includes(brief.id);
+                return (
+                  <div key={brief.id} style={{ background: 'rgba(30,32,41,0.4)', border: `1px solid ${hasInterested ? 'rgba(188,168,142,0.4)' : 'rgba(188,168,142,0.12)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: '0 0 6px' }}>{brief.title}</h3>
+                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {brief.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
+                      </div>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                        {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'BE FIRST'}
+                      </p>
                     </div>
-                    <CinemaButton 
-                      onClick={() => handleInterestInBrief(brief)} 
-                      loading={expressingBriefId === brief.id}
-                      style={userInterests.includes(brief.id) ? { borderColor: '#BCA88E', background: 'rgba(188,168,142,0.08)', padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' } : { padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' }}
-                    >
-                      {expressingBriefId === brief.id ? '...' : userInterests.includes(brief.id) ? '✦ INTERESTED — WITHDRAW' : 'EXPRESS INTEREST'}
-                    </CinemaButton>
+
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{brief.description}</p>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+                      {brief.genre?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {brief.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: '#F0EBE0', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', border: '1px solid rgba(188,168,142,0.1)' }}>{g}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {brief.looking_for?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {brief.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
+                          </div>
+                        </div>
+                      )}
+                      {(brief.budget_range || brief.timeline) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', margin: 0 }}>{[brief.budget_range, brief.timeline].filter(Boolean).join(' • ')}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', opacity: 0.5, letterSpacing: 2 }}>PRODUCER</span>
+                        <span style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0' }}>{brief.producer?.full_name || 'Unknown'}</span>
+                      </div>
+                      <CinemaButton 
+                        onClick={() => handleInterestInBrief(brief)} 
+                        loading={expressingBriefId === brief.id}
+                        style={hasInterested ? { borderColor: '#BCA88E', background: 'rgba(188,168,142,0.08)', padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' } : { padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' }}
+                      >
+                        {expressingBriefId === brief.id ? '...' : hasInterested ? '✦ INTERESTED — WITHDRAW' : 'EXPRESS INTEREST'}
+                      </CinemaButton>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}
