@@ -307,11 +307,14 @@ CREATE TABLE public.presentations (
   user_id         UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   title           TEXT NOT NULL,
   synopsis        TEXT,
-  screening_date  TIMESTAMPTZ NOT NULL,
+  screening_date  TIMESTAMPTZ,
   territory       TEXT,
   expected_reach  TEXT,
   actual_reach    INT DEFAULT 0,
   status          TEXT DEFAULT 'submitted',  -- submitted, approved, screened
+  link            TEXT,
+  contact         TEXT,
+  note            TEXT,
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
