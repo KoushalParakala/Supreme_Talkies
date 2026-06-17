@@ -216,7 +216,7 @@ export default function AdminDashboard() {
 
   // SCREENINGS state
   const [screenings, setScreenings] = useState<any[]>([]);
-  const [screeningStatusFilter, setScreeningStatusFilter] = useState<'ALL' | 'SUBMITTED' | 'APPROVED' | 'SCREENED'>('ALL');
+  const [screeningStatusFilter, setScreeningStatusFilter] = useState<'ALL' | 'SUBMITTED' | 'IN REVIEW' | 'APPROVED' | 'SCREENED' | 'REJECTED'>('ALL');
 
   // FILMS state
   const [films, setFilms] = useState<any[]>([]);
@@ -1399,7 +1399,7 @@ export default function AdminDashboard() {
         {section === 'SCREENINGS' && (
           <motion.div key="screenings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
             <div style={{ display: 'flex', gap: 12 }}>
-              {['ALL', 'SUBMITTED', 'APPROVED', 'SCREENED'].map(s => (
+              {['ALL', 'IN REVIEW', 'APPROVED', 'SCREENED', 'REJECTED'].map(s => (
                 <button key={s} onClick={() => setScreeningStatusFilter(s as any)}
                   style={{
                     background: screeningStatusFilter === s ? 'rgba(188,168,142,0.1)' : 'none',
@@ -1417,19 +1417,22 @@ export default function AdminDashboard() {
               {screenings.length === 0 && !loading && (
                 <p style={{ textAlign: 'center', opacity: 0.3, fontSize: 11, padding: 40 }}>NO SCREENINGS FOUND</p>
               )}
-              {screenings.filter(sc => screeningStatusFilter === 'ALL' || sc.status?.toUpperCase() === screeningStatusFilter).map(screening => (
+              {screenings.filter(sc => {
+                const normalizedStatus = sc.status === 'submitted' ? 'IN REVIEW' : sc.status?.toUpperCase();
+                return screeningStatusFilter === 'ALL' || normalizedStatus === screeningStatusFilter;
+              }).map(screening => (
                 <div key={screening.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#F0EBE0', margin: '0 0 4px' }}>{screening.film_title}</h4>
+                      <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#F0EBE0', margin: '0 0 4px' }}>{screening.film_title || screening.title}</h4>
                       <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.8, margin: 0 }}>
                         {screening.profiles?.full_name} {screening.profiles?.st_id ? `(SUPR-${screening.profiles.st_id})` : ''}
                       </p>
                       <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.6, maxWidth: 800, marginTop: 12, lineHeight: 1.6 }}>{screening.synopsis}</p>
                     </div>
                     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 9, padding: '4px 10px', background: screening.status === 'submitted' ? 'rgba(188,168,142,0.15)' : screening.status === 'approved' ? 'rgba(74,222,128,0.1)' : 'rgba(100,100,100,0.1)', color: screening.status === 'submitted' ? '#BCA88E' : screening.status === 'approved' ? '#4ade80' : '#888', border: '1px solid currentColor', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
-                        {screening.status?.toUpperCase()}
+                      <span style={{ fontSize: 9, padding: '4px 10px', background: screening.status === 'submitted' ? 'rgba(188,168,142,0.15)' : screening.status === 'approved' ? 'rgba(74,222,128,0.1)' : screening.status === 'rejected' ? 'rgba(255,80,80,0.1)' : 'rgba(100,100,100,0.1)', color: screening.status === 'submitted' ? '#BCA88E' : screening.status === 'approved' ? '#4ade80' : screening.status === 'rejected' ? '#ff5050' : '#888', border: '1px solid currentColor', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
+                        {screening.status === 'submitted' ? 'IN REVIEW' : screening.status?.toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -1464,6 +1467,7 @@ export default function AdminDashboard() {
 
                   <div style={{ display: 'flex', gap: 12, borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 16 }}>
                     <button onClick={() => updateScreeningStatus(screening.id, 'approved')} style={{ background: 'none', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>APPROVE</button>
+                    <button onClick={() => updateScreeningStatus(screening.id, 'rejected')} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>REJECT</button>
                     <button onClick={() => updateScreeningStatus(screening.id, 'screened')} style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>MARK SCREENED</button>
                     <button onClick={() => deleteScreening(screening.id)} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer', marginLeft: 'auto' }}>DELETE</button>
                   </div>

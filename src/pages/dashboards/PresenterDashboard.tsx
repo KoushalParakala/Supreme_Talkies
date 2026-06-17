@@ -1,5 +1,5 @@
 import toast from 'react-hot-toast';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -52,6 +52,18 @@ export default function PresenterDashboard() {
   const [form, setForm] = useState({ 
     title: '', synopsis: '', link: '', contact: '', note: '' 
   });
+  const [myScreenings, setMyScreenings] = useState<any[]>([]);
+
+  const fetchScreenings = async () => {
+    if (!user) return;
+    const { data } = await supabase.from('presentations').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    setMyScreenings(data || []);
+  };
+
+  useEffect(() => {
+    fetchScreenings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!user || !form.title) return;
@@ -69,6 +81,7 @@ export default function PresenterDashboard() {
       if (error) throw error;
       setForm({ title: '', synopsis: '', link: '', contact: '', note: '' });
       toast('PRESENTATION SUBMITTED ✦');
+      fetchScreenings();
     } catch (err: any) { toast(err.message); }
     finally { setSubmitting(false); }
   };
@@ -92,6 +105,29 @@ export default function PresenterDashboard() {
             </CinemaButton>
           </div>
         </div>
+
+        {myScreenings.length > 0 && (
+          <div style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+            <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {myScreenings.map(s => (
+                <div key={s.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 8px' }}>{s.title}</h4>
+                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#BCA88E', opacity: 0.6, margin: 0 }}>
+                      SUBMITTED ON: {new Date(s.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: 10, padding: '6px 14px', background: s.status === 'submitted' ? 'rgba(188,168,142,0.15)' : s.status === 'approved' ? 'rgba(74,222,128,0.1)' : s.status === 'rejected' ? 'rgba(255,80,80,0.1)' : 'rgba(100,100,100,0.1)', color: s.status === 'submitted' ? '#BCA88E' : s.status === 'approved' ? '#4ade80' : s.status === 'rejected' ? '#ff5050' : '#888', border: '1px solid currentColor', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
+                      {s.status === 'submitted' ? 'IN REVIEW' : s.status?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
