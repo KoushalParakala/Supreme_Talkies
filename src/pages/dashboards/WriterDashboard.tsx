@@ -267,41 +267,43 @@ export default function WriterDashboard() {
   const handleInterestInBrief = async (brief: any) => {
     if (!user) return;
     setExpressingBriefId(brief.id);
+    const alreadyInterested = userInterests.includes(brief.id);
     try {
-      // 0. Check for existing interest
-      const { data: existing } = await supabase.from('brief_interests')
-        .select('id')
-        .eq('brief_id', brief.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (existing) {
-        toast('You have already expressed interest in this brief ✦');
+      if (alreadyInterested) {
+        // Withdraw interest
+        const { error } = await supabase.from('brief_interests')
+          .delete()
+          .eq('brief_id', brief.id)
+          .eq('user_id', user.id);
+        if (error) throw error;
+        setUserInterests(prev => prev.filter(id => id !== brief.id));
+        toast('INTEREST WITHDRAWN');
+      } else {
+        // Check for duplicate first
+        const { data: existing } = await supabase.from('brief_interests')
+          .select('id').eq('brief_id', brief.id).eq('user_id', user.id).maybeSingle();
+        if (existing) {
+          setUserInterests(prev => [...prev, brief.id]);
+          return;
+        }
+        // Log interest
+        const { error: interestError } = await supabase.from('brief_interests').insert({
+          brief_id: brief.id,
+          user_id: user.id,
+          note: `Writer interest`
+        });
+        if (interestError) throw interestError;
         setUserInterests(prev => [...prev, brief.id]);
-        return;
+        // Notify producer
+        await supabase.from('collab_requests').insert({
+          sender_id: user.id,
+          receiver_id: brief.producer_id,
+          project_title: brief.title,
+          message: `I am interested in your film brief: "${brief.title}". I'd love to discuss my writing services.`
+        });
+        toast('INTEREST LOGGED ✦ The producer has been notified.');
+        fetchOpenBriefs();
       }
-
-      // 1. Record interest in brief_interests table
-      const { error: interestError } = await supabase.from('brief_interests').insert({
-        brief_id: brief.id,
-        user_id: user.id,
-        note: `Writer interest`
-      });
-      if (interestError) throw interestError;
-
-      // Update local state immediately
-      setUserInterests(prev => [...prev, brief.id]);
-
-      // 2. Send a collab request notification to the producer
-      await supabase.from('collab_requests').insert({
-        sender_id: user.id,
-        receiver_id: brief.producer_id,
-        project_title: brief.title,
-        message: `I am interested in your film brief: "${brief.title}". I'd love to discuss my writing services.`
-      });
-
-      toast('INTEREST LOGGED ✦ The producer has been notified.');
-      fetchOpenBriefs();
     } catch (err: any) { toast(err.message); }
     finally { setExpressingBriefId(null); }
   };
@@ -689,12 +691,11 @@ export default function WriterDashboard() {
                       <span style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0' }}>{brief.profiles?.full_name}</span>
                     </div>
                     <CinemaButton 
-                      onClick={() => !userInterests.includes(brief.id) && handleInterestInBrief(brief)} 
-                      disabled={userInterests.includes(brief.id)}
+                      onClick={() => handleInterestInBrief(brief)} 
                       loading={expressingBriefId === brief.id}
-                      style={{ padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' }}
+                      style={userInterests.includes(brief.id) ? { borderColor: '#BCA88E', background: 'rgba(188,168,142,0.08)', padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' } : { padding: '10px 24px', fontSize: 12, letterSpacing: 3, whiteSpace: 'nowrap' }}
                     >
-                      {expressingBriefId === brief.id ? 'LOGGING...' : userInterests.includes(brief.id) ? 'LOGGED ✓' : 'EXPRESS INTEREST'}
+                      {expressingBriefId === brief.id ? '...' : userInterests.includes(brief.id) ? '✦ INTERESTED — WITHDRAW' : 'EXPRESS INTEREST'}
                     </CinemaButton>
                   </div>
                 </div>

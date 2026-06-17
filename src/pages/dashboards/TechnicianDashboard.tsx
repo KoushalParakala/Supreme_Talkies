@@ -128,12 +128,14 @@ export default function TechnicianDashboard() {
   const [sendingCollab, setSendingCollab] = useState(false);
   const [openBriefs, setOpenBriefs] = useState<any[]>([]);
   const [expressingBriefId, setExpressingBriefId] = useState<string | null>(null);
+  const [userBriefInterests, setUserBriefInterests] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
     fetchOtherCrew();
     fetchRequests();
     fetchOpenBriefs();
+    fetchMyBriefInterests();
     if (profile) {
       setAvailable(profile.availability ?? true);
       setFormData({
@@ -172,26 +174,44 @@ export default function TechnicianDashboard() {
     setOpenBriefs(data || []);
   };
 
+  const fetchMyBriefInterests = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase.from('brief_interests').select('brief_id').eq('user_id', user.id);
+      setUserBriefInterests(new Set((data || []).map((i: any) => i.brief_id)));
+    } catch (err) {
+      console.error('Error fetching my interests:', err);
+    }
+  };
+
   const handleInterestInBrief = async (brief: any) => {
     if (!user) return;
     setExpressingBriefId(brief.id);
+    const alreadyInterested = userBriefInterests.has(brief.id);
     try {
-      const { error: interestError } = await supabase.from('brief_interests').insert({
-        brief_id: brief.id,
-        user_id: user.id,
-        note: `Technician interest`
-      });
-      if (interestError) throw interestError;
-
-      await supabase.from('collab_requests').insert({
-        sender_id: user.id,
-        receiver_id: brief.producer_id,
-        project_title: brief.title,
-        message: `I am interested in your film brief: "${brief.title}". I'd love to discuss my technical services.`
-      });
-
-      toast('INTEREST LOGGED ✦ The producer has been notified.');
-      fetchOpenBriefs();
+      if (alreadyInterested) {
+        const { error } = await supabase.from('brief_interests')
+          .delete().eq('brief_id', brief.id).eq('user_id', user.id);
+        if (error) throw error;
+        setUserBriefInterests(prev => { const next = new Set(prev); next.delete(brief.id); return next; });
+        toast('INTEREST WITHDRAWN');
+      } else {
+        const { error: interestError } = await supabase.from('brief_interests').insert({
+          brief_id: brief.id,
+          user_id: user.id,
+          note: `Technician interest`
+        });
+        if (interestError) throw interestError;
+        setUserBriefInterests(prev => new Set([...prev, brief.id]));
+        await supabase.from('collab_requests').insert({
+          sender_id: user.id,
+          receiver_id: brief.producer_id,
+          project_title: brief.title,
+          message: `I am interested in your film brief: "${brief.title}". I'd love to discuss my technical services.`
+        });
+        toast('INTEREST LOGGED ✦ The producer has been notified.');
+        fetchOpenBriefs();
+      }
     } catch (err: any) { toast(err.message); }
     finally { setExpressingBriefId(null); }
   };
@@ -469,8 +489,12 @@ export default function TechnicianDashboard() {
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', opacity: 0.5, letterSpacing: 2 }}>PRODUCER</span>
                       <span style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0' }}>{brief.profiles?.full_name}</span>
                     </div>
-                    <CinemaButton onClick={() => handleInterestInBrief(brief)} loading={expressingBriefId === brief.id}>
-                      {expressingBriefId === brief.id ? 'LOGGING...' : 'EXPRESS INTEREST'}
+                    <CinemaButton 
+                      onClick={() => handleInterestInBrief(brief)} 
+                      loading={expressingBriefId === brief.id}
+                      style={userBriefInterests.has(brief.id) ? { borderColor: '#BCA88E', background: 'rgba(188,168,142,0.08)' } : {}}
+                    >
+                      {expressingBriefId === brief.id ? '...' : userBriefInterests.has(brief.id) ? '❆ INTERESTED — WITHDRAW' : 'EXPRESS INTEREST'}
                     </CinemaButton>
                   </div>
                 </div>
