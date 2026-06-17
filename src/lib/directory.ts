@@ -13,6 +13,8 @@ export interface DirectoryProfile {
   skills?: string[] | null;
   portfolio_url?: string | null;
   note_to_team?: string | null;
+  contact?: string | null;
+  social_handle?: string | null;
   created_at?: string | null;
 }
 
@@ -25,6 +27,8 @@ export interface PublicCrewProfile {
   niche?: string | null;
   availability?: boolean | null;
   note_to_team?: string | null;
+  contact?: string | null;
+  social_handle?: string | null;
   created_at?: string | null;
 }
 

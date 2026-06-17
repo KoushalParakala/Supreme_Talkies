@@ -289,9 +289,8 @@ export default function ProducerDashboard() {
     const fetchId = ++fetchDataRef.current;
     setLoading(true);
     try {
-      const [sRes, tRes, rRes] = await Promise.all([
+      const [sRes, rRes] = await Promise.all([
         supabase.from('scripts').select('*').neq('status', 'draft'),
-        supabase.from('member_directory').select('*').contains('roles', ['technician']).eq('availability', true),
         supabase.from('audience_reactions').select('submission_id, user_id').eq('reaction', 'fire')
       ]);
 
@@ -303,7 +302,29 @@ export default function ProducerDashboard() {
         ...script,
         user: writerProfiles.get(script.user_id) || null
       })));
-      setTechnicians(tRes.data || []);
+
+      // Fetch users interested in this producer's briefs for the roster
+      let rosterList: DirectoryProfile[] = [];
+      if (user) {
+        const { data: interestsData, error: interestsErr } = await supabase
+          .from('brief_interests')
+          .select('*, user:member_directory(*), film_briefs!inner(producer_id)')
+          .eq('film_briefs.producer_id', user.id);
+
+        if (interestsErr) console.error('Error fetching brief interests for roster:', interestsErr);
+
+        if (interestsData) {
+          const seen = new Set<string>();
+          rosterList = (interestsData as any[])
+            .map(item => item.user)
+            .filter(u => {
+              if (!u || seen.has(u.id)) return false;
+              seen.add(u.id);
+              return true;
+            });
+        }
+      }
+      setTechnicians(rosterList);
       
       const fires = new Set<string>();
       const counts: Record<string, number> = {};
@@ -396,6 +417,7 @@ export default function ProducerDashboard() {
       const { error } = await supabase.from('film_briefs').delete().eq('id', briefId);
       if (error) throw error;
       fetchBriefs();
+      fetchData();
     } catch (err: any) {
       toast(err.message);
     }
@@ -414,6 +436,7 @@ export default function ProducerDashboard() {
       setNewBrief({ title: '', description: '', genre: [], budget_range: '', timeline: '', looking_for: [] });
       setShowNewBriefForm(false);
       fetchBriefs();
+      fetchData();
       toast('BRIEF PUBLISHED ✦');
     } catch (err: any) { toast(err.message); }
     finally { setSubmittingBrief(false); }
@@ -750,30 +773,41 @@ export default function ProducerDashboard() {
       ) : (
         /* THE ROSTER TAB */
         technicians.length === 0 ? (
-          <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2 }}>No verified technicians yet.</p>
+          <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2 }}>No interested crew members yet.</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
             {technicians.map((t) => (
               <div key={t.id} style={{ border: '1px solid rgba(188,168,142,0.12)', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 36, height: 36, border: '1px solid rgba(188,168,142,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{t.avatar_symbol}</div>
+                  <div style={{ width: 36, height: 36, border: '1px solid rgba(188,168,142,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{t.avatar_symbol || '👤'}</div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', letterSpacing: 1, margin: 0 }}>{t.full_name}</p>
                       {t.st_verified && <span style={{ color: '#BCA88E', fontSize: 10 }}>✦</span>}
                     </div>
-                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 3 }}>{t.niche?.toUpperCase() || 'TECHNICIAN'}</p>
+                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 3 }}>{t.niche?.toUpperCase() || t.role?.toUpperCase() || 'CREW'}</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {t.skills?.slice(0, 3).map((sk: string) => (
-                    <span key={sk} style={{ fontSize: 7, border: '1px solid rgba(188,168,142,0.2)', padding: '1px 5px', color: '#BCA88E' }}>{sk.toUpperCase()}</span>
-                  ))}
+                {t.note_to_team && (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F0EBE0', opacity: 0.6, fontStyle: 'italic', margin: '4px 0 0', lineHeight: 1.5 }}>
+                    "{t.note_to_team}"
+                  </p>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                  {t.portfolio_url ? (
+                    <a href={t.portfolio_url} target="_blank" rel="noopener noreferrer"
+                      style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.8, letterSpacing: 2, textDecoration: 'underline' }}>
+                      VIEW SHOWREEL →
+                    </a>
+                  ) : (
+                    <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4 }}>NO PORTFOLIO</span>
+                  )}
+                  {t.contact && (
+                    <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.7 }}>
+                      {t.contact}
+                    </span>
+                  )}
                 </div>
-                <a href={t.portfolio_url || undefined} target="_blank" rel="noopener noreferrer"
-                  style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, textDecoration: 'underline' }}>
-                  VIEW SHOWREEL →
-                </a>
               </div>
             ))}
           </div>
