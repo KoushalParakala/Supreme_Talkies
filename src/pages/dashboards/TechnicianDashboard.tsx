@@ -547,7 +547,7 @@ export default function TechnicianDashboard() {
                   </div>
                 );
               })}
-            </div>     </div>
+            </div>
           </motion.div>
         )}
 
