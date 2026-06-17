@@ -180,7 +180,7 @@ const LOOKING_FOR_OPTIONS = ['Writer', 'Director', 'Technician', 'Presenter', 'M
 
 export default function AdminDashboard() {
   const { user: adminUser, loading: authLoading, isAdmin } = useAuth();
-  const [section, setSection] = useState<'INBOX' | 'SCRIPTS' | 'BRIEFS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS'>('INBOX');
+  const [section, setSection] = useState<'INBOX' | 'SCRIPTS' | 'BRIEFS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS' | 'SCREENINGS'>('INBOX');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setDebugStep] = useState<string>('Init');
@@ -214,6 +214,9 @@ export default function AdminDashboard() {
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [newCampaign, setNewCampaign] = useState({ title: '', goal: '', deadline: '', status: 'active', kit_captions: '', kit_hashtags: '', kit_drive_link: '', group_sync_at: '' });
 
+  // SCREENINGS state
+  const [screenings, setScreenings] = useState<any[]>([]);
+  const [screeningStatusFilter, setScreeningStatusFilter] = useState<'ALL' | 'SUBMITTED' | 'APPROVED' | 'SCREENED'>('ALL');
 
   // FILMS state
   const [films, setFilms] = useState<any[]>([]);
@@ -295,6 +298,11 @@ export default function AdminDashboard() {
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setDbTemplates(data || []);
+      } else if (section === 'SCREENINGS') {
+        const { data, error: err } = await supabase.from('presentations').select('*, profiles(full_name, avatar_symbol, st_id)').order('created_at', { ascending: false });
+        if (fetchId !== fetchIdRef.current) return;
+        if (err) throw err;
+        setScreenings(data || []);
       }
 
       setDebugStep('Checking PROJECT ROOMS secondary fetch');
@@ -341,6 +349,7 @@ export default function AdminDashboard() {
       .channel(`admin_live_updates_${section}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'scripts' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presentations' }, () => fetchData())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -355,6 +364,23 @@ export default function AdminDashboard() {
     const { error } = await supabase.from('submissions').update({ status }).eq('id', id);
     if (error) toast(`Error: ${error.message}`);
     fetchData();
+  };
+
+  const updateScreeningStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from('presentations').update({ status }).eq('id', id);
+    if (error) toast(`Error: ${error.message}`);
+    else fetchData();
+  };
+
+  const deleteScreening = async (id: string) => {
+    if (!window.confirm('Delete this screening submission permanently?')) return;
+    try {
+      const { error } = await supabase.from('presentations').delete().eq('id', id);
+      if (error) throw error;
+      fetchData();
+    } catch (err: any) {
+      toast(err.message);
+    }
   };
 
   const toggleBriefStatus = async (id: string, currentStatus: boolean) => {
@@ -622,7 +648,7 @@ export default function AdminDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
       {/* Top Section Tabs */}
       <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0, overflowX: 'auto' }}>
-        {['INBOX', 'SCRIPTS', 'BRIEFS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS'].map(s => (
+        {['INBOX', 'SCRIPTS', 'BRIEFS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS', 'SCREENINGS'].map(s => (
           <button key={s} onClick={() => setSection(s as any)}
             style={{ 
               background: 'none', border: 'none', borderBottom: section === s ? '2px solid #BCA88E' : '2px solid transparent',
@@ -1363,6 +1389,83 @@ export default function AdminDashboard() {
                         fetchData();
                       }
                     }} style={{ color: '#ff5050', background: 'none', border: 'none', fontSize: 14, cursor: 'pointer' }}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {section === 'SCREENINGS' && (
+          <motion.div key="screenings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              {['ALL', 'SUBMITTED', 'APPROVED', 'SCREENED'].map(s => (
+                <button key={s} onClick={() => setScreeningStatusFilter(s as any)}
+                  style={{
+                    background: screeningStatusFilter === s ? 'rgba(188,168,142,0.1)' : 'none',
+                    border: '1px solid rgba(188,168,142,0.15)', padding: '6px 14px',
+                    color: screeningStatusFilter === s ? '#BCA88E' : 'rgba(188,168,142,0.4)',
+                    fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer'
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {screenings.length === 0 && !loading && (
+                <p style={{ textAlign: 'center', opacity: 0.3, fontSize: 11, padding: 40 }}>NO SCREENINGS FOUND</p>
+              )}
+              {screenings.filter(sc => screeningStatusFilter === 'ALL' || sc.status?.toUpperCase() === screeningStatusFilter).map(screening => (
+                <div key={screening.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#F0EBE0', margin: '0 0 4px' }}>{screening.film_title}</h4>
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.8, margin: 0 }}>
+                        {screening.profiles?.full_name} {screening.profiles?.st_id ? `(SUPR-${screening.profiles.st_id})` : ''}
+                      </p>
+                      <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.6, maxWidth: 800, marginTop: 12, lineHeight: 1.6 }}>{screening.synopsis}</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 9, padding: '4px 10px', background: screening.status === 'submitted' ? 'rgba(188,168,142,0.15)' : screening.status === 'approved' ? 'rgba(74,222,128,0.1)' : 'rgba(100,100,100,0.1)', color: screening.status === 'submitted' ? '#BCA88E' : screening.status === 'approved' ? '#4ade80' : '#888', border: '1px solid currentColor', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
+                        {screening.status?.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.05)' }}>
+                    {screening.link && (
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', opacity: 0.6, margin: '0 0 6px' }}>SCREENING LINK</p>
+                        <a href={screening.link} target="_blank" rel="noopener noreferrer" style={{ color: '#F0EBE0', fontSize: 12, textDecoration: 'underline', wordBreak: 'break-all' }}>{screening.link}</a>
+                      </div>
+                    )}
+                    {screening.contact && (
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', opacity: 0.6, margin: '0 0 6px' }}>CONTACT DETAILS</p>
+                        <p style={{ color: '#F0EBE0', fontSize: 12, margin: 0, whiteSpace: 'pre-wrap' }}>{screening.contact}</p>
+                      </div>
+                    )}
+                    {screening.screening_date && (
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', opacity: 0.6, margin: '0 0 6px' }}>DATE (IF ANY)</p>
+                        <p style={{ color: '#F0EBE0', fontSize: 12, margin: 0 }}>{new Date(screening.screening_date).toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {screening.note && (
+                    <div style={{ paddingLeft: 16, borderLeft: '2px solid #BCA88E', marginTop: 8 }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', margin: '0 0 6px' }}>PRESENTER NOTES</p>
+                      <p style={{ color: '#F0EBE0', fontSize: 12, fontStyle: 'italic', margin: 0, opacity: 0.8, whiteSpace: 'pre-wrap' }}>"{screening.note}"</p>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 12, borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 16 }}>
+                    <button onClick={() => updateScreeningStatus(screening.id, 'approved')} style={{ background: 'none', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>APPROVE</button>
+                    <button onClick={() => updateScreeningStatus(screening.id, 'screened')} style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>MARK SCREENED</button>
+                    <button onClick={() => deleteScreening(screening.id)} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer', marginLeft: 'auto' }}>DELETE</button>
                   </div>
                 </div>
               ))}
