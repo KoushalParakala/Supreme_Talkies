@@ -260,12 +260,14 @@ export default function ProducerDashboard() {
       const userIds = (data || []).map((interest: any) => interest.user_id);
       let profileMap = new Map();
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_symbol, st_id, role, st_verified, email, phone')
+        const { data: dirProfiles, error: dirErr } = await supabase
+          .from('member_directory')
+          .select('id, full_name, avatar_symbol, st_id, role, st_verified, contact')
           .in('id', userIds);
-        if (profiles) {
-          profileMap = new Map(profiles.map(p => [p.id, p]));
+        
+        if (dirErr) console.error('Error fetching member_directory:', dirErr);
+        if (dirProfiles) {
+          profileMap = new Map(dirProfiles.map(p => [p.id, p]));
         }
       }
 
@@ -721,13 +723,11 @@ export default function ProducerDashboard() {
                                           {new Date(interest.created_at).toLocaleDateString()}
                                         </p>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                                          {interest.user?.email && (
-                                            <a href={`mailto:${interest.user.email}`} style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8, textDecoration: 'underline' }}>{interest.user.email}</a>
-                                          )}
-                                          {interest.user?.phone && (
-                                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8 }}>{interest.user.phone}</span>
-                                          )}
-                                          {!interest.user?.email && !interest.user?.phone && (
+                                          {interest.user?.contact ? (
+                                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8 }}>
+                                              {interest.user.contact}
+                                            </span>
+                                          ) : (
                                             <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4 }}>NO CONTACT INFO</span>
                                           )}
                                         </div>
