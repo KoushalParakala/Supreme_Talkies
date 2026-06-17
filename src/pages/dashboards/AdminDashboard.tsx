@@ -55,6 +55,129 @@ const KANBAN_STAGES = [
   { id: 'archived', label: 'ARCHIVED', color: 'rgba(100,100,100,0.2)' }
 ];
 
+function CinemaButton({ children, onClick, disabled, loading, style }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean; style?: any;
+}) {
+  const [hov, setHov] = useState(false);
+  return (
+    <motion.button type="button" onClick={onClick} disabled={disabled || loading}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      animate={{ background: hov && !disabled ? '#BCA88E' : 'transparent', color: hov && !disabled ? '#1e2029' : '#BCA88E', opacity: disabled ? 0.4 : 1 }}
+      transition={{ duration: 0.2 }}
+      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
+    >
+      {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
+      {children}
+    </motion.button>
+  );
+}
+
+function TagPicker({ label, tags, selected, onChange, max, single }: {
+  label: string; tags: string[]; selected: string | string[]; onChange: (v: any) => void; max?: number; single?: boolean;
+}) {
+  const [customTagMode, setCustomTagMode] = useState(false);
+  const [customTagValue, setCustomTagValue] = useState('');
+
+  const toggleTag = (tag: string) => {
+    if (tag === '+') {
+      setCustomTagMode(true);
+      return;
+    }
+    if (single) {
+      onChange(tag);
+      return;
+    }
+    const current = selected as string[];
+    if (current.includes(tag)) {
+      onChange(current.filter(t => t !== tag));
+    } else if (!max || current.length < max) {
+      onChange([...current, tag]);
+    }
+  };
+
+  const handleCustomTagSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && customTagValue.trim()) {
+      e.preventDefault();
+      const newTag = customTagValue.trim();
+      if (!single) {
+        const current = selected as string[];
+        if (!current.includes(newTag) && (!max || current.length < max)) {
+          onChange([...current, newTag]);
+        }
+      } else {
+        onChange(newTag);
+      }
+      setCustomTagMode(false);
+      setCustomTagValue('');
+    }
+  };
+
+  const allTags = [...tags];
+  if (!single && Array.isArray(selected)) {
+    selected.forEach(t => {
+      if (!allTags.includes(t)) allTags.splice(allTags.length - 1, 0, t);
+    });
+  } else if (single && selected && !allTags.includes(selected as string)) {
+    allTags.splice(allTags.length - 1, 0, selected as string);
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5, textTransform: 'uppercase' }}>
+        {label} {max && !single && <span style={{ opacity: 0.4, fontSize: 8 }}> (MAX {max})</span>}
+      </label>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {allTags.map(tag => {
+          const isSelected = single ? selected === tag : (selected as string[]).includes(tag);
+          if (tag === '+') {
+            if (customTagMode) {
+              return (
+                <input
+                  key="custom-input"
+                  autoFocus
+                  type="text"
+                  placeholder="Type & Enter"
+                  value={customTagValue}
+                  onChange={(e) => setCustomTagValue(e.target.value)}
+                  onKeyDown={handleCustomTagSubmit}
+                  onBlur={() => setCustomTagMode(false)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 2, background: 'transparent',
+                    border: '1px dashed #BCA88E', color: '#F0EBE0',
+                    fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
+                    outline: 'none', width: 120, textTransform: 'uppercase'
+                  }}
+                />
+              );
+            }
+          }
+          return (
+            <motion.button
+              key={tag} type="button" whileTap={{ scale: 0.97 }}
+              onClick={() => toggleTag(tag)}
+              style={{
+                padding: '6px 14px', borderRadius: 2,
+                background: isSelected ? 'rgba(188,168,142,0.12)' : 'transparent',
+                border: `1px solid ${isSelected ? '#BCA88E' : 'rgba(188,168,142,0.2)'}`,
+                color: isSelected ? '#F0EBE0' : 'rgba(188,168,142,0.5)',
+                fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
+                cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
+              }}
+            >
+              {tag}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const GENRE_OPTIONS = ['Drama', 'Thriller', 'Comedy', 'Romance', 'Documentary', 'Experimental', 'Horror', 'Action', 'Sci-Fi', 'Period', '+'];
+const BUDGET_OPTIONS = ['Under ₹100T', '₹100T–500T', '₹500T–2000T', '₹2000T+', 'Not Disclosed'];
+const TIMELINE_OPTIONS = ['< 1 Month', '1–3 Months', '3–6 Months', '6+ Months'];
+const LOOKING_FOR_OPTIONS = ['Writer', 'Director', 'Technician', 'Presenter', 'Member', '+'];
+
 export default function AdminDashboard() {
   const { user: adminUser, loading: authLoading, isAdmin } = useAuth();
   const [section, setSection] = useState<'INBOX' | 'SCRIPTS' | 'BRIEFS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS'>('INBOX');
@@ -73,6 +196,13 @@ export default function AdminDashboard() {
   const [draggingScriptId, setDraggingScriptId] = useState<string | null>(null);
   const [expandedScriptId, setExpandedScriptId] = useState<string | null>(null);
   const [briefs, setBriefs] = useState<any[]>([]);
+
+  // BRIEFS state
+  const [showNewBriefForm, setShowNewBriefForm] = useState(false);
+  const [newBrief, setNewBrief] = useState({ 
+    title: '', description: '', genre: [] as string[], budget_range: '', timeline: '', looking_for: [] as string[] 
+  });
+  const [submittingBrief, setSubmittingBrief] = useState(false);
 
   // PROJECT ROOMS state
   const [projectRooms, setProjectRooms] = useState<any[]>([]);
@@ -124,7 +254,7 @@ export default function AdminDashboard() {
 
       if (section === 'INBOX') {
         setDebugStep('Fetching INBOX submissions...');
-        const { data, error: err } = await supabase.from('submissions').select('*, profiles(full_name, avatar_symbol)').order('created_at', { ascending: false });
+        const { data, error: err } = await supabase.from('submissions').select('*, profiles(full_name, avatar_symbol, st_id)').order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
         setDebugStep('INBOX fetch complete');
         if (err) throw err;
@@ -231,6 +361,35 @@ export default function AdminDashboard() {
     const { error } = await supabase.from('film_briefs').update({ is_open: !currentStatus }).eq('id', id);
     if (error) toast(`Error: ${error.message}`);
     else fetchData();
+  };
+
+  const deleteBrief = async (briefId: string) => {
+    if (!window.confirm('Delete this brief permanently?')) return;
+    try {
+      const { error } = await supabase.from('film_briefs').delete().eq('id', briefId);
+      if (error) throw error;
+      fetchData();
+    } catch (err: any) {
+      toast(err.message);
+    }
+  };
+
+  const submitBrief = async () => {
+    if (!adminUser || !newBrief.title) return;
+    setSubmittingBrief(true);
+    try {
+      const { error } = await supabase.from('film_briefs').insert({ 
+        producer_id: adminUser.id, 
+        ...newBrief,
+        is_open: true
+      });
+      if (error) throw error;
+      setNewBrief({ title: '', description: '', genre: [], budget_range: '', timeline: '', looking_for: [] });
+      setShowNewBriefForm(false);
+      fetchData();
+      toast('BRIEF PUBLISHED ✦');
+    } catch (err: any) { toast(err.message); }
+    finally { setSubmittingBrief(false); }
   };
 
   const createRoom = async () => {
@@ -534,7 +693,7 @@ export default function AdminDashboard() {
                             {sub.type === 'collab' ? sub.data?.platform : sub.data?.title || sub.data?.genre || 'Untitled'}
                           </p>
                           <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
-                            {sub.type?.toUpperCase()} · {sub.profiles?.full_name} · {sub.status?.toUpperCase()}
+                            {sub.type?.toUpperCase()} · {sub.profiles?.full_name} {sub.profiles?.st_id ? `(SUPR-${sub.profiles.st_id})` : ''} · {sub.status?.toUpperCase()}
                           </p>
                         </div>
                       </div>
@@ -585,7 +744,7 @@ export default function AdminDashboard() {
                       {filteredSubmissions.filter(s => s.status === status).map(sub => (
                         <div key={sub.id} style={{ background: 'rgba(188,168,142,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 12 }}>
                           <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>{sub.data?.title || 'Untitled'}</p>
-                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: 0 }}>{sub.profiles?.full_name}</p>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: 0 }}>{sub.profiles?.full_name} {sub.profiles?.st_id ? `(SUPR-${sub.profiles.st_id})` : ''}</p>
                         </div>
                       ))}
                     </div>
@@ -812,23 +971,54 @@ export default function AdminDashboard() {
         )}
 
         {section === 'BRIEFS' && (
-          <motion.div key="briefs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {briefs.map(b => (
-              <div key={b.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 6px' }}>{b.title}</p>
-                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
-                    BY {b.producer?.full_name} · BUDGET: {b.budget_range}
-                  </p>
-                  <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, maxWidth: 500, lineHeight: 1.5 }}>{b.description}</p>
+          <motion.div key="briefs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+            {/* Create Form */}
+            {!showNewBriefForm ? (
+              <CinemaButton onClick={() => setShowNewBriefForm(true)}>+ NEW BRIEF</CinemaButton>
+            ) : (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: 32, border: '1px solid rgba(188,168,142,0.2)', background: 'rgba(188,168,142,0.03)', display: 'flex', flexDirection: 'column', gap: 32 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#BCA88E', margin: 0 }}>NEW BRIEF</p>
+                  <button onClick={() => setShowNewBriefForm(false)} style={{ background: 'none', border: 'none', color: '#BCA88E', fontSize: 20, cursor: 'pointer' }}>✕</button>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <button onClick={() => toggleBriefStatus(b.id, b.is_open)} style={{ background: 'none', border: `1px solid ${b.is_open ? '#4ade80' : '#BCA88E'}`, color: b.is_open ? '#4ade80' : '#BCA88E', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer' }}>
-                    {b.is_open ? 'OPEN' : 'CLOSED'}
-                  </button>
+                
+                <CinemaInput label="BRIEF TITLE" value={newBrief.title} onChange={v => setNewBrief({...newBrief, title: v})} />
+                <CinemaTextarea label="DESCRIPTION & REQUIREMENTS" rows={4} value={newBrief.description} onChange={v => setNewBrief({...newBrief, description: v})} />
+                
+                <TagPicker label="GENRE(S)" tags={GENRE_OPTIONS} selected={newBrief.genre} onChange={v => setNewBrief({...newBrief, genre: v})} max={3} />
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+                  <TagPicker label="BUDGET RANGE" tags={BUDGET_OPTIONS} selected={newBrief.budget_range} onChange={v => setNewBrief({...newBrief, budget_range: v})} single />
+                  <TagPicker label="TIMELINE" tags={TIMELINE_OPTIONS} selected={newBrief.timeline} onChange={v => setNewBrief({...newBrief, timeline: v})} single />
                 </div>
-              </div>
-            ))}
+                
+                <TagPicker label="LOOKING FOR" tags={LOOKING_FOR_OPTIONS} selected={newBrief.looking_for} onChange={v => setNewBrief({...newBrief, looking_for: v})} />
+
+                <CinemaButton onClick={submitBrief} loading={submittingBrief} disabled={!newBrief.title}>PUBLISH BRIEF</CinemaButton>
+              </motion.div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {briefs.map(b => (
+                <div key={b.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 6px' }}>{b.title}</p>
+                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
+                      BY {b.producer?.full_name} · BUDGET: {b.budget_range}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, maxWidth: 500, lineHeight: 1.5 }}>{b.description}</p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                    <button onClick={() => toggleBriefStatus(b.id, b.is_open)} style={{ background: 'none', border: `1px solid ${b.is_open ? '#4ade80' : '#BCA88E'}`, color: b.is_open ? '#4ade80' : '#BCA88E', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
+                      {b.is_open ? 'OPEN' : 'CLOSED'}
+                    </button>
+                    <button onClick={() => deleteBrief(b.id)} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
+                      DELETE
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
 

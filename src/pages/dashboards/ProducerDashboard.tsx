@@ -48,7 +48,14 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
 function TagPicker({ label, tags, selected, onChange, max, single }: {
   label: string; tags: string[]; selected: string | string[]; onChange: (v: any) => void; max?: number; single?: boolean;
 }) {
+  const [customTagMode, setCustomTagMode] = useState(false);
+  const [customTagValue, setCustomTagValue] = useState('');
+
   const toggleTag = (tag: string) => {
+    if (tag === '+') {
+      setCustomTagMode(true);
+      return;
+    }
     if (single) {
       onChange(tag);
       return;
@@ -61,14 +68,62 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
     }
   };
 
+  const handleCustomTagSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && customTagValue.trim()) {
+      e.preventDefault();
+      const newTag = customTagValue.trim();
+      if (!single) {
+        const current = selected as string[];
+        if (!current.includes(newTag) && (!max || current.length < max)) {
+          onChange([...current, newTag]);
+        }
+      } else {
+        onChange(newTag);
+      }
+      setCustomTagMode(false);
+      setCustomTagValue('');
+    }
+  };
+
+  const allTags = [...tags];
+  if (!single && Array.isArray(selected)) {
+    selected.forEach(t => {
+      if (!allTags.includes(t)) allTags.splice(allTags.length - 1, 0, t);
+    });
+  } else if (single && selected && !allTags.includes(selected as string)) {
+    allTags.splice(allTags.length - 1, 0, selected as string);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5, textTransform: 'uppercase' }}>
         {label} {max && !single && <span style={{ opacity: 0.4, fontSize: 8 }}> (MAX {max})</span>}
       </label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {tags.map(tag => {
+        {allTags.map(tag => {
           const isSelected = single ? selected === tag : (selected as string[]).includes(tag);
+          if (tag === '+') {
+            if (customTagMode) {
+              return (
+                <input
+                  key="custom-input"
+                  autoFocus
+                  type="text"
+                  placeholder="Type & Enter"
+                  value={customTagValue}
+                  onChange={(e) => setCustomTagValue(e.target.value)}
+                  onKeyDown={handleCustomTagSubmit}
+                  onBlur={() => setCustomTagMode(false)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 2, background: 'transparent',
+                    border: '1px dashed #BCA88E', color: '#F0EBE0',
+                    fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
+                    outline: 'none', width: 120, textTransform: 'uppercase'
+                  }}
+                />
+              );
+            }
+          }
           return (
             <motion.button
               key={tag} type="button" whileTap={{ scale: 0.97 }}
@@ -91,10 +146,10 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
   );
 }
 
-const GENRE_OPTIONS = ['Drama', 'Thriller', 'Comedy', 'Romance', 'Documentary', 'Experimental', 'Horror', 'Action', 'Sci-Fi', 'Period'];
-const BUDGET_OPTIONS = ['Under ₹1L', '₹1L–5L', '₹5L–20L', '₹20L+', 'Not Disclosed'];
+const GENRE_OPTIONS = ['Drama', 'Thriller', 'Comedy', 'Romance', 'Documentary', 'Experimental', 'Horror', 'Action', 'Sci-Fi', 'Period', '+'];
+const BUDGET_OPTIONS = ['Under ₹100T', '₹100T–500T', '₹500T–2000T', '₹2000T+', 'Not Disclosed'];
 const TIMELINE_OPTIONS = ['< 1 Month', '1–3 Months', '3–6 Months', '6+ Months'];
-const LOOKING_FOR_OPTIONS = ['Writer', 'Director', 'Technician', 'Presenter', 'Member'];
+const LOOKING_FOR_OPTIONS = ['Writer', 'Director', 'Technician', 'Presenter', 'Member', '+'];
 
 export default function ProducerDashboard() {
   const { user } = useAuth();
@@ -155,12 +210,21 @@ export default function ProducerDashboard() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      const interestProfiles = await fetchMemberDirectoryByIds((data || []).map((interest: any) => interest.user_id));
+
+      const userIds = (data || []).map((interest: any) => interest.user_id);
+      let profileMap = new Map();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.from('profiles').select('id, full_name, avatar_symbol, st_id, role, st_verified, email, phone').in('id', userIds);
+        if (profiles) {
+          profileMap = new Map(profiles.map(p => [p.id, p]));
+        }
+      }
+
       setInterests({
         ...interests,
         [briefId]: (data || []).map((interest: any) => ({
           ...interest,
-          user: interestProfiles.get(interest.user_id) || null
+          user: profileMap.get(interest.user_id) || null
         }))
       });
     } catch (err) {
@@ -305,7 +369,9 @@ export default function ProducerDashboard() {
               <div key={s.id} style={{ padding: '24px 0', borderBottom: '1px solid rgba(188,168,142,0.08)', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 1 }}>{s.title}</p>
-                  <span style={{ fontSize: 18 }}>{s.user?.avatar_symbol}</span>
+                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+                    {s.user?.full_name?.substring(0,1).toUpperCase() || '👤'}
+                  </span>
                 </div>
                 <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.4, fontStyle: 'italic', lineHeight: 1.6, minHeight: 60 }}>"{s.logline}"</p>
                 
@@ -389,10 +455,8 @@ export default function ProducerDashboard() {
             ) : (
               briefs.map((b) => {
                 const interestCount = b.brief_interests?.[0]?.count || 0;
-                // Trending logic simplified: For now, if we had first_interest_at, we'd use it.
-                // As a fallback, we'll mark as trending if it has interests and is relatively new.
-                const isNew = (new Date().getTime() - new Date(b.created_at).getTime()) < (48 * 60 * 60 * 1000);
-                const isTrending = interestCount > 0 && isNew;
+                const maxInterests = Math.max(...briefs.map(br => br.brief_interests?.[0]?.count || 0), 0);
+                const isTrending = interestCount > 0 && interestCount === maxInterests;
 
                 return (
                   <div key={b.id} style={{ background: 'rgba(30,32,41,0.4)', border: '1px solid rgba(188,168,142,0.12)', padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -503,12 +567,17 @@ export default function ProducerDashboard() {
                                     <p style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.3, marginBottom: 8 }}>
                                       {new Date(interest.created_at).toLocaleDateString()}
                                     </p>
-                                    <a 
-                                      href={`mailto:admin@supremetalkies.com?subject=Interest Signal: ${interest.user?.full_name} for Brief ${b.title}`}
-                                      style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 2, textDecoration: 'underline', fontWeight: 600 }}
-                                    >
-                                      REACH OUT
-                                    </a>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+                                      {interest.user?.email && (
+                                        <a href={`mailto:${interest.user.email}`} style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8, textDecoration: 'underline' }}>{interest.user.email}</a>
+                                      )}
+                                      {interest.user?.phone && (
+                                        <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8 }}>{interest.user.phone}</span>
+                                      )}
+                                      {!interest.user?.email && !interest.user?.phone && (
+                                        <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4 }}>NO CONTACT INFO</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               ))}
