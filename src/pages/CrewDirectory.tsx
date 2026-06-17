@@ -232,14 +232,10 @@ export default function CrewDirectory(){
                         <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0, lineHeight: 1.6, opacity: 0.8 }}>{selectedCrew.bio}</p>
                       </div>
                     )}
-                    {selectedCrew.skills && selectedCrew.skills.length > 0 && (
+                    {selectedCrew.note_to_team && (
                       <div style={{ gridColumn: '1 / -1' }}>
-                        <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 8px' }}>SKILLS</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {selectedCrew.skills.map((sk: string) => (
-                            <span key={sk} style={{ fontSize: 8, background: 'rgba(188,168,142,0.08)', border: '1px solid rgba(188,168,142,0.2)', padding: '2px 8px', color: '#BCA88E', letterSpacing: 1 }}>{sk.toUpperCase()}</span>
-                          ))}
-                        </div>
+                        <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 2, margin: '0 0 4px' }}>NOTE TO SUPREME TEAM</p>
+                        <p style={{ fontSize: 13, color: '#F0EBE0', margin: 0, lineHeight: 1.6, opacity: 0.8 }}>{selectedCrew.note_to_team}</p>
                       </div>
                     )}
                     <div>

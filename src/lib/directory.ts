@@ -12,6 +12,7 @@ export interface DirectoryProfile {
   availability?: boolean | null;
   skills?: string[] | null;
   portfolio_url?: string | null;
+  note_to_team?: string | null;
   created_at?: string | null;
 }
 
@@ -23,6 +24,7 @@ export interface PublicCrewProfile {
   roles: string[] | null;
   niche?: string | null;
   availability?: boolean | null;
+  note_to_team?: string | null;
   created_at?: string | null;
 }
 

@@ -92,6 +92,7 @@ CREATE TABLE public.profiles (
   skills            TEXT[] DEFAULT '{}',
   contact           TEXT,
   social_handle     TEXT,
+  note_to_team      TEXT,
   created_at        TIMESTAMPTZ DEFAULT NOW(),
   updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
@@ -364,6 +365,7 @@ SELECT
   skills,
   contact,
   social_handle,
+  note_to_team,
   availability,
   is_early_access,
   share_streak,

@@ -23,6 +23,7 @@ export interface Profile {
   skills?: string[];
   contact?: string;
   social_handle?: string;
+  note_to_team?: string;
   created_at?: string;
   updated_at?: string;
 }

@@ -59,53 +59,6 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: {
     </div>
   );
 }
-
-function TagPicker({ label, tags, selected, onChange, max, single }: {
-  label: string; tags: string[]; selected: string | string[]; onChange: (v: any) => void; max?: number; single?: boolean;
-}) {
-  const toggleTag = (tag: string) => {
-    if (single) {
-      onChange(tag);
-      return;
-    }
-    const current = Array.isArray(selected) ? selected : [];
-    if (current.includes(tag)) {
-      onChange(current.filter(t => t !== tag));
-    } else if (!max || current.length < max) {
-      onChange([...current, tag]);
-    }
-  };
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5, textTransform: 'uppercase' }}>
-        {label} {max && !single && <span style={{ opacity: 0.4, fontSize: 8 }}> (MAX {max})</span>}
-      </label>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {tags.map(tag => {
-          const isSelected = single ? selected === tag : (Array.isArray(selected) && selected.includes(tag));
-          return (
-            <motion.button
-              key={tag} type="button" whileTap={{ scale: 0.97 }}
-              onClick={() => toggleTag(tag)}
-              style={{
-                padding: '6px 14px', borderRadius: 2,
-                background: isSelected ? 'rgba(188,168,142,0.12)' : 'transparent',
-                border: `1px solid ${isSelected ? '#BCA88E' : 'rgba(188,168,142,0.2)'}`,
-                color: isSelected ? '#F0EBE0' : 'rgba(188,168,142,0.5)',
-                fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
-                cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
-              }}
-            >
-              {tag}
-            </motion.button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function TechnicianDashboard() {
   const { user, profile, refreshProfile } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -114,7 +67,7 @@ export default function TechnicianDashboard() {
     specialization: profile?.niche || '', 
     experience: profile?.experience || '', 
     portfolioLink: profile?.portfolio_url || '', 
-    skills: Array.isArray(profile?.skills) ? profile.skills : [] as string[],
+    noteToTeam: profile?.note_to_team || '',
     contact: (profile as any)?.contact || '',
     socialHandle: profile?.social_handle || ''
   });
@@ -142,7 +95,7 @@ export default function TechnicianDashboard() {
         specialization: profile.niche || '',
         experience: (profile as any).experience || '',
         portfolioLink: profile.portfolio_url || '',
-        skills: Array.isArray(profile.skills) ? profile.skills as string[] : [],
+        noteToTeam: profile.note_to_team || '',
         contact: (profile as any).contact || '',
         socialHandle: (profile as any).social_handle || ''
       });
@@ -283,7 +236,7 @@ export default function TechnicianDashboard() {
       const { error } = await supabase.from('profiles').update({ 
         niche: formData.specialization,
         portfolio_url: formData.portfolioLink,
-        skills: formData.skills,
+        note_to_team: formData.noteToTeam,
         experience: formData.experience,
         contact: formData.contact,
         social_handle: formData.socialHandle
@@ -457,7 +410,7 @@ export default function TechnicianDashboard() {
                   )}
                 </div>
 
-                <TagPicker label="TECHNICAL SKILLS" tags={['Directing', 'Cinematography', 'Editing', 'Sound', 'VFX', 'Stunts', 'Acting', 'Writing']} selected={Array.isArray(formData.skills) ? formData.skills : (formData.skills ? [formData.skills] : [])} onChange={(v) => setFormData({ ...formData, skills: v })} max={5} />
+                <CinemaTextarea label="NOTE TO SUPREME TEAM (WILL SHOW ON CREW CARD)" placeholder="Any specific notes or preferences for the supreme team..." value={formData.noteToTeam} onChange={(v) => setFormData({ ...formData, noteToTeam: v })} rows={3} />
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
                   <CinemaInput label="EXPERIENCE" placeholder="e.g. 5 Years / 10 Short Films" value={formData.experience} onChange={(v) => setFormData({ ...formData, experience: v })} />
@@ -589,12 +542,12 @@ export default function TechnicianDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>RECEIVED</p>
-              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>INCOMING CONNECTIONS ({receivedRequests.length})</p>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>INCOMING CONNECTIONS ({receivedRequests.filter(req => req.status === 'pending').length})</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 800 }}>
-                {receivedRequests.length === 0 ? (
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.2, fontStyle: 'italic' }}>No incoming requests yet.</p>
-                ) : receivedRequests.map(req => (
+                {receivedRequests.filter(req => req.status === 'pending').length === 0 ? (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.2, fontStyle: 'italic' }}>No pending requests.</p>
+                ) : receivedRequests.filter(req => req.status === 'pending').map(req => (
                   <div key={req.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(188,168,142,0.1)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -614,22 +567,11 @@ export default function TechnicianDashboard() {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                       <div style={{ display: 'flex', gap: 12 }}>
-                        {req.status === 'pending' ? (
-                          <>
-                            <CinemaButton onClick={() => handleRequestAction(req.id, 'accepted')}>ACCEPT</CinemaButton>
-                            <button 
-                              onClick={() => handleRequestAction(req.id, 'declined')}
-                              style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: 'rgba(255,120,120,0.8)', padding: '13px 32px', fontFamily: 'Playfair Display, sans-serif', fontSize: 14, letterSpacing: 4, cursor: 'pointer' }}
-                            >DECLINE</button>
-                          </>
-                        ) : (
-                          <span style={{ 
-                            fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 3, padding: '4px 12px',
-                            background: req.status === 'accepted' ? 'rgba(100,200,120,0.1)' : 'rgba(255,80,80,0.1)',
-                            border: `1px solid ${req.status === 'accepted' ? '#64c878' : '#ff4d4d'}`,
-                            color: req.status === 'accepted' ? '#64c878' : '#ff4d4d'
-                          }}>{req.status.toUpperCase()}</span>
-                        )}
+                        <CinemaButton onClick={() => handleRequestAction(req.id, 'accepted')}>ACCEPT</CinemaButton>
+                        <button 
+                          onClick={() => handleRequestAction(req.id, 'declined')}
+                          style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: 'rgba(255,120,120,0.8)', padding: '13px 32px', fontFamily: 'Playfair Display, sans-serif', fontSize: 14, letterSpacing: 4, cursor: 'pointer' }}
+                        >DECLINE</button>
                       </div>
                       <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{req.sender?.st_id ? (req.sender.st_id.startsWith('SUPR-') ? req.sender.st_id : `SUPR-${req.sender.st_id}`) : 'Pending'}</p>
                     </div>
@@ -642,10 +584,12 @@ export default function TechnicianDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>SENT</p>
-              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>YOUR OUTGOING PINGS ({sentRequests.length})</p>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>YOUR OUTGOING PINGS ({sentRequests.filter(req => req.status === 'pending').length})</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 800 }}>
-                {sentRequests.map(req => (
+                {sentRequests.filter(req => req.status === 'pending').length === 0 ? (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.2, fontStyle: 'italic' }}>No pending sent requests.</p>
+                ) : sentRequests.filter(req => req.status === 'pending').map(req => (
                   <div key={req.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                       <span style={{ fontSize: 20 }}>{req.receiver?.avatar_symbol || req.receiver?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
@@ -654,10 +598,45 @@ export default function TechnicianDashboard() {
                         <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{req.receiver?.st_id ? (req.receiver.st_id.startsWith('SUPR-') ? req.receiver.st_id : `SUPR-${req.receiver.st_id}`) : 'Pending'}</p>
                       </div>
                     </div>
-                    <span style={{ 
-                      fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, padding: '4px 10px',
-                      background: 'rgba(188,168,142,0.1)', color: '#BCA88E'
-                    }}>{req.status.toUpperCase()}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <span style={{ 
+                        fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, padding: '4px 10px',
+                        background: 'rgba(188,168,142,0.1)', color: '#BCA88E'
+                      }}>PENDING</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mutual Connections */}
+            <div>
+              <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
+              <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>MUTUAL CONNECTIONS</p>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>ACTIVE COLLABORATORS</p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
+                {[
+                  ...receivedRequests.filter(req => req.status === 'accepted').map(req => ({ id: req.id, peer: req.sender })),
+                  ...sentRequests.filter(req => req.status === 'accepted').map(req => ({ id: req.id, peer: req.receiver }))
+                ].map(collab => (
+                  <div key={collab.id} style={{ border: '1px solid rgba(188,168,142,0.2)', background: 'rgba(188,168,142,0.05)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 24 }}>{collab.peer?.avatar_symbol || collab.peer?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
+                        <div>
+                          <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: '0 0 2px' }}>{collab.peer?.full_name}</p>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{collab.peer?.st_id ? (collab.peer.st_id.startsWith('SUPR-') ? collab.peer.st_id : `SUPR-${collab.peer.st_id}`) : 'Pending'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    {collab.peer?.portfolio_url ? (
+                      <a href={collab.peer.portfolio_url} target="_blank" rel="noreferrer" style={{ alignSelf: 'flex-start', fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 2, color: '#c9a84c', textDecoration: 'underline', marginTop: 8 }}>
+                        VIEW WORK →
+                      </a>
+                    ) : (
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: '8px 0 0', letterSpacing: 2 }}>NO PORTFOLIO</p>
+                    )}
                   </div>
                 ))}
               </div>
