@@ -483,15 +483,22 @@ export default function WriterDashboard() {
   const handleDeleteScript = async (scriptId: string) => {
     if (!window.confirm('Are you sure you want to delete this script?')) return;
     try {
+      // First try to delete versions
       const { error: versionsError } = await supabase.from('script_versions').delete().eq('script_id', scriptId);
       if (versionsError) throw versionsError;
 
-      const { error } = await supabase.from('scripts').delete().eq('id', scriptId);
+      // Then delete the script AND return the deleted rows to verify RLS didn't block it
+      const { data, error } = await supabase.from('scripts').delete().eq('id', scriptId).select();
       if (error) throw error;
-      toast('SCRIPT DELETED ✕');
-      fetchSubmissions();
+      
+      if (!data || data.length === 0) {
+        alert('Supabase blocked the deletion! You need to add a "DELETE" RLS policy for the "scripts" table in your Supabase dashboard so writers can delete their own scripts.');
+      } else {
+        toast('SCRIPT DELETED ✕');
+        fetchSubmissions();
+      }
     } catch (err: any) {
-      toast(err.message);
+      alert(`Delete Error: ${err.message}`);
     }
   };
 
