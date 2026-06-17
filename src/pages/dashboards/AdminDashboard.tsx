@@ -629,8 +629,9 @@ export default function AdminDashboard() {
             {scriptViewMode === 'list' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {scripts.map(s => (
-                  <div key={s.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', gap: 20 }}>
+                  <div key={s.id} style={{ border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: 24, display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', gap: 20 }}>
                       <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, flexShrink: 0 }}>
                         {s.user?.full_name?.substring(0,1).toUpperCase() || '?'}
                       </div>
