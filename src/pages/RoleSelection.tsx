@@ -54,7 +54,7 @@ const ROLES = [
     scene: 'SC·05',
     description: 'For promoters & content strategists',
     line: 'The bridge between story and world.',
-    features: ['Launch & manage campaigns', 'Access content kit', 'Campaign leaderboard', 'Track reach metrics'],
+    features: ['Launch & manage campaigns', 'Submit collab briefs', 'Track reach metrics'],
   },
   {
     id: 'amplifier',
