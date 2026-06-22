@@ -716,7 +716,7 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: 0 }}>
-                            {sub.type === 'collab' ? sub.data?.platform : sub.data?.title || sub.data?.genre || 'Untitled'}
+                            {sub.type === 'collab' ? sub.data?.platform : sub.type === 'marketing_idea' ? 'Marketing Idea' : sub.data?.title || sub.data?.genre || 'Untitled'}
                           </p>
                           <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
                             {sub.type?.toUpperCase()} · {sub.profiles?.full_name} {sub.profiles?.st_id ? `(SUPR-${sub.profiles.st_id})` : ''} · {sub.status?.toUpperCase()}
@@ -729,7 +729,13 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     
-                    <pre style={{ margin: '0 0 20px', fontSize: 10, color: '#BCA88E', opacity: 0.4, whiteSpace: 'pre-wrap' }}>{JSON.stringify(sub.data, null, 2)}</pre>
+                    {sub.type === 'marketing_idea' ? (
+                      <div style={{ padding: 16, background: sub.data?.color || 'rgba(255,255,255,0.05)', color: '#1a1a1a', fontFamily: 'Inter, monospace', fontSize: 12, marginBottom: 20, borderRadius: 4 }}>
+                        {sub.data?.text}
+                      </div>
+                    ) : (
+                      <pre style={{ margin: '0 0 20px', fontSize: 10, color: '#BCA88E', opacity: 0.4, whiteSpace: 'pre-wrap' }}>{JSON.stringify(sub.data, null, 2)}</pre>
+                    )}
 
                     {/* Quick Reply */}
                     <div style={{ borderTop: '1px solid rgba(188,168,142,0.05)', paddingTop: 16 }}>
@@ -769,7 +775,9 @@ export default function AdminDashboard() {
                     <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {filteredSubmissions.filter(s => s.status === status).map(sub => (
                         <div key={sub.id} style={{ background: 'rgba(188,168,142,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 12 }}>
-                          <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>{sub.data?.title || 'Untitled'}</p>
+                          <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>
+                            {sub.type === 'collab' ? sub.data?.platform : sub.type === 'marketing_idea' ? 'Marketing Idea' : sub.data?.title || 'Untitled'}
+                          </p>
                           <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: 0 }}>{sub.profiles?.full_name} {sub.profiles?.st_id ? `(SUPR-${sub.profiles.st_id})` : ''}</p>
                         </div>
                       ))}

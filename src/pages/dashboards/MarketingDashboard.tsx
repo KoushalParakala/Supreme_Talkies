@@ -307,13 +307,7 @@ export default function MarketingDashboard() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24, padding: 20 }}>
               {(() => {
-                const marketingIdeas = ideas.filter(idea => {
-                  const profile = idea.profiles;
-                  if (!profile) return false;
-                  const isMarketing = profile.role === 'marketing' || (Array.isArray(profile.roles) && profile.roles.includes('marketing'));
-                  const isAdminUser = profile.role === 'admin' || (Array.isArray(profile.roles) && profile.roles.includes('admin'));
-                  return isMarketing || isAdminUser;
-                });
+                const marketingIdeas = ideas;
 
                 if (marketingIdeas.length === 0) {
                   return <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>;
