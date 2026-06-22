@@ -44,23 +44,18 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
   );
 }
 
-
-const PLATFORMS = ['Instagram', 'Twitter/X', 'YouTube', 'LinkedIn', 'WhatsApp', 'Other'];
-
 export default function MarketingDashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   
   /* Campaign States */
   const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [showNewCampaign, setShowNewCampaign] = useState(false);
-  const [newCampaign, setNewCampaign] = useState({ 
-    title: '', platform: [] as string[], niche: '', start_date: '', end_date: '', reach_target: '' 
-  });
-  const [editingReach, setEditingReach] = useState<string | null>(null);
-  const [reachUpdateValue, setReachUpdateValue] = useState('');
   const [myAssignments, setMyAssignments] = useState<Record<string, any>>({});
+
+  /* Idea Board States */
+  const [ideas, setIdeas] = useState<any[]>([]);
+  const [newIdeaText, setNewIdeaText] = useState('');
+  const [postingIdea, setPostingIdea] = useState(false);
 
   /* Collab Brief States */
   const [collabForm, setCollabForm] = useState({
@@ -84,7 +79,7 @@ export default function MarketingDashboard() {
       const { data: allCampaigns } = await supabase
         .from('campaigns')
         .select('*')
-        .or(`status.eq.active,created_by.eq.${user?.id}`)
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
       
       if (fetchId !== fetchIdRef.current) return;
@@ -99,6 +94,15 @@ export default function MarketingDashboard() {
       const assignMap: Record<string, any> = {};
       assigns?.forEach(a => { assignMap[a.campaign_id] = a; });
       setMyAssignments(assignMap);
+
+      const { data: allIdeas } = await supabase
+        .from('submissions')
+        .select('*, profiles(full_name)')
+        .eq('type', 'marketing_idea')
+        .order('created_at', { ascending: false });
+
+      if (fetchId !== fetchIdRef.current) return;
+      setIdeas(allIdeas || []);
 
     } catch (err) {
       if (fetchId !== fetchIdRef.current) return;
@@ -140,41 +144,28 @@ export default function MarketingDashboard() {
     }
   };
 
-  const handleLaunchCampaign = async () => {
-    if (!user || !newCampaign.title) return;
-    setSubmitting(true);
+  const handlePostIdea = async () => {
+    if (!user || !newIdeaText.trim()) return;
+    setPostingIdea(true);
     try {
-      const { error } = await supabase.from('campaigns').insert({ 
-        ...newCampaign, 
-        created_by: user.id,
-        status: 'active',
-        actual_reach: 0
+      const colors = ['#fef08a', '#bbf7d0', '#fbcfe8', '#bfdbfe', '#fed7aa', '#e9d5ff'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
+      const { error } = await supabase.from('submissions').insert({
+        user_id: user.id,
+        type: 'marketing_idea',
+        data: { text: newIdeaText, color },
+        status: 'submitted'
       });
       if (error) throw error;
-      setNewCampaign({ title: '', platform: [], niche: '', start_date: '', end_date: '', reach_target: '' });
-      setShowNewCampaign(false);
+      setNewIdeaText('');
       fetchData();
-      toast('CAMPAIGN LAUNCHED ✦');
-    } catch (err: any) { toast(err.message); }
-    finally { setSubmitting(false); }
-  };
-
-  const handleUpdateReach = async (id: string) => {
-    try {
-      const { error } = await supabase.from('campaigns').update({ actual_reach: parseInt(reachUpdateValue) }).eq('id', id);
-      if (error) throw error;
-      setEditingReach(null);
-      fetchData();
-    } catch (err: any) { toast(err.message); }
-  };
-
-  const handleCloseCampaign = async (id: string) => {
-    if (!window.confirm('Mark this campaign as completed?')) return;
-    try {
-      const { error } = await supabase.from('campaigns').update({ status: 'completed' }).eq('id', id);
-      if (error) throw error;
-      fetchData();
-    } catch (err: any) { toast(err.message); }
+      toast('IDEA PINNED TO BOARD 📌');
+    } catch (err: any) {
+      toast(err.message);
+    } finally {
+      setPostingIdea(false);
+    }
   };
 
   const handleJoinCampaign = async (campaignId: string) => {
@@ -211,63 +202,17 @@ export default function MarketingDashboard() {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-      {/* Tabs */}
-
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
       {loading ? (
         <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3 }}>SYNCHRONIZING MISSIONS...</p>
       ) : (
-        /* CAMPAIGNS TAB */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
-          {/* New Campaign Form */}
+        <>
+          {/* CAMPAIGNS SECTION */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
-              <div>
-                <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
-                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>STRATEGIZE AND DEPLOY</p>
-              </div>
-              <button onClick={() => setShowNewCampaign(!showNewCampaign)} style={{ background: 'none', border: '1px solid #BCA88E', color: '#BCA88E', padding: '10px 24px', fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 4, cursor: 'pointer' }}>
-                {showNewCampaign ? 'CANCEL' : '+ NEW CAMPAIGN'}
-              </button>
+            <div style={{ marginBottom: 32 }}>
+              <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>JOIN ACTIVE MISSIONS AND TRACK PROGRESS</p>
             </div>
-
-            <AnimatePresence>
-              {showNewCampaign && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', background: 'rgba(188,168,142,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 32, marginBottom: 48 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
-                    <CinemaInput label="CAMPAIGN TITLE" placeholder="e.g. Summer Blockbuster Premiere" value={newCampaign.title} onChange={(v) => setNewCampaign({ ...newCampaign, title: v })} />
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 5, textTransform: 'uppercase', margin: 0 }}>TARGET PLATFORMS</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {PLATFORMS.map(p => (
-                          <button key={p} onClick={() => {
-                            const next = newCampaign.platform.includes(p) ? newCampaign.platform.filter(x => x !== p) : [...newCampaign.platform, p];
-                            setNewCampaign({ ...newCampaign, platform: next });
-                          }}
-                            style={{ padding: '6px 12px', border: '1px solid rgba(188,168,142,0.2)', background: newCampaign.platform.includes(p) ? 'rgba(188,168,142,0.12)' : 'transparent', borderColor: newCampaign.platform.includes(p) ? '#BCA88E' : 'rgba(188,168,142,0.2)', color: newCampaign.platform.includes(p) ? '#BCA88E' : 'rgba(240,235,224,0.4)', fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 2, cursor: 'pointer' }}
-                          >{p.toUpperCase()}</button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-                      <CinemaInput label="START DATE" type="date" value={newCampaign.start_date} onChange={(v) => setNewCampaign({ ...newCampaign, start_date: v })} />
-                      <CinemaInput label="END DATE" type="date" value={newCampaign.end_date} onChange={(v) => setNewCampaign({ ...newCampaign, end_date: v })} />
-                    </div>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-                      <CinemaInput label="REACH TARGET" type="number" placeholder="e.g. 50000" value={newCampaign.reach_target} onChange={(v) => setNewCampaign({ ...newCampaign, reach_target: v })} />
-                      <CinemaInput label="NICHE" placeholder="e.g. Thriller Fans" value={newCampaign.niche} onChange={(v) => setNewCampaign({ ...newCampaign, niche: v })} />
-                    </div>
-
-                    <motion.button onClick={handleLaunchCampaign} disabled={submitting || !newCampaign.title} whileHover={{ background: '#BCA88E', color: '#0a0a0a' }} style={{ background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '14px 40px', fontFamily: 'Montserrat, sans-serif', fontSize: 12, letterSpacing: 6, cursor: 'pointer', alignSelf: 'flex-start' }}>
-                      {submitting ? 'DEPLOYING...' : 'LAUNCH CAMPAIGN  →'}
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {campaigns.length === 0 ? (
@@ -277,7 +222,6 @@ export default function MarketingDashboard() {
                   const target = parseInt(c.reach_target) || 1;
                   const actual = c.actual_reach || 0;
                   const progress = Math.min((actual / target) * 100, 100);
-                  const isOwner = c.created_by === user?.id;
 
                   return (
                     <div key={c.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(188,168,142,0.1)', padding: 32 }}>
@@ -311,40 +255,23 @@ export default function MarketingDashboard() {
                           <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} style={{ height: '100%', background: '#BCA88E' }} />
                         </div>
                       </div>
-
-                      {isOwner && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
-                          {editingReach === c.id ? (
-                            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                              <input type="number" value={reachUpdateValue} onChange={(e) => setReachUpdateValue(e.target.value)} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid #BCA88E', color: '#F0EBE0', fontFamily: 'Inter, monospace', fontSize: 12, width: 100, outline: 'none' }} placeholder="Update reach..." />
-                              <button onClick={() => handleUpdateReach(c.id)} style={{ background: '#BCA88E', border: 'none', color: '#0a0a0a', fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 700, padding: '6px 12px', cursor: 'pointer' }}>UPDATE</button>
-                              <button onClick={() => setEditingReach(null)} style={{ background: 'none', border: 'none', color: '#F0EBE0', opacity: 0.4, cursor: 'pointer' }}>✕</button>
-                            </div>
-                          ) : (
-                            <button onClick={() => { setEditingReach(c.id); setReachUpdateValue(actual.toString()); }} style={{ background: 'none', border: 'none', color: '#BCA88E', opacity: 0.6, fontSize: 10, letterSpacing: 2, cursor: 'pointer' }}>✎ UPDATE REACH</button>
-                          )}
-                          <button onClick={() => handleCloseCampaign(c.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', opacity: 0.5, fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>CLOSE CAMPAIGN</button>
-                        </div>
-                      )}
                       
-                      {!isOwner && c.status === 'active' && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
-                          {myAssignments[c.id] ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
-                                JOINED ({myAssignments[c.id].posts_count || 0} POSTS)
-                              </span>
-                              <button onClick={() => handleLogPost(c.id)} style={{ background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '6px 16px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>
-                                + LOG POST
-                              </button>
-                            </div>
-                          ) : (
-                            <button onClick={() => handleJoinCampaign(c.id)} style={{ background: '#BCA88E', border: 'none', color: '#0a0a0a', padding: '8px 24px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>
-                              JOIN MISSION
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
+                        {myAssignments[c.id] ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
+                              JOINED ({myAssignments[c.id].posts_count || 0} POSTS)
+                            </span>
+                            <button onClick={() => handleLogPost(c.id)} style={{ background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '6px 16px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>
+                              + LOG POST
                             </button>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        ) : (
+                          <button onClick={() => handleJoinCampaign(c.id)} style={{ background: '#BCA88E', border: 'none', color: '#0a0a0a', padding: '8px 24px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>
+                            JOIN MISSION
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })
@@ -352,7 +279,78 @@ export default function MarketingDashboard() {
             </div>
           </div>
 
-          {/* Original Collab Brief Form (JOIN THE SQUAD) */}
+          {/* IDEA BOARD SECTION */}
+          <div style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+            <div style={{ marginBottom: 32 }}>
+              <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN IDEA BOARD</p>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>PIN YOUR IDEAS FOR THE TEAM</p>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(188,168,142,0.2)', padding: 32, marginBottom: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <CinemaTextarea label="NEW IDEA" placeholder="What's your campaign idea?" value={newIdeaText} onChange={setNewIdeaText} rows={3} />
+              <CinemaButton onClick={handlePostIdea} loading={postingIdea} disabled={postingIdea || !newIdeaText.trim()} style={{ fontSize: 12, padding: '10px 24px' }}>
+                PIN IDEA 📌
+              </CinemaButton>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24, padding: 20 }}>
+              {ideas.length === 0 ? (
+                <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>
+              ) : (
+                ideas.map((idea) => (
+                  <motion.div key={idea.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
+                    style={{
+                      background: idea.data?.color || '#fef08a',
+                      color: '#1a1a1a',
+                      padding: '24px 20px',
+                      position: 'relative',
+                      boxShadow: '4px 6px 12px rgba(0,0,0,0.15)',
+                      transform: `rotate(${Math.random() * 4 - 2}deg)`,
+                      minHeight: 150,
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                  >
+                    {/* The pin */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 8,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 12,
+                      height: 12,
+                      background: '#ef4444',
+                      borderRadius: '50%',
+                      boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.3), 1px 1px 2px rgba(0,0,0,0.2)',
+                      zIndex: 2
+                    }} />
+                    {/* Pin reflection */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 10,
+                      left: '50%',
+                      transform: 'translateX(-80%)',
+                      width: 3,
+                      height: 3,
+                      background: 'rgba(255,255,255,0.8)',
+                      borderRadius: '50%',
+                      zIndex: 3
+                    }} />
+
+                    <div style={{ flex: 1, marginTop: 12, fontFamily: 'Inter, monospace', fontSize: 13, lineHeight: 1.6, wordWrap: 'break-word', fontWeight: 500 }}>
+                      {idea.data?.text || ''}
+                    </div>
+                    
+                    <div style={{ fontSize: 9, opacity: 0.6, marginTop: 16, textAlign: 'right', fontFamily: 'Montserrat, sans-serif', letterSpacing: 1 }}>
+                      — {idea.profiles?.full_name || 'Member'}
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* THE COLLAB BRIEF SECTION */}
           <div style={{ paddingTop: 64, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
             <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
             <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 22, color: '#BCA88E', letterSpacing: 2, marginBottom: 6 }}>THE COLLAB BRIEF</p>
@@ -367,7 +365,7 @@ export default function MarketingDashboard() {
               <CinemaButton onClick={handleCollabSubmit} loading={collabSubmitting} disabled={collabSubmitting}>SUBMIT PROPOSAL  →</CinemaButton>
             </div>
           </div>
-        </div>
+        </>
       )}
       
       {/* Pulse Animation for active status */}
