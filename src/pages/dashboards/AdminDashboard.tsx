@@ -719,7 +719,7 @@ export default function AdminDashboard() {
                             {sub.type === 'collab' ? sub.data?.platform : sub.type === 'marketing_idea' ? 'Marketing Idea' : sub.data?.title || sub.data?.genre || 'Untitled'}
                           </p>
                           <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
-                            {sub.type?.toUpperCase()} · {sub.profiles?.full_name} {sub.profiles?.st_id ? `(SUPR-${sub.profiles.st_id})` : ''} · {sub.status?.toUpperCase()}
+                            {sub.type?.toUpperCase()} · {sub.profiles?.full_name} {sub.profiles?.st_id ? (sub.profiles.st_id.startsWith('SUPR-') ? `(${sub.profiles.st_id})` : `(SUPR-${sub.profiles.st_id})`) : ''} · {sub.status?.toUpperCase()}
                           </p>
                         </div>
                       </div>
@@ -778,7 +778,7 @@ export default function AdminDashboard() {
                           <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>
                             {sub.type === 'collab' ? sub.data?.platform : sub.type === 'marketing_idea' ? 'Marketing Idea' : sub.data?.title || 'Untitled'}
                           </p>
-                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: 0 }}>{sub.profiles?.full_name} {sub.profiles?.st_id ? `(SUPR-${sub.profiles.st_id})` : ''}</p>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: 0 }}>{sub.profiles?.full_name} {sub.profiles?.st_id ? (sub.profiles.st_id.startsWith('SUPR-') ? `(${sub.profiles.st_id})` : `(SUPR-${sub.profiles.st_id})`) : ''}</p>
                         </div>
                       ))}
                     </div>

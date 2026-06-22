@@ -487,6 +487,7 @@ CREATE POLICY "films_admin_write"    ON public.films FOR ALL     TO authenticate
 -- ── SUBMISSIONS ──
 CREATE POLICY "submissions_own"      ON public.submissions FOR ALL TO authenticated USING (auth.uid() = user_id OR public.is_admin());
 CREATE POLICY "submissions_insert"   ON public.submissions FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "submissions_marketing_read" ON public.submissions FOR SELECT TO authenticated USING (type = 'marketing_idea');
 
 -- ── SCRIPTS ──
 CREATE POLICY "scripts_own"          ON public.scripts FOR SELECT  USING (auth.uid() = user_id OR public.is_admin());
