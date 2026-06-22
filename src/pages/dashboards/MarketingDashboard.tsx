@@ -45,7 +45,7 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
 }
 
 export default function MarketingDashboard() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   
   /* Campaign States */
@@ -97,7 +97,7 @@ export default function MarketingDashboard() {
 
       const { data: allIdeas } = await supabase
         .from('submissions')
-        .select('*, profiles(full_name)')
+        .select('*, profiles(full_name, role, roles)')
         .eq('type', 'marketing_idea')
         .order('created_at', { ascending: false });
 
@@ -200,6 +200,18 @@ export default function MarketingDashboard() {
     } catch (err: any) { toast(err.message); }
   };
 
+  const handleDeleteIdea = async (ideaId: string) => {
+    if (!window.confirm('Delete this idea?')) return;
+    try {
+      const { error } = await supabase.from('submissions').delete().eq('id', ideaId);
+      if (error) throw error;
+      fetchData();
+      toast('IDEA DELETED ✕');
+    } catch (err: any) {
+      toast(err.message);
+    }
+  };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
@@ -294,59 +306,108 @@ export default function MarketingDashboard() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 24, padding: 20 }}>
-              {ideas.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>
-              ) : (
-                ideas.map((idea) => (
-                  <motion.div key={idea.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
-                    style={{
-                      background: idea.data?.color || '#fef08a',
-                      color: '#1a1a1a',
-                      padding: '24px 20px',
-                      position: 'relative',
-                      boxShadow: '4px 6px 12px rgba(0,0,0,0.15)',
-                      transform: `rotate(${Math.random() * 4 - 2}deg)`,
-                      minHeight: 150,
-                      display: 'flex',
-                      flexDirection: 'column'
-                    }}
-                  >
-                    {/* The pin */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 8,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 12,
-                      height: 12,
-                      background: '#ef4444',
-                      borderRadius: '50%',
-                      boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.3), 1px 1px 2px rgba(0,0,0,0.2)',
-                      zIndex: 2
-                    }} />
-                    {/* Pin reflection */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 10,
-                      left: '50%',
-                      transform: 'translateX(-80%)',
-                      width: 3,
-                      height: 3,
-                      background: 'rgba(255,255,255,0.8)',
-                      borderRadius: '50%',
-                      zIndex: 3
-                    }} />
+              {(() => {
+                const marketingIdeas = ideas.filter(idea => {
+                  const profile = idea.profiles;
+                  if (!profile) return false;
+                  const isMarketing = profile.role === 'marketing' || (Array.isArray(profile.roles) && profile.roles.includes('marketing'));
+                  const isAdminUser = profile.role === 'admin' || (Array.isArray(profile.roles) && profile.roles.includes('admin'));
+                  return isMarketing || isAdminUser;
+                });
 
-                    <div style={{ flex: 1, marginTop: 12, fontFamily: 'Inter, monospace', fontSize: 13, lineHeight: 1.6, wordWrap: 'break-word', fontWeight: 500 }}>
-                      {idea.data?.text || ''}
-                    </div>
-                    
-                    <div style={{ fontSize: 9, opacity: 0.6, marginTop: 16, textAlign: 'right', fontFamily: 'Montserrat, sans-serif', letterSpacing: 1 }}>
-                      — {idea.profiles?.full_name || 'Member'}
-                    </div>
-                  </motion.div>
-                ))
-              )}
+                if (marketingIdeas.length === 0) {
+                  return <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>;
+                }
+
+                return marketingIdeas.map((idea) => {
+                  const isOwner = idea.user_id === user?.id;
+                  const canDelete = isOwner || isAdmin;
+                  return (
+                    <motion.div key={idea.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
+                      style={{
+                        background: idea.data?.color || '#fef08a',
+                        color: '#1a1a1a',
+                        padding: '24px 20px',
+                        position: 'relative',
+                        boxShadow: '4px 6px 12px rgba(0,0,0,0.15)',
+                        transform: `rotate(${Math.random() * 4 - 2}deg)`,
+                        minHeight: 150,
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}
+                    >
+                      {canDelete && (
+                        <button 
+                          onClick={() => handleDeleteIdea(idea.id)}
+                          style={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            background: 'none',
+                            border: 'none',
+                            color: 'rgba(0,0,0,0.4)',
+                            cursor: 'pointer',
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            zIndex: 10,
+                            padding: 4,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '50%',
+                            lineHeight: 1,
+                            transition: 'color 0.2s, background-color 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#ef4444';
+                            e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = 'rgba(0,0,0,0.4)';
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+
+                      {/* The pin */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 8,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 12,
+                        height: 12,
+                        background: '#ef4444',
+                        borderRadius: '50%',
+                        boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.3), 1px 1px 2px rgba(0,0,0,0.2)',
+                        zIndex: 2
+                      }} />
+                      {/* Pin reflection */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 10,
+                        left: '50%',
+                        transform: 'translateX(-80%)',
+                        width: 3,
+                        height: 3,
+                        background: 'rgba(255,255,255,0.8)',
+                        borderRadius: '50%',
+                        zIndex: 3
+                      }} />
+
+                      <div style={{ flex: 1, marginTop: 12, fontFamily: 'Inter, monospace', fontSize: 13, lineHeight: 1.6, wordWrap: 'break-word', fontWeight: 500 }}>
+                        {idea.data?.text || ''}
+                      </div>
+                      
+                      <div style={{ fontSize: 9, opacity: 0.6, marginTop: 16, textAlign: 'right', fontFamily: 'Montserrat, sans-serif', letterSpacing: 1 }}>
+                        — {idea.profiles?.full_name || 'Member'} ({idea.profiles?.role === 'admin' || (Array.isArray(idea.profiles?.roles) && idea.profiles.roles.includes('admin')) ? 'Admin' : 'Marketing'})
+                      </div>
+                    </motion.div>
+                  );
+                });
+              })()}
             </div>
           </div>
 
