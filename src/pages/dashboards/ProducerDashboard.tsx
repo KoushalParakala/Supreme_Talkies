@@ -397,6 +397,40 @@ export default function ProducerDashboard() {
     }
   };
 
+  const handleAcceptCollab = async (interest: any, briefTitle: string) => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.from('collab_requests')
+        .select('id')
+        .eq('sender_id', interest.user_id)
+        .eq('receiver_id', user.id)
+        .eq('project_title', briefTitle)
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        const { error: updateError } = await supabase.from('collab_requests').update({ status: 'accepted' }).eq('id', data.id);
+        if (updateError) throw updateError;
+        toast('COLLAB ACCEPTED ✦');
+      } else {
+        // If not found, create one already accepted
+        const { error: insertError } = await supabase.from('collab_requests').insert({
+          sender_id: interest.user_id,
+          receiver_id: user.id,
+          project_title: briefTitle,
+          message: 'Collab accepted by producer',
+          status: 'accepted'
+        });
+        if (insertError) throw insertError;
+        toast('COLLAB ACCEPTED ✦');
+      }
+    } catch (err: any) {
+      toast(err.message || 'Error accepting collab');
+    }
+  };
+
   const handleToggleBriefStatus = async (briefId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
@@ -741,19 +775,16 @@ export default function ProducerDashboard() {
                                           )}
                                         </div>
                                       </div>
-                                      <div style={{ textAlign: 'right' }}>
-                                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.3, marginBottom: 8 }}>
+                                      <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
+                                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.3, margin: 0 }}>
                                           {new Date(interest.created_at).toLocaleDateString()}
                                         </p>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                                          {interest.user?.contact ? (
-                                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8 }}>
-                                              {interest.user.contact}
-                                            </span>
-                                          ) : (
-                                            <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4 }}>NO CONTACT INFO</span>
-                                          )}
-                                        </div>
+                                        <CinemaButton 
+                                          onClick={() => handleAcceptCollab(interest, b.title)}
+                                          style={{ padding: '8px 16px', fontSize: 10, letterSpacing: 2 }}
+                                        >
+                                          ACCEPT COLLAB
+                                        </CinemaButton>
                                       </div>
                                     </div>
                                   ))}

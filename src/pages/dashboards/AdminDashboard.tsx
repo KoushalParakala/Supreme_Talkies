@@ -180,7 +180,7 @@ const LOOKING_FOR_OPTIONS = ['Writer', 'Director', 'Technician', 'Presenter', 'M
 
 export default function AdminDashboard() {
   const { user: adminUser, loading: authLoading, isAdmin } = useAuth();
-  const [section, setSection] = useState<'INBOX' | 'WRITERS' | 'BRIEFS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS' | 'SCREENINGS'>('INBOX');
+  const [section, setSection] = useState<'INBOX' | 'WRITERS' | 'PROJECTS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS' | 'SCREENINGS'>('INBOX');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setDebugStep] = useState<string>('Init');
@@ -202,12 +202,12 @@ export default function AdminDashboard() {
   const [submittingChallenge, setSubmittingChallenge] = useState(false);
   const [adminChallenges, setAdminChallenges] = useState<any[]>([]);
 
-  // BRIEFS state
-  const [showNewBriefForm, setShowNewBriefForm] = useState(false);
-  const [newBrief, setNewBrief] = useState({ 
+  // PROJECTS state
+  const [showNewProjectForm, setShowNewProjectForm] = useState(false);
+  const [newProject, setNewProject] = useState({ 
     title: '', description: '', genre: [] as string[], budget_range: '', timeline: '', looking_for: [] as string[] 
   });
-  const [submittingBrief, setSubmittingBrief] = useState(false);
+  const [submittingProject, setSubmittingProject] = useState(false);
 
   // PROJECT ROOMS state
   const [projectRooms, setProjectRooms] = useState<any[]>([]);
@@ -277,8 +277,8 @@ export default function AdminDashboard() {
         if (fetchId === fetchIdRef.current) {
           setAdminChallenges(chalData || []);
         }
-      } else if (section === 'BRIEFS') {
-        const { data, error: err } = await supabase.from('film_briefs').select('*, producer:profiles(full_name, avatar_symbol)').order('created_at', { ascending: false });
+      } else if (section === 'PROJECTS') {
+        const { data, error: err } = await supabase.from('film_briefs').select('*, producer:profiles(full_name, avatar_symbol), brief_interests(*, user:profiles(full_name, st_id, role, avatar_symbol))').order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setBriefs(data || []);
@@ -393,39 +393,36 @@ export default function AdminDashboard() {
     }
   };
 
-  const toggleBriefStatus = async (id: string, currentStatus: boolean) => {
+  const toggleProjectStatus = async (id: string, currentStatus: boolean) => {
     const { error } = await supabase.from('film_briefs').update({ is_open: !currentStatus }).eq('id', id);
-    if (error) toast(`Error: ${error.message}`);
-    else fetchData();
+    if (!error) fetchData();
   };
 
-  const deleteBrief = async (briefId: string) => {
-    if (!window.confirm('Delete this brief permanently?')) return;
+  const deleteProject = async (projectId: string) => {
+    if (!window.confirm('Delete this project permanently?')) return;
     try {
-      const { error } = await supabase.from('film_briefs').delete().eq('id', briefId);
+      const { error } = await supabase.from('film_briefs').delete().eq('id', projectId);
       if (error) throw error;
       fetchData();
-    } catch (err: any) {
-      toast(err.message);
-    }
+    } catch (err: any) { toast(err.message); }
   };
 
-  const submitBrief = async () => {
-    if (!adminUser || !newBrief.title) return;
-    setSubmittingBrief(true);
+  const submitProject = async () => {
+    if (!adminUser || !newProject.title) return;
+    setSubmittingProject(true);
     try {
       const { error } = await supabase.from('film_briefs').insert({ 
         producer_id: adminUser.id, 
-        ...newBrief,
+        ...newProject,
         is_open: true
       });
       if (error) throw error;
-      setNewBrief({ title: '', description: '', genre: [], budget_range: '', timeline: '', looking_for: [] });
-      setShowNewBriefForm(false);
+      setNewProject({ title: '', description: '', genre: [], budget_range: '', timeline: '', looking_for: [] });
+      setShowNewProjectForm(false);
       fetchData();
-      toast('BRIEF PUBLISHED ✦');
+      toast('PROJECT PUBLISHED ✦');
     } catch (err: any) { toast(err.message); }
-    finally { setSubmittingBrief(false); }
+    finally { setSubmittingProject(false); }
   };
 
   const createRoom = async () => {
@@ -684,7 +681,7 @@ export default function AdminDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
       {/* Top Section Tabs */}
       <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0, overflowX: 'auto' }}>
-        {['INBOX', 'WRITERS', 'BRIEFS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS', 'SCREENINGS'].map(s => (
+        {['INBOX', 'WRITERS', 'PROJECTS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS', 'SCREENINGS'].map(s => (
           <button key={s} onClick={() => setSection(s as any)}
             style={{ 
               background: 'none', border: 'none', borderBottom: section === s ? '2px solid #BCA88E' : '2px solid transparent',
@@ -1081,52 +1078,76 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {section === 'BRIEFS' && (
-          <motion.div key="briefs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+        {section === 'PROJECTS' && (
+          <motion.div key="projects" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
             {/* Create Form */}
-            {!showNewBriefForm ? (
-              <CinemaButton onClick={() => setShowNewBriefForm(true)}>+ NEW BRIEF</CinemaButton>
+            {!showNewProjectForm ? (
+              <CinemaButton onClick={() => setShowNewProjectForm(true)}>+ NEW PROJECT</CinemaButton>
             ) : (
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: 32, border: '1px solid rgba(188,168,142,0.2)', background: 'rgba(188,168,142,0.03)', display: 'flex', flexDirection: 'column', gap: 32 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#BCA88E', margin: 0 }}>NEW BRIEF</p>
-                  <button onClick={() => setShowNewBriefForm(false)} style={{ background: 'none', border: 'none', color: '#BCA88E', fontSize: 20, cursor: 'pointer' }}>✕</button>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#BCA88E', margin: 0 }}>NEW PROJECT</p>
+                  <button onClick={() => setShowNewProjectForm(false)} style={{ background: 'none', border: 'none', color: '#BCA88E', fontSize: 20, cursor: 'pointer' }}>✕</button>
                 </div>
                 
-                <CinemaInput label="BRIEF TITLE" value={newBrief.title} onChange={v => setNewBrief({...newBrief, title: v})} />
-                <CinemaTextarea label="DESCRIPTION & REQUIREMENTS" rows={4} value={newBrief.description} onChange={v => setNewBrief({...newBrief, description: v})} />
+                <CinemaInput label="PROJECT TITLE" value={newProject.title} onChange={v => setNewProject({...newProject, title: v})} />
+                <CinemaTextarea label="DESCRIPTION & REQUIREMENTS" rows={4} value={newProject.description} onChange={v => setNewProject({...newProject, description: v})} />
                 
-                <TagPicker label="GENRE(S)" tags={GENRE_OPTIONS} selected={newBrief.genre} onChange={v => setNewBrief({...newBrief, genre: v})} max={3} />
+                <TagPicker label="GENRE(S)" tags={GENRE_OPTIONS} selected={newProject.genre} onChange={v => setNewProject({...newProject, genre: v})} max={3} />
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-                  <TagPicker label="BUDGET RANGE" tags={BUDGET_OPTIONS} selected={newBrief.budget_range} onChange={v => setNewBrief({...newBrief, budget_range: v})} single />
-                  <TagPicker label="TIMELINE" tags={TIMELINE_OPTIONS} selected={newBrief.timeline} onChange={v => setNewBrief({...newBrief, timeline: v})} single />
+                  <TagPicker label="BUDGET RANGE" tags={BUDGET_OPTIONS} selected={newProject.budget_range} onChange={v => setNewProject({...newProject, budget_range: v})} single />
+                  <TagPicker label="TIMELINE" tags={TIMELINE_OPTIONS} selected={newProject.timeline} onChange={v => setNewProject({...newProject, timeline: v})} single />
                 </div>
                 
-                <TagPicker label="LOOKING FOR" tags={LOOKING_FOR_OPTIONS} selected={newBrief.looking_for} onChange={v => setNewBrief({...newBrief, looking_for: v})} />
+                <TagPicker label="LOOKING FOR" tags={LOOKING_FOR_OPTIONS} selected={newProject.looking_for} onChange={v => setNewProject({...newProject, looking_for: v})} />
 
-                <CinemaButton onClick={submitBrief} loading={submittingBrief} disabled={!newBrief.title}>PUBLISH BRIEF</CinemaButton>
+                <CinemaButton onClick={submitProject} loading={submittingProject} disabled={!newProject.title}>PUBLISH PROJECT</CinemaButton>
               </motion.div>
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {briefs.map(b => (
-                <div key={b.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between' }}>
-                  <div>
-                    <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 6px' }}>{b.title}</p>
-                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
-                      BY {b.producer?.full_name} · BUDGET: {b.budget_range}
-                    </p>
-                    <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, maxWidth: 500, lineHeight: 1.5 }}>{b.description}</p>
+                <div key={b.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div>
+                      <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 6px' }}>{b.title}</p>
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
+                        BY {b.producer?.full_name} · BUDGET: {b.budget_range}
+                      </p>
+                      <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.7, maxWidth: 500, lineHeight: 1.5 }}>{b.description}</p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+                      <button onClick={() => toggleProjectStatus(b.id, b.is_open)} style={{ background: 'none', border: `1px solid ${b.is_open ? '#4ade80' : '#BCA88E'}`, color: b.is_open ? '#4ade80' : '#BCA88E', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
+                        {b.is_open ? 'OPEN' : 'CLOSED'}
+                      </button>
+                      <button onClick={() => deleteProject(b.id)} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
+                        DELETE
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-                    <button onClick={() => toggleBriefStatus(b.id, b.is_open)} style={{ background: 'none', border: `1px solid ${b.is_open ? '#4ade80' : '#BCA88E'}`, color: b.is_open ? '#4ade80' : '#BCA88E', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
-                      {b.is_open ? 'OPEN' : 'CLOSED'}
-                    </button>
-                    <button onClick={() => deleteBrief(b.id)} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
-                      DELETE
-                    </button>
-                  </div>
+                  
+                  {b.brief_interests && b.brief_interests.length > 0 && (
+                    <div style={{ marginTop: 12, borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 16 }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 3, color: '#BCA88E', margin: '0 0 12px' }}>INTERESTED USERS ({b.brief_interests.length})</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {b.brief_interests.map((interest: any) => (
+                          <div key={interest.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(188,168,142,0.05)', padding: '8px 16px' }}>
+                            <span style={{ fontSize: 16 }}>{interest.user?.avatar_symbol || '👤'}</span>
+                            <div>
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', margin: 0 }}>{interest.user?.full_name}</p>
+                              <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0 }}>
+                                SUPR-{interest.user?.st_id} {interest.user?.role ? `• ${interest.user.role.toUpperCase()}` : ''}
+                              </p>
+                            </div>
+                            {interest.note && (
+                              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F0EBE0', opacity: 0.5, fontStyle: 'italic', margin: '0 0 0 16px' }}>"{interest.note}"</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

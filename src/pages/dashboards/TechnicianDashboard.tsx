@@ -444,18 +444,29 @@ export default function TechnicianDashboard() {
                 <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.25, fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>No active briefs right now.</p>
               ) : openBriefs.map(brief => {
                 const hasInterested = userBriefInterests.has(brief.id);
+                const acceptedRequest = sentRequests.find(req => req.project_title === brief.title && req.status === 'accepted');
+
                 return (
-                  <div key={brief.id} style={{ background: 'rgba(30,32,41,0.4)', border: `1px solid ${hasInterested ? 'rgba(188,168,142,0.4)' : 'rgba(188,168,142,0.12)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
+                  <div key={brief.id} style={{ background: 'rgba(30,32,41,0.4)', border: `1px solid ${acceptedRequest ? 'rgba(74,222,128,0.4)' : hasInterested ? 'rgba(188,168,142,0.4)' : 'rgba(188,168,142,0.12)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: '0 0 6px' }}>{brief.title}</h3>
                         <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {brief.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
                       </div>
-                      {hasInterested && (
+                      {acceptedRequest ? (
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#4ade80', letterSpacing: 3, margin: '0 0 4px', fontWeight: 700 }}>
+                            ✦ ACCEPTED
+                          </p>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.8, margin: 0 }}>
+                            {acceptedRequest.receiver?.contact || 'Check Mutual Connections'}
+                          </p>
+                        </div>
+                      ) : hasInterested ? (
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
                           ✦ INTERESTED
                         </p>
-                      )}
+                      ) : null}
                     </div>
 
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{brief.description}</p>
@@ -493,9 +504,10 @@ export default function TechnicianDashboard() {
                       <CinemaButton 
                         onClick={() => handleInterestInBrief(brief)} 
                         loading={expressingBriefId === brief.id}
-                        style={hasInterested ? { borderColor: '#BCA88E', background: 'rgba(188,168,142,0.08)' } : {}}
+                        disabled={!!acceptedRequest}
+                        style={acceptedRequest ? { borderColor: '#4ade80', color: '#4ade80', background: 'rgba(74,222,128,0.08)' } : hasInterested ? { borderColor: '#BCA88E', background: 'rgba(188,168,142,0.08)' } : {}}
                       >
-                        {expressingBriefId === brief.id ? '...' : hasInterested ? '✦ INTERESTED — WITHDRAW' : 'EXPRESS INTEREST'}
+                        {expressingBriefId === brief.id ? '...' : acceptedRequest ? 'COLLABORATION ACTIVE' : hasInterested ? '✦ INTERESTED — WITHDRAW' : 'EXPRESS INTEREST'}
                       </CinemaButton>
                     </div>
                   </div>
