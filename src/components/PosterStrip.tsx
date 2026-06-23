@@ -60,12 +60,7 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
 
   // Poster takes full width — side posters are offset so they peek in and blend
   const POSTER_W  = isMobile ? '80vw' : '45vw';
-  const SIDE_OFFSET = isMobile ? '70vw' : '38vw';
-
-  // Mask gradients: center has wide opaque middle fading at both edges
-  // side cards fade stronger toward the outer edge to blend seamlessly
-  const CENTER_MASK = 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)';
-  const SIDE_MASK   = 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)';
+  const SIDE_OFFSET = isMobile ? '85vw' : '48vw';
 
   return (
     <div
@@ -83,6 +78,31 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
         touchAction: 'pan-y',
       }}
     >
+      {/* Smooth Edge Gradients to blend side posters into the background */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: isMobile ? '12vw' : '25vw',
+          background: 'linear-gradient(to right, #0a0808 0%, transparent 100%)',
+          zIndex: 30,
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: isMobile ? '12vw' : '25vw',
+          background: 'linear-gradient(to left, #0a0808 0%, transparent 100%)',
+          zIndex: 30,
+          pointerEvents: 'none',
+        }}
+      />
       <motion.div
         onPanStart={handlePanStart}
         onPan={handlePan}
@@ -125,9 +145,6 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
             film.posterImage ||
             (i < 5 ? `/scroll${i + 1}.webp` : film.stills?.[0] || film.reelImage);
 
-          // Mask: fades edges of each poster so adjacent posters blend into each other
-          const mask = isCenter ? CENTER_MASK : SIDE_MASK;
-
           return (
             <motion.div
               key={film.id}
@@ -150,9 +167,6 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                 pointerEvents,
                 cursor: 'pointer',
                 willChange: 'transform',
-                // Mask creates the seamless blend between adjacent posters
-                WebkitMaskImage: isVisible ? mask : 'none',
-                maskImage: isVisible ? mask : 'none',
               }}
               whileTap={{ cursor: 'grabbing' }}
             >
