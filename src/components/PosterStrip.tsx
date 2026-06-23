@@ -59,13 +59,13 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
   };
 
   // Poster takes full width — side posters are offset so they peek in and blend
-  const POSTER_W  = isMobile ? '100vw' : '100vw';
-  const SIDE_OFFSET = isMobile ? '85vw' : '88vw';
+  const POSTER_W  = isMobile ? '90vw' : '65vw';
+  const SIDE_OFFSET = isMobile ? '80vw' : '55vw';
 
   // Mask gradients: center has wide opaque middle fading at both edges
   // side cards fade stronger toward the outer edge to blend seamlessly
-  const CENTER_MASK = 'linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%)';
-  const SIDE_MASK   = 'linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%)';
+  const CENTER_MASK = 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)';
+  const SIDE_MASK   = 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)';
 
   return (
     <div
