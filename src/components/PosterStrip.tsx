@@ -74,7 +74,7 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
       style={{
         position: 'relative',
         width: '100%',
-        height: isMobile ? '65vh' : '85vh',
+        height: isMobile ? '45vh' : '55vh',
         background: '#0a0808',
         overflow: 'hidden',
         display: 'flex',
@@ -171,70 +171,7 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                 }}
               />
 
-              {/* Center card: subtle bottom gradient + title info */}
-              {isCenter && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    background:
-                      'linear-gradient(to top, rgba(10,8,8,0.88) 0%, rgba(10,8,8,0.45) 45%, transparent 100%)',
-                    padding: isMobile ? '40px 16px 16px' : '50px 40px 24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                    zIndex: 6,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  {film.title && (
-                    <p
-                      style={{
-                        fontFamily: 'Playfair Display, serif',
-                        fontSize: isMobile ? 16 : 22,
-                        fontWeight: 600,
-                        color: '#F0EBE0',
-                        margin: 0,
-                        letterSpacing: 1,
-                        textShadow: '0 2px 14px rgba(0,0,0,0.9)',
-                      }}
-                    >
-                      {film.title}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    {film.director && (
-                      <span
-                        style={{
-                          fontFamily: 'Montserrat, sans-serif',
-                          fontSize: 8,
-                          letterSpacing: 3,
-                          color: '#c9a84c',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        dir. {film.director}
-                      </span>
-                    )}
-                    {film.rating && (
-                      <span
-                        style={{
-                          fontFamily: 'Inter, monospace',
-                          fontSize: 7,
-                          letterSpacing: 2,
-                          color: 'rgba(240,235,224,0.4)',
-                          border: '1px solid rgba(240,235,224,0.18)',
-                          padding: '1px 5px',
-                        }}
-                      >
-                        {film.rating}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
+
             </motion.div>
           );
         })}
