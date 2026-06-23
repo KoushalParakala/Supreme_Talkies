@@ -1,5 +1,5 @@
 import toast from 'react-hot-toast';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -180,14 +180,13 @@ const LOOKING_FOR_OPTIONS = ['Writer', 'Director', 'Technician', 'Presenter', 'M
 
 export default function AdminDashboard() {
   const { user: adminUser, loading: authLoading, isAdmin } = useAuth();
-  const [section, setSection] = useState<'INBOX' | 'WRITERS' | 'PROJECTS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS' | 'SCREENINGS'>('INBOX');
+  const [section, setSection] = useState<'FILMS' | 'WRITERS' | 'PROJECTS' | 'PROJECT ROOMS' | 'MARKETING' | 'CAMPAIGNS' | 'CREW' | 'SCREENINGS'>('FILMS');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setDebugStep] = useState<string>('Init');
   
-  // INBOX state
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
-  const [typeFilter, setTypeFilter] = useState('all');
+  // MARKETING state
+  const [marketingTab, setMarketingTab] = useState<'marketing_idea' | 'collab'>('marketing_idea');
   const [submissions, setSubmissions] = useState<any[]>([]);
 
   // WRITERS / PIPELINE state
@@ -212,7 +211,6 @@ export default function AdminDashboard() {
   // PROJECT ROOMS state
   const [projectRooms, setProjectRooms] = useState<any[]>([]);
   const [newRoom, setNewRoom] = useState({ title: '', script_id: '', brief: '' });
-  const [replyState, setReplyState] = useState<{ id: string | null, text: string }>({ id: null, text: '' });
 
   // CAMPAIGNS state
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -238,12 +236,7 @@ export default function AdminDashboard() {
   const [still3File, setStill3File] = useState<File | null>(null);
   const [uploadingFilm, setUploadingFilm] = useState(false);
 
-  // TEMPLATES state
-  const [dbTemplates, setDbTemplates] = useState<any[]>([]);
-  const [newTemplate, setNewTemplate] = useState({ label: '', type: 'REPLY', subject: '', body: '' });
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
-  const [useTemplateModal, setUseTemplateModal] = useState<any>(null);
-  const [templateVars, setTemplateVars] = useState({ writer_name: '', script_title: '', reviewer_name: '' });
+
 
   // PROJECT ROOMS upgrades
   const [roomStatusFilter, setRoomStatusFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'>('ALL');
@@ -260,11 +253,11 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
 
-      if (section === 'INBOX') {
-        setDebugStep('Fetching INBOX submissions...');
-        const { data, error: err } = await supabase.from('submissions').select('*, profiles(full_name, avatar_symbol, st_id)').order('created_at', { ascending: false });
+      if (section === 'MARKETING') {
+        setDebugStep('Fetching MARKETING submissions...');
+        const { data, error: err } = await supabase.from('submissions').select('*, profiles(full_name, avatar_symbol, st_id)').in('type', ['marketing_idea', 'collab']).order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
-        setDebugStep('INBOX fetch complete');
+        setDebugStep('MARKETING fetch complete');
         if (err) throw err;
         setSubmissions(data || []);
       } else if (section === 'WRITERS') {
@@ -303,11 +296,6 @@ export default function AdminDashboard() {
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
         setFilms(data || []);
-      } else if (section === 'TEMPLATES') {
-        const { data, error: err } = await supabase.from('admin_templates').select('*').order('created_at', { ascending: false });
-        if (fetchId !== fetchIdRef.current) return;
-        if (err) throw err;
-        setDbTemplates(data || []);
       } else if (section === 'SCREENINGS') {
         const { data, error: err } = await supabase.from('presentations').select('*, profiles(full_name, avatar_symbol, st_id)').order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
@@ -534,26 +522,6 @@ export default function AdminDashboard() {
     } catch (err: any) { toast(err.message); }
   };
 
-  const saveTemplate = async () => {
-    if (!newTemplate.label || !newTemplate.body) return;
-    try {
-      if (editingTemplateId) {
-        await supabase.from('admin_templates').update(newTemplate).eq('id', editingTemplateId);
-      } else {
-        await supabase.from('admin_templates').insert(newTemplate);
-      }
-      setNewTemplate({ label: '', type: 'REPLY', subject: '', body: '' });
-      setEditingTemplateId(null);
-      fetchData();
-    } catch (err: any) { toast(err.message); }
-  };
-
-  const deleteTemplate = async (id: string) => {
-    if (!confirm('Discard this template?')) return;
-    const { error } = await supabase.from('admin_templates').delete().eq('id', id);
-    if (!error) fetchData();
-  };
-
   const createCampaign = async () => {
     if (!newCampaign.title || !adminUser) return;
     const payload = {
@@ -600,18 +568,6 @@ export default function AdminDashboard() {
     } catch (err: any) { toast(err.message); }
   };
 
-  const TEMPLATES = [
-    { label: 'ACKNOWLEDGED', text: 'Thank you for submitting to Supreme Talkies. We have received your submission and will review it within 7 days.' },
-    { label: 'SHORTLISTED', text: 'Your submission has been shortlisted. We are seriously considering it for development. Expect to hear from us within 3 days.' },
-    { label: 'IN DEVELOPMENT', text: 'Exciting news — your submission is now officially in development with Supreme Talkies. Welcome to the family.' },
-    { label: 'MORE INFO', text: 'We loved your submission and would like to learn more. Could you share additional details or arrange a call?' },
-    { label: 'NOT THIS TIME', text: 'Thank you for trusting us with your work. While this one is not the right fit right now, we encourage you to submit again.' },
-  ];
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast("Copied to clipboard. Send via your preferred channel (email/DM).");
-  };
 
   
   const saveFilm = async () => {
@@ -666,9 +622,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredSubmissions = useMemo(() => 
-    submissions.filter(s => typeFilter === 'all' || s.type === typeFilter)
-  , [submissions, typeFilter]);
 
   if (!authLoading && !isAdmin) {
     return <Navigate to="/dashboard" replace />;
@@ -681,7 +634,7 @@ export default function AdminDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
       {/* Top Section Tabs */}
       <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0, overflowX: 'auto' }}>
-        {['INBOX', 'WRITERS', 'PROJECTS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS', 'SCREENINGS'].map(s => (
+        {['MARKETING', 'FILMS', 'WRITERS', 'PROJECTS', 'PROJECT ROOMS', 'CAMPAIGNS', 'SCREENINGS'].map(s => (
           <button key={s} onClick={() => setSection(s as any)}
             style={{ 
               background: 'none', border: 'none', borderBottom: section === s ? '2px solid #BCA88E' : '2px solid transparent',
@@ -701,124 +654,74 @@ export default function AdminDashboard() {
       )}
 
       <AnimatePresence mode="wait">
-        {section === 'INBOX' && (
-          <motion.div key="inbox" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Inbox Controls */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: 12, overflowX: 'auto' }}>
-                {['all', 'script', 'portfolio', 'film', 'collab', 'producer_interest'].map(type => (
-                  <button key={type} onClick={() => setTypeFilter(type)}
-                    style={{
-                      background: typeFilter === type ? 'rgba(188,168,142,0.1)' : 'none',
-                      border: '1px solid rgba(188,168,142,0.1)',
-                      padding: '6px 12px', fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 2,
-                      color: typeFilter === type ? '#BCA88E' : 'rgba(188,168,142,0.5)', cursor: 'pointer'
-                    }}
-                  >
-                    {type.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 16 }}>
-                {['LIST', 'KANBAN'].map(mode => (
-                  <button key={mode} onClick={() => setViewMode(mode.toLowerCase() as any)}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 3,
-                      color: viewMode === mode.toLowerCase() ? '#BCA88E' : 'rgba(188,168,142,0.4)',
-                      padding: '8px 0', borderBottom: viewMode === mode.toLowerCase() ? '1px solid #BCA88E' : '1px solid transparent'
-                    }}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
+        {section === 'MARKETING' && (
+          <motion.div key="marketing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 16 }}>
+              {['marketing_idea', 'collab'].map(type => (
+                <button key={type} onClick={() => setMarketingTab(type as any)}
+                  style={{
+                    background: marketingTab === type ? 'rgba(188,168,142,0.1)' : 'none',
+                    border: '1px solid rgba(188,168,142,0.1)',
+                    padding: '8px 16px', fontFamily: 'Inter, monospace', fontSize: 10, letterSpacing: 2,
+                    color: marketingTab === type ? '#BCA88E' : 'rgba(188,168,142,0.5)', cursor: 'pointer'
+                  }}
+                >
+                  {type === 'marketing_idea' ? 'MARKETING IDEAS' : 'MARKETERS (COLLAB)'}
+                </button>
+              ))}
             </div>
 
-            {viewMode === 'list' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                {filteredSubmissions.length === 0 && !loading && (
-                  <p style={{ textAlign: 'center', opacity: 0.3, fontSize: 11, padding: 40 }}>NO SUBMISSIONS FOUND</p>
-                )}
-                {filteredSubmissions.map(sub => (
-                  <div key={sub.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, marginBottom: 16 }}>
-                      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.6 }}>{sub.profiles?.full_name || 'Unknown'}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {submissions.filter(s => s.type === marketingTab).length === 0 && !loading && (
+                <p style={{ textAlign: 'center', opacity: 0.3, fontSize: 11, padding: 40 }}>NO {marketingTab === 'marketing_idea' ? 'IDEAS' : 'MARKETERS'} FOUND</p>
+              )}
+              {submissions.filter(s => s.type === marketingTab).map(sub => (
+                <div key={sub.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.6 }}>{sub.profiles?.full_name || 'Unknown'}</span>
+                      </div>
+                      <div>
+                        <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: 0 }}>
+                          {sub.type === 'collab' ? sub.data?.platform : 'Marketing Idea'}
+                        </p>
+                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
+                          {sub.profiles?.st_id ? (sub.profiles.st_id.startsWith('SUPR-') ? `(${sub.profiles.st_id})` : `(SUPR-${sub.profiles.st_id})`) : ''} · {sub.status?.toUpperCase()}
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => updateSubStatus(sub.id, 'accepted')} style={{ background: 'none', border: '1px solid #BCA88E', color: '#BCA88E', fontSize: 9, padding: '4px 12px', cursor: 'pointer' }}>ACCEPT</button>
+                      <button onClick={() => updateSubStatus(sub.id, 'archived')} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', fontSize: 9, padding: '4px 12px', cursor: 'pointer' }}>ARCHIVE</button>
+                    </div>
+                  </div>
+                  
+                  {sub.type === 'marketing_idea' ? (
+                    <div style={{ padding: 16, background: sub.data?.color || 'rgba(255,255,255,0.05)', color: '#1a1a1a', fontFamily: 'Inter, monospace', fontSize: 12, marginBottom: 20, borderRadius: 4 }}>
+                      {sub.data?.text}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'rgba(255,255,255,0.02)', padding: 16, border: '1px solid rgba(188,168,142,0.05)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                        <div>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', margin: '0 0 4px' }}>PLATFORM / HANDLE</p>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 13, color: '#F0EBE0', margin: 0 }}>{sub.data?.platform}</p>
                         </div>
                         <div>
-                          <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0', margin: 0 }}>
-                            {sub.type === 'collab' ? sub.data?.platform : sub.type === 'marketing_idea' ? 'Marketing Idea' : sub.data?.title || sub.data?.genre || 'Untitled'}
-                          </p>
-                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
-                            {sub.type?.toUpperCase()} · {sub.profiles?.full_name} {sub.profiles?.st_id ? (sub.profiles.st_id.startsWith('SUPR-') ? `(${sub.profiles.st_id})` : `(SUPR-${sub.profiles.st_id})`) : ''} · {sub.status?.toUpperCase()}
-                          </p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', margin: '0 0 4px' }}>FOLLOWER COUNT</p>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 13, color: '#F0EBE0', margin: 0 }}>{sub.data?.follower_count}</p>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => updateSubStatus(sub.id, 'accepted')} style={{ background: 'none', border: '1px solid #BCA88E', color: '#BCA88E', fontSize: 9, padding: '4px 12px', cursor: 'pointer' }}>ACCEPT</button>
-                        <button onClick={() => updateSubStatus(sub.id, 'archived')} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', fontSize: 9, padding: '4px 12px', cursor: 'pointer' }}>ARCHIVE</button>
+                      <div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', margin: '0 0 4px' }}>COLLAB IDEA</p>
+                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 13, color: '#F0EBE0', margin: 0, whiteSpace: 'pre-wrap' }}>{sub.data?.collab_idea}</p>
                       </div>
                     </div>
-                    
-                    {sub.type === 'marketing_idea' ? (
-                      <div style={{ padding: 16, background: sub.data?.color || 'rgba(255,255,255,0.05)', color: '#1a1a1a', fontFamily: 'Inter, monospace', fontSize: 12, marginBottom: 20, borderRadius: 4 }}>
-                        {sub.data?.text}
-                      </div>
-                    ) : (
-                      <pre style={{ margin: '0 0 20px', fontSize: 10, color: '#BCA88E', opacity: 0.4, whiteSpace: 'pre-wrap' }}>{JSON.stringify(sub.data, null, 2)}</pre>
-                    )}
-
-                    {/* Quick Reply */}
-                    <div style={{ borderTop: '1px solid rgba(188,168,142,0.05)', paddingTop: 16 }}>
-                      <button onClick={() => setReplyState({ id: replyState.id === sub.id ? null : sub.id, text: '' })} 
-                        style={{ background: 'none', border: 'none', color: '#BCA88E', fontSize: 9, letterSpacing: 2, cursor: 'pointer', padding: 0, opacity: 0.6 }}>
-                        {replyState.id === sub.id ? '✕ CLOSE' : '↶ SEND TEMPLATE'}
-                      </button>
-                      
-                      {replyState.id === sub.id && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {TEMPLATES.map(t => (
-                              <button key={t.label} onClick={() => setReplyState({ ...replyState, text: t.text })}
-                                style={{ background: 'none', border: '1px solid rgba(188,168,142,0.15)', padding: '4px 10px', color: '#BCA88E', fontFamily: 'Inter, monospace', fontSize: 8, letterSpacing: 3, cursor: 'pointer' }}>
-                                {t.label}
-                              </button>
-                            ))}
-                          </div>
-                          <CinemaTextarea value={replyState.text} onChange={(v: string) => setReplyState({ ...replyState, text: v })} placeholder="Type your reply here..." />
-                          <button onClick={() => copyToClipboard(replyState.text)} 
-                            style={{ alignSelf: 'flex-start', background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '8px 24px', fontFamily: 'Inter, monospace', fontSize: 10, fontWeight: 700, letterSpacing: 2, cursor: 'pointer' }}>
-                            COPY TO CLIPBOARD
-                          </button>
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 20 }}>
-                {['submitted', 'under_review', 'accepted', 'archived'].map(status => (
-                  <div key={status} style={{ width: 260, flexShrink: 0, background: 'rgba(0,0,0,0.2)', minHeight: 400 }}>
-                    <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(188,168,142,0.1)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 5 }}>
-                      {status.toUpperCase()}
-                    </div>
-                    <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {filteredSubmissions.filter(s => s.status === status).map(sub => (
-                        <div key={sub.id} style={{ background: 'rgba(188,168,142,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 12 }}>
-                          <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>
-                            {sub.type === 'collab' ? sub.data?.platform : sub.type === 'marketing_idea' ? 'Marketing Idea' : sub.data?.title || 'Untitled'}
-                          </p>
-                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: 0 }}>{sub.profiles?.full_name} {sub.profiles?.st_id ? (sub.profiles.st_id.startsWith('SUPR-') ? `(${sub.profiles.st_id})` : `(SUPR-${sub.profiles.st_id})`) : ''}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  )}
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
         {section === 'WRITERS' && (
@@ -1346,65 +1249,6 @@ export default function AdminDashboard() {
 
 
 
-        {section === 'TEMPLATES' && (
-          <motion.div key="templates" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-            {/* Create Form */}
-            <div style={{ padding: 32, border: '1px solid rgba(188,168,142,0.2)', background: 'rgba(188,168,142,0.03)', display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#BCA88E', margin: 0 }}>{editingTemplateId ? 'EDIT TEMPLATE' : 'NEW QUICK REPLY TEMPLATE'}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <CinemaInput label="TEMPLATE LABEL" value={newTemplate.label} onChange={(v: string) => setNewTemplate({ ...newTemplate, label: v })} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'Playfair Display, serif', fontSize: 10, color: '#BCA88E', letterSpacing: 4 }}>TYPE</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {['REPLY', 'REJECTION', 'ACCEPTANCE', 'FEEDBACK'].map(t => (
-                      <button key={t} onClick={() => setNewTemplate({ ...newTemplate, type: t })}
-                        style={{
-                          background: newTemplate.type === t ? '#BCA88E' : 'rgba(188,168,142,0.05)',
-                          color: newTemplate.type === t ? '#0e0f13' : '#BCA88E',
-                          border: '1px solid rgba(188,168,142,0.2)', padding: '6px 12px', fontSize: 8, letterSpacing: 2, cursor: 'pointer'
-                        }}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <CinemaInput label="SUBJECT" value={newTemplate.subject} onChange={(v: string) => setNewTemplate({ ...newTemplate, subject: v })} />
-              <div>
-                <CinemaTextarea label="BODY" rows={8} value={newTemplate.body} onChange={(v: string) => setNewTemplate({ ...newTemplate, body: v })} />
-                <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.5, marginTop: 8 }}>Use {"{writer_name}, {script_title}, {reviewer_name}"} as placeholders</p>
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={saveTemplate} style={{ flex: 1, background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '12px', fontFamily: 'Inter, monospace', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: 'pointer' }}>
-                  {editingTemplateId ? 'UPDATE TEMPLATE' : 'SAVE TEMPLATE'}
-                </button>
-                {editingTemplateId && <button onClick={() => { setEditingTemplateId(null); setNewTemplate({ label: '', type: 'REPLY', subject: '', body: '' }); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
-              </div>
-            </div>
-
-            {/* List */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-              {dbTemplates.map(t => (
-                <div key={t.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 15, color: '#F0EBE0', margin: 0 }}>{t.label}</h4>
-                    <span style={{ fontSize: 8, background: 'rgba(188,168,142,0.1)', color: '#BCA88E', padding: '2px 6px', letterSpacing: 2 }}>{t.type}</span>
-                  </div>
-                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', margin: 0, opacity: 0.5 }}>SUB: {t.subject}</p>
-                  <p style={{ fontSize: 12, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.body}</p>
-                  
-                  <div style={{ display: 'flex', gap: 12, marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
-                    <button onClick={() => setUseTemplateModal(t)} style={{ flex: 1, background: 'none', border: '1px solid #BCA88E', color: '#BCA88E', fontSize: 9, padding: '8px', cursor: 'pointer' }}>USE</button>
-                    <button onClick={() => { setEditingTemplateId(t.id); setNewTemplate(t); }} style={{ background: 'none', border: '1px solid rgba(188,168,142,0.2)', color: '#BCA88E', fontSize: 9, padding: '8px', cursor: 'pointer' }}>EDIT</button>
-                    <button onClick={() => deleteTemplate(t.id)} style={{ color: '#ff5050', background: 'none', border: 'none', fontSize: 14, cursor: 'pointer' }}>✕</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
         {section === 'FILMS' && (
           <motion.div key="films" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
             {/* Create/Edit Form */}
@@ -1585,49 +1429,6 @@ export default function AdminDashboard() {
 
       </AnimatePresence>
 
-      {/* USE TEMPLATE MODAL */}
-      <AnimatePresence>
-        {useTemplateModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-            <motion.div initial={{ y: 20 }} animate={{ y: 0 }} style={{ width: '100%', maxWidth: 800, background: '#0a0a0a', border: '1px solid #BCA88E', padding: 40, position: 'relative' }}>
-              <button onClick={() => setUseTemplateModal(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: '#BCA88E', fontSize: 20, cursor: 'pointer' }}>✕</button>
-              
-              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, color: '#BCA88E', marginBottom: 32 }}>POPULATE TEMPLATE</h2>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <CinemaInput label="WRITER NAME" value={templateVars.writer_name} onChange={(v: string) => setTemplateVars({ ...templateVars, writer_name: v })} />
-                  <CinemaInput label="SCRIPT TITLE" value={templateVars.script_title} onChange={(v: string) => setTemplateVars({ ...templateVars, script_title: v })} />
-                  <CinemaInput label="REVIEWER NAME" value={templateVars.reviewer_name} onChange={(v: string) => setTemplateVars({ ...templateVars, reviewer_name: v })} />
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 4, color: '#BCA88E' }}>LIVE PREVIEW</p>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 20, flex: 1, fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto' }}>
-                    {useTemplateModal.body
-                      .replace(/{writer_name}/g, templateVars.writer_name || '[WRITER NAME]')
-                      .replace(/{script_title}/g, templateVars.script_title || '[SCRIPT TITLE]')
-                      .replace(/{reviewer_name}/g, templateVars.reviewer_name || '[REVIEWER NAME]')}
-                  </div>
-                  <button 
-                    onClick={() => {
-                      const populated = useTemplateModal.body
-                        .replace(/{writer_name}/g, templateVars.writer_name)
-                        .replace(/{script_title}/g, templateVars.script_title)
-                        .replace(/{reviewer_name}/g, templateVars.reviewer_name);
-                      navigator.clipboard.writeText(populated);
-                      toast("COPIED TO CLIPBOARD ✦");
-                    }}
-                    style={{ background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '12px', fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 3, cursor: 'pointer' }}
-                  >
-                    COPY TO CLIPBOARD
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
