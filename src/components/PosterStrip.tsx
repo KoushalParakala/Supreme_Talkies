@@ -1,3 +1,4 @@
+// Production Build: Seamless edge-blended cinematic poster strip
 import { useState, useEffect, useRef } from 'react';
 import { motion, PanInfo, useMotionValue, animate } from 'framer-motion';
 import { useFilms } from '../hooks/useFilms';
