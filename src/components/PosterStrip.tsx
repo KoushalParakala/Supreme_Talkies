@@ -109,8 +109,6 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
     return dist;
   };
 
-  const currentFilm = FILMS[currentIndex];
-
   // Poster width & spacing
   const POSTER_W = isMobile ? '88vw' : '70vw';
   const SIDE_OFFSET = isMobile ? '93vw' : '76vw';
