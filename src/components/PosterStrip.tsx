@@ -139,7 +139,6 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
             opacity = 0; brightness = 0; zIndex = 1; pointerEvents = 'none';
           }
 
-          const isVisible = isCenter || isLeft || isRight;
 
           const bgImage =
             film.posterImage ||
