@@ -774,40 +774,71 @@ export default function WriterDashboard() {
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-                {challenges.map(c => {
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 32, padding: '20px 10px' }}>
+                {challenges.map((c, i) => {
                   const entered = userEntries.some(e => e.challenge_id === c.id);
-                  const diff = new Date(c.deadline).getTime() - new Date().getTime();
-                  const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                  const isUrgent = daysLeft > 0 && daysLeft <= 7;
+                  const diff = c.deadline ? new Date(c.deadline).getTime() - new Date().getTime() : null;
+                  const daysLeft = diff ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
+                  const isUrgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
+
+                  // Use id characters or index to create a stable pseudo-random rotation between -3 and 3
+                  const rotation = ((c.id ? c.id.charCodeAt(0) : i) % 7) - 3;
 
                   return (
-                    <div key={c.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(188,168,142,0.15)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <motion.div 
+                      key={c.id} 
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1, rotate: rotation }}
+                      whileHover={{ scale: 1.05, rotate: 0, zIndex: 10 }}
+                      style={{ 
+                        background: '#fdf6e3', // Pale yellow sticky note color
+                        padding: '24px 24px 32px 24px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: 20,
+                        boxShadow: '2px 6px 16px rgba(0,0,0,0.6)', 
+                        color: '#1a1a1a', 
+                        position: 'relative',
+                        minHeight: '220px',
+                        cursor: 'default'
+                      }}
+                    >
+                      {/* Tape piece at the top */}
+                      <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', width: 80, height: 24, background: 'rgba(255,255,255,0.6)', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                      
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: 0 }}>{c.title}</h3>
+                        <h3 style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: 22, color: '#1a1a1a', margin: 0, lineHeight: 1.4 }}>{c.title}</h3>
                         {c.prize && (
-                          <span style={{ padding: '4px 10px', background: 'rgba(188,168,142,0.1)', border: '1px solid #BCA88E', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 2 }}>{c.prize.toUpperCase()}</span>
+                          <span style={{ padding: '4px 10px', background: 'rgba(0,0,0,0.05)', border: '1px solid #1a1a1a', color: '#1a1a1a', fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 2 }}>{c.prize.toUpperCase()}</span>
                         )}
                       </div>
                       
-                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{c.description}</p>
+                      {c.description && (
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#1a1a1a', opacity: 0.8, lineHeight: 1.7, margin: 0 }}>{c.description}</p>
+                      )}
                       
                       {c.prompt && (
-                        <blockquote style={{ borderLeft: '2px solid #BCA88E', paddingLeft: 16, margin: 0, fontStyle: 'italic', color: '#BCA88E', fontSize: 13 }}>
+                        <blockquote style={{ borderLeft: '2px solid #1a1a1a', paddingLeft: 16, margin: 0, fontStyle: 'italic', color: '#1a1a1a', fontSize: 14 }}>
                           "{c.prompt}"
                         </blockquote>
                       )}
 
                       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#BCA88E', margin: 0 }}>
-                            DEADLINE: {new Date(c.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
-                          </p>
+                          {c.deadline ? (
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#1a1a1a', margin: 0, fontWeight: 700 }}>
+                              DEADLINE: {new Date(c.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
+                            </p>
+                          ) : (
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#1a1a1a', margin: 0, fontWeight: 700 }}>
+                              OPEN CHALLENGE
+                            </p>
+                          )}
                           {isUrgent && (
                             <motion.span 
                               animate={{ opacity: [0.4, 1, 0.4] }} 
                               transition={{ duration: 1.5, repeat: Infinity }}
-                              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E', fontWeight: 700 }}
+                              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#d9534f', fontWeight: 800 }}
                             >
                               {daysLeft === 1 ? '1 DAY LEFT' : `${daysLeft} DAYS LEFT`}
                             </motion.span>
@@ -819,12 +850,13 @@ export default function WriterDashboard() {
                           disabled={entered}
                           style={{
                             width: '100%',
-                            background: entered ? 'none' : 'rgba(188,168,142,0.1)',
-                            border: '1px solid #BCA88E',
-                            color: '#BCA88E',
+                            background: entered ? 'rgba(0,0,0,0.05)' : 'transparent',
+                            border: '1px solid #1a1a1a',
+                            color: '#1a1a1a',
                             fontFamily: 'Montserrat, sans-serif',
                             fontSize: 10,
                             letterSpacing: 4,
+                            fontWeight: 700,
                             padding: '12px',
                             cursor: entered ? 'default' : 'pointer',
                             opacity: entered ? 0.6 : 1,
@@ -834,7 +866,7 @@ export default function WriterDashboard() {
                           {entered ? 'ENTERED' : 'ENTER CHALLENGE'}
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>

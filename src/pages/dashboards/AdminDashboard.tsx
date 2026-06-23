@@ -180,7 +180,7 @@ const LOOKING_FOR_OPTIONS = ['Writer', 'Director', 'Technician', 'Presenter', 'M
 
 export default function AdminDashboard() {
   const { user: adminUser, loading: authLoading, isAdmin } = useAuth();
-  const [section, setSection] = useState<'INBOX' | 'SCRIPTS' | 'BRIEFS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS' | 'SCREENINGS'>('INBOX');
+  const [section, setSection] = useState<'INBOX' | 'WRITERS' | 'BRIEFS' | 'PROJECT ROOMS' | 'CAMPAIGNS' | 'CREW' | 'TEMPLATES' | 'FILMS' | 'SCREENINGS'>('INBOX');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setDebugStep] = useState<string>('Init');
@@ -190,12 +190,16 @@ export default function AdminDashboard() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [submissions, setSubmissions] = useState<any[]>([]);
 
-  // SCRIPTS / PIPELINE state
+  // WRITERS / PIPELINE state
   const [scriptViewMode, setScriptViewMode] = useState<'list' | 'kanban'>('list');
   const [scripts, setScripts] = useState<any[]>([]);
   const [draggingScriptId, setDraggingScriptId] = useState<string | null>(null);
   const [expandedScriptId, setExpandedScriptId] = useState<string | null>(null);
   const [briefs, setBriefs] = useState<any[]>([]);
+  
+  // WRITERS Challenges state
+  const [newChallenge, setNewChallenge] = useState({ title: '' });
+  const [submittingChallenge, setSubmittingChallenge] = useState(false);
 
   // BRIEFS state
   const [showNewBriefForm, setShowNewBriefForm] = useState(false);
@@ -262,7 +266,7 @@ export default function AdminDashboard() {
         setDebugStep('INBOX fetch complete');
         if (err) throw err;
         setSubmissions(data || []);
-      } else if (section === 'SCRIPTS') {
+      } else if (section === 'WRITERS') {
         const { data, error: err } = await supabase.from('scripts').select('*, user:profiles(full_name, avatar_symbol, st_id, role)').order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
@@ -567,6 +571,21 @@ export default function AdminDashboard() {
     else { setEditingCampaign(null); fetchData(); }
   };
 
+  const createChallenge = async () => {
+    if (!adminUser || !newChallenge.title) return;
+    setSubmittingChallenge(true);
+    try {
+      const { error } = await supabase.from('writing_challenges').insert({ 
+        title: newChallenge.title,
+        is_active: true
+      });
+      if (error) throw error;
+      setNewChallenge({ title: '' });
+      toast('CHALLENGE POSTED ✦');
+    } catch (err: any) { toast(err.message); }
+    finally { setSubmittingChallenge(false); }
+  };
+
   const TEMPLATES = [
     { label: 'ACKNOWLEDGED', text: 'Thank you for submitting to Supreme Talkies. We have received your submission and will review it within 7 days.' },
     { label: 'SHORTLISTED', text: 'Your submission has been shortlisted. We are seriously considering it for development. Expect to hear from us within 3 days.' },
@@ -648,7 +667,7 @@ export default function AdminDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
       {/* Top Section Tabs */}
       <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0, overflowX: 'auto' }}>
-        {['INBOX', 'SCRIPTS', 'BRIEFS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS', 'SCREENINGS'].map(s => (
+        {['INBOX', 'WRITERS', 'BRIEFS', 'PROJECT ROOMS', 'CAMPAIGNS', 'TEMPLATES', 'FILMS', 'SCREENINGS'].map(s => (
           <button key={s} onClick={() => setSection(s as any)}
             style={{ 
               background: 'none', border: 'none', borderBottom: section === s ? '2px solid #BCA88E' : '2px solid transparent',
@@ -788,7 +807,7 @@ export default function AdminDashboard() {
             )}
           </motion.div>
         )}
-        {section === 'SCRIPTS' && (
+        {section === 'WRITERS' && (
           <motion.div key="scripts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* Status Summary Header */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, padding: '24px 40px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(188,168,142,0.15)' }}>
@@ -1001,6 +1020,32 @@ export default function AdminDashboard() {
                 })}
               </div>
             )}
+
+            {/* Writer Challenges Section */}
+            <div style={{ marginTop: 40, borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 40 }}>
+              <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, color: '#BCA88E', margin: '0 0 16px' }}>WRITER CHALLENGES</p>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.5, marginBottom: 24 }}>
+                Add a quick logline prompt. It will appear as a sticky note on the Writer Dashboard.
+              </p>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', maxWidth: 800 }}>
+                <div style={{ flex: 1 }}>
+                  <CinemaInput 
+                    label="CHALLENGE LOGLINE" 
+                    placeholder="e.g. A detective discovers they are the prime suspect in their own case." 
+                    value={newChallenge.title} 
+                    onChange={v => setNewChallenge({ ...newChallenge, title: v })} 
+                  />
+                </div>
+                <CinemaButton 
+                  onClick={createChallenge} 
+                  loading={submittingChallenge} 
+                  disabled={!newChallenge.title}
+                  style={{ marginTop: 18 }}
+                >
+                  POST CHALLENGE
+                </CinemaButton>
+              </div>
+            </div>
           </motion.div>
         )}
 
