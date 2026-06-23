@@ -207,7 +207,6 @@ export default function WriterDashboard() {
   
   // Challenge State
   const [challenges, setChallenges] = useState<any[]>([]);
-  const [userEntries, setUserEntries] = useState<any[]>([]);
 
   // Inspiration State
   const [inspirationPins, setInspirationPins] = useState<any[]>([]);
@@ -364,24 +363,7 @@ export default function WriterDashboard() {
     const fetchId = ++fetchChallengesRef.current;
     const { data: c } = await supabase.from('writing_challenges').select('*').eq('is_active', true).order('deadline', { ascending: true });
     if (fetchId !== fetchChallengesRef.current) return;
-    const { data: e } = await supabase.from('challenge_submissions').select('*').eq('user_id', user.id);
-    if (fetchId !== fetchChallengesRef.current) return;
     setChallenges(c || []);
-    setUserEntries(e || []);
-  };
-
-  const handleChallengeEnter = async (challengeId: string) => {
-    if (!user) return;
-    try {
-      const { error } = await supabase.from('challenge_submissions').insert({
-        challenge_id: challengeId,
-        user_id: user.id,
-        script_id: null
-      });
-      if (error) throw error;
-      toast('ENTRY CONFIRMED ✦');
-      fetchChallenges();
-    } catch (err: any) { toast(err.message); }
   };
 
   const handlePinSubmit = async () => {
@@ -776,11 +758,6 @@ export default function WriterDashboard() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 32, padding: '20px 10px' }}>
                 {challenges.map((c, i) => {
-                  const entered = userEntries.some(e => e.challenge_id === c.id);
-                  const diff = c.deadline ? new Date(c.deadline).getTime() - new Date().getTime() : null;
-                  const daysLeft = diff ? Math.ceil(diff / (1000 * 60 * 60 * 24)) : null;
-                  const isUrgent = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
-
                   // Use id characters or index to create a stable pseudo-random rotation between -3 and 3
                   const rotation = ((c.id ? c.id.charCodeAt(0) : i) % 7) - 3;
 
@@ -807,65 +784,21 @@ export default function WriterDashboard() {
                       <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%) rotate(-2deg)', width: 80, height: 24, background: 'rgba(255,255,255,0.6)', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
                       
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h3 style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: 22, color: '#1a1a1a', margin: 0, lineHeight: 1.4 }}>{c.title}</h3>
+                        <h3 style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: 22, color: '#1a1a1a', margin: 0, lineHeight: 1.4, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{c.title}</h3>
                         {c.prize && (
                           <span style={{ padding: '4px 10px', background: 'rgba(0,0,0,0.05)', border: '1px solid #1a1a1a', color: '#1a1a1a', fontFamily: 'Montserrat, sans-serif', fontSize: 8, letterSpacing: 2 }}>{c.prize.toUpperCase()}</span>
                         )}
                       </div>
                       
                       {c.description && (
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#1a1a1a', opacity: 0.8, lineHeight: 1.7, margin: 0 }}>{c.description}</p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#1a1a1a', opacity: 0.8, lineHeight: 1.7, margin: 0, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{c.description}</p>
                       )}
                       
                       {c.prompt && (
-                        <blockquote style={{ borderLeft: '2px solid #1a1a1a', paddingLeft: 16, margin: 0, fontStyle: 'italic', color: '#1a1a1a', fontSize: 14 }}>
+                        <blockquote style={{ borderLeft: '2px solid #1a1a1a', paddingLeft: 16, margin: 0, fontStyle: 'italic', color: '#1a1a1a', fontSize: 14, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                           "{c.prompt}"
                         </blockquote>
                       )}
-
-                      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          {c.deadline ? (
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#1a1a1a', margin: 0, fontWeight: 700 }}>
-                              DEADLINE: {new Date(c.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
-                            </p>
-                          ) : (
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 4, color: '#1a1a1a', margin: 0, fontWeight: 700 }}>
-                              OPEN CHALLENGE
-                            </p>
-                          )}
-                          {isUrgent && (
-                            <motion.span 
-                              animate={{ opacity: [0.4, 1, 0.4] }} 
-                              transition={{ duration: 1.5, repeat: Infinity }}
-                              style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#d9534f', fontWeight: 800 }}
-                            >
-                              {daysLeft === 1 ? '1 DAY LEFT' : `${daysLeft} DAYS LEFT`}
-                            </motion.span>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={() => !entered && handleChallengeEnter(c.id)}
-                          disabled={entered}
-                          style={{
-                            width: '100%',
-                            background: entered ? 'rgba(0,0,0,0.05)' : 'transparent',
-                            border: '1px solid #1a1a1a',
-                            color: '#1a1a1a',
-                            fontFamily: 'Montserrat, sans-serif',
-                            fontSize: 10,
-                            letterSpacing: 4,
-                            fontWeight: 700,
-                            padding: '12px',
-                            cursor: entered ? 'default' : 'pointer',
-                            opacity: entered ? 0.6 : 1,
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          {entered ? 'ENTERED' : 'ENTER CHALLENGE'}
-                        </button>
-                      </div>
                     </motion.div>
                   );
                 })}

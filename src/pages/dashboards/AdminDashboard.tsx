@@ -200,6 +200,7 @@ export default function AdminDashboard() {
   // WRITERS Challenges state
   const [newChallenge, setNewChallenge] = useState({ title: '' });
   const [submittingChallenge, setSubmittingChallenge] = useState(false);
+  const [adminChallenges, setAdminChallenges] = useState<any[]>([]);
 
   // BRIEFS state
   const [showNewBriefForm, setShowNewBriefForm] = useState(false);
@@ -267,10 +268,15 @@ export default function AdminDashboard() {
         if (err) throw err;
         setSubmissions(data || []);
       } else if (section === 'WRITERS') {
-        const { data, error: err } = await supabase.from('scripts').select('*, user:profiles(full_name, avatar_symbol, st_id, role)').order('created_at', { ascending: false });
+        const { data: scriptsData, error: scriptsErr } = await supabase.from('scripts').select('*, user:profiles(full_name, avatar_symbol, st_id, role)').order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
-        if (err) throw err;
-        setScripts(data || []);
+        if (scriptsErr) throw scriptsErr;
+        setScripts(scriptsData || []);
+        
+        const { data: chalData } = await supabase.from('writing_challenges').select('*').order('created_at', { ascending: false });
+        if (fetchId === fetchIdRef.current) {
+          setAdminChallenges(chalData || []);
+        }
       } else if (section === 'BRIEFS') {
         const { data, error: err } = await supabase.from('film_briefs').select('*, producer:profiles(full_name, avatar_symbol)').order('created_at', { ascending: false });
         if (fetchId !== fetchIdRef.current) return;
@@ -582,8 +588,19 @@ export default function AdminDashboard() {
       if (error) throw error;
       setNewChallenge({ title: '' });
       toast('CHALLENGE POSTED ✦');
+      fetchData(); // re-fetch challenges
     } catch (err: any) { toast(err.message); }
     finally { setSubmittingChallenge(false); }
+  };
+
+  const deleteChallenge = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this challenge?')) return;
+    try {
+      const { error } = await supabase.from('writing_challenges').delete().eq('id', id);
+      if (error) throw error;
+      toast('CHALLENGE DELETED ✕');
+      fetchData();
+    } catch (err: any) { toast(err.message); }
   };
 
   const TEMPLATES = [
@@ -1045,6 +1062,21 @@ export default function AdminDashboard() {
                   POST CHALLENGE
                 </CinemaButton>
               </div>
+
+              {/* Existing Challenges List */}
+              {adminChallenges.length > 0 && (
+                <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5, color: '#BCA88E', margin: 0 }}>ACTIVE CHALLENGES</p>
+                  {adminChallenges.map(chal => (
+                    <div key={chal.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(188,168,142,0.1)', padding: '16px 24px' }}>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#F0EBE0', margin: 0, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                        {chal.title}
+                      </p>
+                      <button onClick={() => deleteChallenge(chal.id)} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: 16, opacity: 0.7, marginLeft: 16, flexShrink: 0 }} title="Delete Challenge">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
