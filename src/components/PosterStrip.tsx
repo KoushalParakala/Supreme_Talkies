@@ -181,10 +181,10 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                     right: 0,
                     background:
                       'linear-gradient(to top, rgba(10,8,8,0.88) 0%, rgba(10,8,8,0.45) 45%, transparent 100%)',
-                    padding: isMobile ? '50px 22px 22px' : '70px 56px 32px',
+                    padding: isMobile ? '40px 16px 16px' : '50px 40px 24px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 7,
+                    gap: 4,
                     zIndex: 6,
                     pointerEvents: 'none',
                   }}
@@ -193,7 +193,7 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                     <p
                       style={{
                         fontFamily: 'Playfair Display, serif',
-                        fontSize: isMobile ? 20 : 28,
+                        fontSize: isMobile ? 16 : 22,
                         fontWeight: 600,
                         color: '#F0EBE0',
                         margin: 0,
@@ -204,13 +204,13 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                       {film.title}
                     </p>
                   )}
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     {film.director && (
                       <span
                         style={{
                           fontFamily: 'Montserrat, sans-serif',
-                          fontSize: 9,
-                          letterSpacing: 4,
+                          fontSize: 8,
+                          letterSpacing: 3,
                           color: '#c9a84c',
                           textTransform: 'uppercase',
                         }}
@@ -222,11 +222,11 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                       <span
                         style={{
                           fontFamily: 'Inter, monospace',
-                          fontSize: 8,
-                          letterSpacing: 3,
+                          fontSize: 7,
+                          letterSpacing: 2,
                           color: 'rgba(240,235,224,0.4)',
                           border: '1px solid rgba(240,235,224,0.18)',
-                          padding: '2px 7px',
+                          padding: '1px 5px',
                         }}
                       >
                         {film.rating}
@@ -270,54 +270,6 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
         </div>
       )}
 
-      {/* Nav arrows */}
-      {!isMobile && FILMS.length > 1 && (
-        <>
-          {[
-            { side: 'left' as const, label: '‹', onClick: () => { prevPoster(); startInteraction(); stopInteraction(); } },
-            { side: 'right' as const, label: '›', onClick: () => { nextPoster(); startInteraction(); stopInteraction(); } },
-          ].map(({ side, label, onClick }) => (
-            <button
-              key={side}
-              onClick={onClick}
-              style={{
-                position: 'absolute',
-                [side]: 28,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 50,
-                background: 'rgba(10,8,8,0.55)',
-                border: '1px solid rgba(201,168,76,0.22)',
-                color: 'rgba(201,168,76,0.75)',
-                width: 40,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: 18,
-                backdropFilter: 'blur(8px)',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLButtonElement;
-                el.style.background = 'rgba(201,168,76,0.14)';
-                el.style.color = '#c9a84c';
-                el.style.borderColor = 'rgba(201,168,76,0.5)';
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLButtonElement;
-                el.style.background = 'rgba(10,8,8,0.55)';
-                el.style.color = 'rgba(201,168,76,0.75)';
-                el.style.borderColor = 'rgba(201,168,76,0.22)';
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </>
-      )}
     </div>
   );
 }
