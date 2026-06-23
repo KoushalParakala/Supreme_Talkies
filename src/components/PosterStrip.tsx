@@ -30,36 +30,22 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
 
   const stopInteraction = () => {
     if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
-    interactionTimeoutRef.current = setTimeout(() => {
-      setIsInteracting(false);
-    }, 2000);
+    interactionTimeoutRef.current = setTimeout(() => setIsInteracting(false), 2000);
   };
 
-  // Auto scroll
   useEffect(() => {
     if (isInteracting) return;
-    const interval = setInterval(() => {
-      nextPoster();
-    }, 4000);
+    const interval = setInterval(nextPoster, 4000);
     return () => clearInterval(interval);
   }, [isInteracting, FILMS.length]);
 
-  const handlePanStart = () => {
-    startInteraction();
-    dragX.stop();
-  };
-
-  const handlePan = (_: any, info: PanInfo) => {
-    dragX.set(info.offset.x);
-  };
-
+  const handlePanStart = () => { startInteraction(); dragX.stop(); };
+  const handlePan = (_: any, info: PanInfo) => { dragX.set(info.offset.x); };
   const handlePanEnd = (_: any, info: PanInfo) => {
     stopInteraction();
-    const offset = info.offset.x;
-    const velocity = info.velocity.x;
     animate(dragX, 0, { type: 'spring', stiffness: 60, damping: 20, mass: 1 });
-    if (offset < -50 || velocity < -300) nextPoster();
-    else if (offset > 50 || velocity > 300) prevPoster();
+    if (info.offset.x < -50 || info.velocity.x < -300) nextPoster();
+    else if (info.offset.x > 50 || info.velocity.x > 300) prevPoster();
   };
 
   const getDistance = (index: number) => {
@@ -71,9 +57,14 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
     return dist;
   };
 
-  // Poster width & spacing
-  const POSTER_W = isMobile ? '86vw' : '72vw';
-  const SIDE_OFFSET = isMobile ? '92vw' : '78vw';
+  // Poster takes full width — side posters are offset so they peek in and blend
+  const POSTER_W  = isMobile ? '100vw' : '100vw';
+  const SIDE_OFFSET = isMobile ? '85vw' : '88vw';
+
+  // Mask gradients: center has wide opaque middle fading at both edges
+  // side cards fade stronger toward the outer edge to blend seamlessly
+  const CENTER_MASK = 'linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%)';
+  const SIDE_MASK   = 'linear-gradient(to right, transparent 0%, black 22%, black 78%, transparent 100%)';
 
   return (
     <div
@@ -82,7 +73,7 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
       style={{
         position: 'relative',
         width: '100%',
-        height: isMobile ? '60vh' : '78vh',
+        height: isMobile ? '65vh' : '85vh',
         background: '#0a0808',
         overflow: 'hidden',
         display: 'flex',
@@ -91,32 +82,6 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
         touchAction: 'pan-y',
       }}
     >
-      {/* Softened Edge Gradients — left and right container overlays */}
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: isMobile ? '15vw' : '12vw',
-          background: 'linear-gradient(to right, #0a0808 0%, transparent 100%)',
-          zIndex: 30,
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: isMobile ? '15vw' : '12vw',
-          background: 'linear-gradient(to left, #0a0808 0%, transparent 100%)',
-          zIndex: 30,
-          pointerEvents: 'none',
-        }}
-      />
-
       <motion.div
         onPanStart={handlePanStart}
         onPan={handlePan}
@@ -133,43 +98,34 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
         {FILMS.map((film, i) => {
           const dist = getDistance(i);
           const isCenter = dist === 0;
-          const isLeft = dist === -1;
-          const isRight = dist === 1;
+          const isLeft   = dist === -1;
+          const isRight  = dist === 1;
 
-          let x = '0%';
-          let opacity = 1;
-          let scale = 1;
-          let zIndex = 10;
+          let x: string;
+          let opacity: number;
+          let zIndex: number;
           let pointerEvents: any = 'auto';
+          let brightness: number;
 
           if (isCenter) {
-            x = '0%';
-            opacity = 1;
-            scale = 1;
-            zIndex = 20;
+            x = '0%'; opacity = 1; brightness = 1; zIndex = 20;
           } else if (isLeft) {
-            x = `-${SIDE_OFFSET}`;
-            opacity = 0.55;
-            scale = 0.94;
-            zIndex = 10;
+            x = `-${SIDE_OFFSET}`; opacity = 1; brightness = 0.45; zIndex = 10;
           } else if (isRight) {
-            x = SIDE_OFFSET;
-            opacity = 0.55;
-            scale = 0.94;
-            zIndex = 10;
+            x = SIDE_OFFSET; opacity = 1; brightness = 0.45; zIndex = 10;
           } else {
-            x = dist < 0 ? '-200%' : '200%';
-            opacity = 0;
-            scale = 0.85;
-            zIndex = 1;
-            pointerEvents = 'none';
+            x = dist < 0 ? '-220%' : '220%';
+            opacity = 0; brightness = 0; zIndex = 1; pointerEvents = 'none';
           }
+
+          const isVisible = isCenter || isLeft || isRight;
 
           const bgImage =
             film.posterImage ||
             (i < 5 ? `/scroll${i + 1}.webp` : film.stills?.[0] || film.reelImage);
 
-          const isVisible = isCenter || isLeft || isRight;
+          // Mask: fades edges of each poster so adjacent posters blend into each other
+          const mask = isCenter ? CENTER_MASK : SIDE_MASK;
 
           return (
             <motion.div
@@ -179,23 +135,26 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                 else if (isLeft) prevPoster();
                 else if (isRight) nextPoster();
               }}
-              animate={{ x, opacity, scale }}
-              transition={{ type: 'spring', stiffness: 42, damping: 22 }}
+              animate={{
+                x,
+                opacity,
+                filter: `brightness(${brightness})`,
+              }}
+              transition={{ type: 'spring', stiffness: 40, damping: 22 }}
               style={{
                 position: 'absolute',
                 width: POSTER_W,
-                height: '84%', // properly boxed card with vertical margin
+                height: '100%',
                 zIndex,
                 pointerEvents,
-                cursor: isCenter ? 'pointer' : 'pointer',
+                cursor: 'pointer',
                 willChange: 'transform',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 20px 48px rgba(0,0,0,0.65)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                // Mask creates the seamless blend between adjacent posters
+                WebkitMaskImage: isVisible ? mask : 'none',
+                maskImage: isVisible ? mask : 'none',
               }}
+              whileTap={{ cursor: 'grabbing' }}
             >
-              {/* Poster image */}
               <img
                 src={bgImage}
                 alt={film.title || ''}
@@ -211,32 +170,7 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                 }}
               />
 
-              {/* Warm amber depth tint for side cards — NOT grey */}
-              {!isCenter && isVisible && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'rgba(10, 8, 8, 0.52)',
-                    boxShadow: 'inset 0 0 80px 20px rgba(10,8,8,0.6)',
-                  }}
-                />
-              )}
-
-              {/* Gold border frame on center card */}
-              {isCenter && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.18)',
-                    pointerEvents: 'none',
-                    zIndex: 5,
-                  }}
-                />
-              )}
-
-              {/* Bottom title gradient + info on center card */}
+              {/* Center card: subtle bottom gradient + title info */}
               {isCenter && (
                 <div
                   style={{
@@ -244,11 +178,12 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    background: 'linear-gradient(to top, rgba(10,8,8,0.85) 0%, rgba(10,8,8,0.5) 40%, transparent 100%)',
-                    padding: isMobile ? '40px 20px 20px' : '60px 40px 28px',
+                    background:
+                      'linear-gradient(to top, rgba(10,8,8,0.88) 0%, rgba(10,8,8,0.45) 45%, transparent 100%)',
+                    padding: isMobile ? '50px 22px 22px' : '70px 56px 32px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 6,
+                    gap: 7,
                     zIndex: 6,
                     pointerEvents: 'none',
                   }}
@@ -257,12 +192,12 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                     <p
                       style={{
                         fontFamily: 'Playfair Display, serif',
-                        fontSize: isMobile ? 18 : 26,
+                        fontSize: isMobile ? 20 : 28,
                         fontWeight: 600,
                         color: '#F0EBE0',
                         margin: 0,
                         letterSpacing: 1,
-                        textShadow: '0 2px 12px rgba(0,0,0,0.8)',
+                        textShadow: '0 2px 14px rgba(0,0,0,0.9)',
                       }}
                     >
                       {film.title}
@@ -289,8 +224,8 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
                           fontSize: 8,
                           letterSpacing: 3,
                           color: 'rgba(240,235,224,0.4)',
-                          border: '1px solid rgba(240,235,224,0.2)',
-                          padding: '2px 6px',
+                          border: '1px solid rgba(240,235,224,0.18)',
+                          padding: '2px 7px',
                         }}
                       >
                         {film.rating}
@@ -304,12 +239,12 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
         })}
       </motion.div>
 
-      {/* Pagination — gold perforations */}
+      {/* Pagination — gold pill dots */}
       {FILMS.length > 1 && (
         <div
           style={{
             position: 'absolute',
-            bottom: 24,
+            bottom: 20,
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
@@ -324,95 +259,62 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
               onClick={() => { setCurrentIndex(i); startInteraction(); stopInteraction(); }}
               animate={{
                 width: i === currentIndex ? 24 : 6,
-                opacity: i === currentIndex ? 1 : 0.35,
+                opacity: i === currentIndex ? 1 : 0.3,
                 background: i === currentIndex ? '#c9a84c' : '#F0EBE0',
               }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              style={{
-                height: 6,
-                borderRadius: 3,
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-              }}
+              style={{ height: 6, borderRadius: 3, border: 'none', cursor: 'pointer', padding: 0 }}
             />
           ))}
         </div>
       )}
 
-      {/* Nav arrows — minimal, cinematic */}
+      {/* Nav arrows */}
       {!isMobile && FILMS.length > 1 && (
         <>
-          <button
-            onClick={() => { prevPoster(); startInteraction(); stopInteraction(); }}
-            style={{
-              position: 'absolute',
-              left: 24,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 50,
-              background: 'rgba(10,8,8,0.6)',
-              border: '1px solid rgba(201,168,76,0.2)',
-              color: 'rgba(201,168,76,0.7)',
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontFamily: 'monospace',
-              fontSize: 16,
-              backdropFilter: 'blur(8px)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(201,168,76,0.15)';
-              (e.currentTarget as HTMLButtonElement).style.color = '#c9a84c';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(201,168,76,0.5)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,8,0.6)';
-              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(201,168,76,0.7)';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(201,168,76,0.2)';
-            }}
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => { nextPoster(); startInteraction(); stopInteraction(); }}
-            style={{
-              position: 'absolute',
-              right: 24,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              zIndex: 50,
-              background: 'rgba(10,8,8,0.6)',
-              border: '1px solid rgba(201,168,76,0.2)',
-              color: 'rgba(201,168,76,0.7)',
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontFamily: 'monospace',
-              fontSize: 16,
-              backdropFilter: 'blur(8px)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(201,168,76,0.15)';
-              (e.currentTarget as HTMLButtonElement).style.color = '#c9a84c';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(201,168,76,0.5)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,8,0.6)';
-              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(201,168,76,0.7)';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(201,168,76,0.2)';
-            }}
-          >
-            ›
-          </button>
+          {[
+            { side: 'left' as const, label: '‹', onClick: () => { prevPoster(); startInteraction(); stopInteraction(); } },
+            { side: 'right' as const, label: '›', onClick: () => { nextPoster(); startInteraction(); stopInteraction(); } },
+          ].map(({ side, label, onClick }) => (
+            <button
+              key={side}
+              onClick={onClick}
+              style={{
+                position: 'absolute',
+                [side]: 28,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 50,
+                background: 'rgba(10,8,8,0.55)',
+                border: '1px solid rgba(201,168,76,0.22)',
+                color: 'rgba(201,168,76,0.75)',
+                width: 40,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: 18,
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLButtonElement;
+                el.style.background = 'rgba(201,168,76,0.14)';
+                el.style.color = '#c9a84c';
+                el.style.borderColor = 'rgba(201,168,76,0.5)';
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLButtonElement;
+                el.style.background = 'rgba(10,8,8,0.55)';
+                el.style.color = 'rgba(201,168,76,0.75)';
+                el.style.borderColor = 'rgba(201,168,76,0.22)';
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </>
       )}
     </div>
