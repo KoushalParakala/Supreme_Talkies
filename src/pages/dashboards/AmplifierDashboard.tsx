@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
-import { fetchMemberByStId, fetchMemberDirectoryByIds } from '../../lib/directory';
+import { fetchMemberDirectoryByIds } from '../../lib/directory';
 
 /* ── Shared UI Components ── */
 function CinemaButton({ children, onClick, disabled, loading, style }: { 
@@ -24,8 +24,9 @@ function CinemaButton({ children, onClick, disabled, loading, style }: {
 }
 
 export default function AmplifierDashboard() {
+
   const { user, profile, refreshProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'impact' | 'shoutouts' | 'groups'>('impact');
+  const [activeTab, setActiveTab] = useState<'impact' | 'shoutouts'>('impact');
   
   // MY IMPACT state
   const [loggingShare, setLoggingShare] = useState(false);
@@ -36,20 +37,12 @@ export default function AmplifierDashboard() {
   const [shoutoutLink, setShoutoutLink] = useState('');
   const [postingShoutout, setPostingShoutout] = useState(false);
 
-  // GROUPS state
-  const [groups, setGroups] = useState<any[]>([]);
-  const [newGroup, setNewGroup] = useState({ name: '', description: '' });
-  const [creatingGroup, setCreatingGroup] = useState(false);
-  const [inviteId, setInviteId] = useState<Record<string, string>>({}); // {groupId: stId}
-
   useEffect(() => {
     if (!user) return;
     if (activeTab === 'impact') {
       // Nothing extra to fetch yet, uses profile
     } else if (activeTab === 'shoutouts') {
       fetchShoutouts();
-    } else if (activeTab === 'groups') {
-      fetchGroups();
     }
   }, [user, activeTab]);
 
@@ -67,21 +60,6 @@ export default function AmplifierDashboard() {
     setShoutouts((data || []).map((shoutout: any) => ({
       ...shoutout,
       profiles: profileMap.get(shoutout.user_id) || null
-    })));
-  };
-
-  const fetchGroups = async () => {
-    if (!user) return;
-    const fetchId = ++fetchIdRef.current;
-    const { data } = await supabase.from('amplifier_groups')
-      .select('*')
-      .contains('member_ids', [user.id]);
-    if (fetchId !== fetchIdRef.current) return;
-    const profileMap = await fetchMemberDirectoryByIds((data || []).flatMap((group: any) => group.member_ids || []));
-    if (fetchId !== fetchIdRef.current) return;
-    setGroups((data || []).map((group: any) => ({
-      ...group,
-      members: (group.member_ids || []).map((memberId: string) => profileMap.get(memberId)).filter(Boolean)
     })));
   };
 
@@ -104,7 +82,6 @@ export default function AmplifierDashboard() {
       
       if (error) throw error;
       await refreshProfile();
-      fetchGroups();
     } catch (err: any) { toast(err.message); }
     finally { setLoggingShare(false); }
   };
@@ -137,41 +114,6 @@ export default function AmplifierDashboard() {
     if (!error) setShoutouts(prev => prev.filter(s => s.id !== id));
   };
 
-  const handleCreateGroup = async () => {
-    if (!user || !newGroup.name) return;
-    setCreatingGroup(true);
-    try {
-      const { error } = await supabase.from('amplifier_groups').insert({
-        name: newGroup.name,
-        description: newGroup.description,
-        created_by: user.id,
-        member_ids: [user.id]
-      });
-      if (error) throw error;
-      setNewGroup({ name: '', description: '' });
-      fetchGroups();
-    } catch (err: any) { toast(err.message); }
-    finally { setCreatingGroup(false); }
-  };
-
-  const handleInvite = async (groupId: string, stId: string, existingMembers: string[]) => {
-    if (!stId) return;
-    try {
-      const target = await fetchMemberByStId(stId);
-      if (!target) throw new Error('Member not found.');
-      if (existingMembers.includes(target.id)) throw new Error('Already in group.');
-
-      const { error } = await supabase.from('amplifier_groups').update({
-        member_ids: [...existingMembers, target.id]
-      }).eq('id', groupId);
-      
-      if (error) throw error;
-      toast('Member added! ✦');
-      setInviteId({ ...inviteId, [groupId]: '' });
-      fetchGroups();
-    } catch (err: any) { toast(err.message); }
-  };
-
   const streak = profile?.share_streak || 0;
   const timeAgo = (date: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
@@ -187,8 +129,7 @@ export default function AmplifierDashboard() {
       <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0 }}>
         {[
           { id: 'impact', label: 'MY IMPACT' },
-          { id: 'shoutouts', label: 'SHOUTOUT WALL' },
-          { id: 'groups', label: 'GROUPS' }
+          { id: 'shoutouts', label: 'SHOUTOUT WALL' }
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             style={{ 
@@ -327,67 +268,6 @@ export default function AmplifierDashboard() {
                 </div>
               ))}
               {shoutouts.length === 50 && <CinemaButton onClick={() => {}} style={{ alignSelf: 'center' }}>LOAD MORE</CinemaButton>}
-            </div>
-          </motion.div>
-        )}
-
-        {activeTab === 'groups' && (
-          <motion.div key="groups" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-            {/* Create Group */}
-            <div style={{ border: '1px solid rgba(188,168,142,0.15)', padding: 32, background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#BCA88E', margin: 0 }}>NEW AMPLIFIER GROUP</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5 }}>GROUP NAME</label>
-                  <input 
-                    type="text" value={newGroup.name} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })}
-                    style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(188,168,142,0.3)', color: '#F0EBE0', fontFamily: 'Inter, monospace', fontSize: 14, outline: 'none' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5 }}>DESCRIPTION</label>
-                  <textarea 
-                    rows={2} value={newGroup.description} onChange={e => setNewGroup({ ...newGroup, description: e.target.value })}
-                    style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(188,168,142,0.3)', color: '#F0EBE0', fontFamily: 'Inter, sans-serif', fontSize: 14, outline: 'none', resize: 'none' }}
-                  />
-                </div>
-              </div>
-              <CinemaButton onClick={handleCreateGroup} loading={creatingGroup} disabled={!newGroup.name}>CREATE GROUP</CinemaButton>
-            </div>
-
-            {/* List */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 24 }}>
-              {groups.map(g => (
-                <div key={g.id} style={{ background: 'rgba(14,15,20,0.8)', border: '1px solid rgba(188,168,142,0.1)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div>
-                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontStyle: 'italic', color: '#BCA88E', margin: '0 0 8px' }}>{g.name}</h3>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.6, lineHeight: 1.6, margin: 0 }}>{g.description}</p>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: -8 }}>
-                      {g.members?.slice(0, 5).map((m: any, idx: number) => (
-                        <span key={m.st_id} title={m.full_name} style={{ width: 28, height: 28, borderRadius: '50%', background: '#0e0f13', border: '1px solid #BCA88E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: idx > 0 ? -10 : 0 }}>{m.avatar_symbol}</span>
-                      ))}
-                    </div>
-                    <span style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E' }}>
-                      {g.members?.length > 5 ? `+${g.members.length - 5} MORE` : `${g.members?.length} MEMBERS`}
-                    </span>
-                  </div>
-
-                  <div style={{ borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <input 
-                        type="text" placeholder="SUPR-12345" 
-                        value={inviteId[g.id] || ''} onChange={e => setInviteId({ ...inviteId, [g.id]: e.target.value })}
-                        style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(188,168,142,0.3)', color: '#F0EBE0', fontFamily: 'Inter, monospace', fontSize: 11, outline: 'none' }}
-                      />
-                      <button onClick={() => handleInvite(g.id, inviteId[g.id], g.member_ids)} style={{ background: 'none', border: '1px solid #BCA88E', color: '#BCA88E', padding: '4px 12px', fontSize: 9, fontFamily: 'Montserrat, sans-serif', letterSpacing: 2, cursor: 'pointer' }}>INVITE</button>
-                    </div>
-                    <button onClick={() => toast('Group sync coming soon. Stay tuned.')} style={{ background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '10px', fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>SYNC</button>
-                  </div>
-                </div>
-              ))}
             </div>
           </motion.div>
         )}

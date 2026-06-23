@@ -62,7 +62,7 @@ const ROLES = [
     scene: 'SC·06',
     description: 'For fans, supporters & community',
     line: 'Voices that echo in the silence.',
-    features: ['Log daily shares for streak', 'Shoutout wall', 'Amplifier groups', 'Early access perks'],
+    features: ['Log daily shares for streak', 'Shoutout wall', 'Early access perks'],
   },
 ];
 
