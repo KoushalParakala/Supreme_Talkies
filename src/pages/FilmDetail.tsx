@@ -142,6 +142,7 @@ export default function FilmDetail() {
 
   const credits = [
     { label: 'DIRECTED BY',      value: film.director },
+    { label: 'PRODUCED BY',      value: film.producer },
     { label: 'ASSOCIATE DIRECTOR', value: film.associateDirector },
     { label: 'WRITTEN BY',       value: film.writtenBy },
     { label: 'CINEMATOGRAPHY',   value: film.cinematography },

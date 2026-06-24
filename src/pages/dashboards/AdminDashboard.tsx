@@ -225,11 +225,11 @@ export default function AdminDashboard() {
   const [films, setFilms] = useState<any[]>([]);
   const [editingFilm, setEditingFilm] = useState<any>(null);
   const [newFilm, setNewFilm] = useState<any>({
-    title: '', logline: '', rating: 'UA', duration: '',
-    director: '', producer: '', cast_members: '', synopsis: '', special_note: '',
-    video_link: '', reel_image: '', poster_image: '', coming_soon: false, stills: []
+    title: '', production_note: '', rating: 'UA', duration: '',
+    director: '', producer: '', synopsis: '', special_note: '',
+    video_link: '', reel_image: '', coming_soon: false, stills: [],
+    cinematography: '', editing: '', music: '', cast: ''
   });
-  const [posterFile, setPosterFile] = useState<File | null>(null);
   const [reelFile, setReelFile] = useState<File | null>(null);
   const [still1File, setStill1File] = useState<File | null>(null);
   const [still2File, setStill2File] = useState<File | null>(null);
@@ -574,7 +574,6 @@ export default function AdminDashboard() {
     try {
       setUploadingFilm(true);
       
-      let finalPosterUrl = newFilm.poster_image;
       let finalReelUrl = newFilm.reel_image;
       const finalStills = newFilm.stills || [];
 
@@ -589,7 +588,6 @@ export default function AdminDashboard() {
         return publicUrl;
       };
 
-      if (posterFile) finalPosterUrl = await uploadFile(posterFile, 'posters');
       if (reelFile) finalReelUrl = await uploadFile(reelFile, 'reels');
       
       const newStills = [...finalStills];
@@ -597,7 +595,7 @@ export default function AdminDashboard() {
       if (still2File) newStills[1] = await uploadFile(still2File, 'stills');
       if (still3File) newStills[2] = await uploadFile(still3File, 'stills');
 
-      const filmPayload = { ...newFilm, poster_image: finalPosterUrl, reel_image: finalReelUrl, stills: newStills.filter(Boolean) };
+      const filmPayload = { ...newFilm, reel_image: finalReelUrl, stills: newStills.filter(Boolean) };
 
       if (editingFilm) {
         const { error } = await supabase.from('films').update(filmPayload).eq('id', editingFilm.id);
@@ -608,12 +606,11 @@ export default function AdminDashboard() {
       }
       
       setEditingFilm(null);
-      setPosterFile(null);
       setReelFile(null);
       setStill1File(null);
       setStill2File(null);
       setStill3File(null);
-      setNewFilm({ title: '', logline: '', rating: 'UA', duration: '', director: '', producer: '', cast_members: '', synopsis: '', special_note: '', video_link: '', reel_image: '', poster_image: '', coming_soon: false, stills: [] });
+      setNewFilm({ title: '', production_note: '', rating: 'UA', duration: '', director: '', producer: '', synopsis: '', special_note: '', video_link: '', reel_image: '', coming_soon: false, stills: [], cinematography: '', editing: '', music: '', cast: '' });
       fetchData();
     } catch (e: any) { 
       toast(e.message); 
@@ -1257,7 +1254,7 @@ export default function AdminDashboard() {
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <CinemaInput label="TITLE" value={newFilm.title} onChange={(v) => setNewFilm({ ...newFilm, title: v })} />
-                <CinemaInput label="LOGLINE" value={newFilm.logline} onChange={(v) => setNewFilm({ ...newFilm, logline: v })} />
+                <CinemaInput label="PRODUCTION NOTE" value={newFilm.production_note} onChange={(v) => setNewFilm({ ...newFilm, production_note: v })} />
                 <CinemaInput label="DIRECTOR" value={newFilm.director} onChange={(v) => setNewFilm({ ...newFilm, director: v })} />
                 <CinemaInput label="PRODUCER" value={newFilm.producer} onChange={(v) => setNewFilm({ ...newFilm, producer: v })} />
               </div>
@@ -1270,18 +1267,19 @@ export default function AdminDashboard() {
               <CinemaTextarea label="SYNOPSIS" value={newFilm.synopsis} onChange={(v) => setNewFilm({ ...newFilm, synopsis: v })} rows={4} />
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'Playfair Display, serif', fontSize: 10, color: '#BCA88E', letterSpacing: 4 }}>POSTER IMAGE (Horizontal .webp)</label>
-                  <input type="file" accept="image/webp" onChange={(e) => setPosterFile(e.target.files?.[0] || null)} style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', marginTop: 8 }} />
-                  {newFilm.poster_image && !posterFile && <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0 }}>Current: {newFilm.poster_image}</p>}
-                </div>
+                <CinemaInput label="CINEMATOGRAPHY" value={newFilm.cinematography} onChange={(v) => setNewFilm({ ...newFilm, cinematography: v })} />
+                <CinemaInput label="EDITING" value={newFilm.editing} onChange={(v) => setNewFilm({ ...newFilm, editing: v })} />
+                <CinemaInput label="MUSIC" value={newFilm.music} onChange={(v) => setNewFilm({ ...newFilm, music: v })} />
+                <CinemaInput label="CAST" value={newFilm.cast} onChange={(v) => setNewFilm({ ...newFilm, cast: v })} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontFamily: 'Playfair Display, serif', fontSize: 10, color: '#BCA88E', letterSpacing: 4 }}>REEL IMAGE (Vertical .webp)</label>
                   <input type="file" accept="image/webp" onChange={(e) => setReelFile(e.target.files?.[0] || null)} style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', marginTop: 8 }} />
                   {newFilm.reel_image && !reelFile && <p style={{ fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0 }}>Current: {newFilm.reel_image}</p>}
                 </div>
                 <CinemaInput label="VIDEO LINK (Trailer/Film URL)" value={newFilm.video_link} onChange={(v) => setNewFilm({ ...newFilm, video_link: v })} />
-                <CinemaInput label="CAST MEMBERS" value={newFilm.cast_members} onChange={(v) => setNewFilm({ ...newFilm, cast_members: v })} />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
@@ -1311,7 +1309,7 @@ export default function AdminDashboard() {
                 <button disabled={uploadingFilm} onClick={saveFilm} style={{ flex: 1, background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '12px', fontFamily: 'Inter, monospace', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: uploadingFilm ? 'not-allowed' : 'pointer', opacity: uploadingFilm ? 0.7 : 1 }}>
                   {uploadingFilm ? 'UPLOADING...' : (editingFilm ? 'UPDATE FILM' : 'PUBLISH FILM')}
                 </button>
-                {editingFilm && <button onClick={() => { setEditingFilm(null); setPosterFile(null); setReelFile(null); setStill1File(null); setStill2File(null); setStill3File(null); setNewFilm({ title: '', logline: '', rating: 'UA', duration: '', director: '', producer: '', cast_members: '', synopsis: '', special_note: '', video_link: '', reel_image: '', poster_image: '', coming_soon: false, stills: [] }); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
+                {editingFilm && <button onClick={() => { setEditingFilm(null); setReelFile(null); setStill1File(null); setStill2File(null); setStill3File(null); setNewFilm({ title: '', production_note: '', rating: 'UA', duration: '', director: '', producer: '', synopsis: '', special_note: '', video_link: '', reel_image: '', coming_soon: false, stills: [], cinematography: '', editing: '', music: '', cast: '' }); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
               </div>
             </div>
 
@@ -1327,8 +1325,8 @@ export default function AdminDashboard() {
                     {f.coming_soon && <span style={{ fontSize: 8, background: 'rgba(188,168,142,0.1)', color: '#BCA88E', padding: '2px 6px', letterSpacing: 2 }}>COMING SOON</span>}
                   </div>
                   
-                  {(f.poster_image || f.reel_image) && (
-                    <div style={{ height: 120, background: '#111', backgroundImage: `url(${f.poster_image || f.reel_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.8 }} />
+                  {f.reel_image && (
+                    <div style={{ height: 120, background: '#111', backgroundImage: `url(${f.reel_image})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.8 }} />
                   )}
 
                   <div style={{ display: 'flex', gap: 12, marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.05)' }}>

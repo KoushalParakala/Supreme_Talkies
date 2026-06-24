@@ -71,7 +71,7 @@ export default function FilmHoverCard({ film }: FilmHoverCardProps) {
               fontStyle: film.specialNote ? 'normal' : 'italic',
             }}
           >
-            {film.specialNote || film.logline}
+            {film.specialNote || film.productionNote}
           </p>
 
           {/* Divider */}

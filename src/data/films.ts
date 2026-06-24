@@ -1,7 +1,7 @@
 export interface Film {
   id: string;
   title: string;
-  logline: string;
+  productionNote: string;
   color: string;
   rating: string;
   duration: string;
@@ -31,7 +31,7 @@ export const FILMS: Film[] = [
   {
     id: '1',
     title: 'AVASARAMA? AHAMKARAMA!',
-    logline: 'Ego consumes where purpose once stood.',
+    productionNote: 'Ego consumes where purpose once stood.',
     color: '#0a1a2a',
     rating: 'UA',
     duration: '59:16 MINS',
@@ -52,7 +52,7 @@ export const FILMS: Film[] = [
   {
     id: '2',
     title: 'SWAPPED',
-    logline: 'A simple transaction spirals into a dangerous conflict.',
+    productionNote: 'A simple transaction spirals into a dangerous conflict.',
     color: '#1a0d0d',
     rating: 'A',
     duration: '7:04 MINS',
@@ -74,7 +74,7 @@ export const FILMS: Film[] = [
   {
     id: '3',
     title: 'THE CINEPHILE - MONARCHY OF MADNESS',
-    logline: 'A passion for cinema turns into uncontrollable madness.',
+    productionNote: 'A passion for cinema turns into uncontrollable madness.',
     color: '#0d1a0d',
     rating: 'UA',
     duration: '47:04 MINS',
@@ -97,7 +97,7 @@ export const FILMS: Film[] = [
   {
     id: '4',
     title: 'BAKING SODA',
-    logline: 'Bad judgment and a mysterious packet lead to chaos.',
+    productionNote: 'Bad judgment and a mysterious packet lead to chaos.',
     color: '#1a1a0a',
     rating: 'UA',
     duration: '8:41 MINS',
@@ -119,7 +119,7 @@ export const FILMS: Film[] = [
   {
     id: '5',
     title: 'BARKING DOGS',
-    logline: 'A violent path of revenge blurs reality and inner voices.',
+    productionNote: 'A violent path of revenge blurs reality and inner voices.',
     color: '#1a0a0a',
     rating: 'A',
     duration: '10:47 MINS',
