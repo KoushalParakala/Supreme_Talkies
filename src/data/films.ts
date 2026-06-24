@@ -25,6 +25,7 @@ export interface Film {
   teluguDubbingTeam?: string;
   supremeTalkiesTeam?: string;
   posterImage?: string;
+  customCredits?: { role: string; value: string }[];
 }
 
 export const FILMS: Film[] = [

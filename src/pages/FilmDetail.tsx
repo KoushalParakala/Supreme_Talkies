@@ -140,7 +140,9 @@ export default function FilmDetail() {
     );
   }
 
-  const credits = [
+  const credits = film.customCredits && film.customCredits.length > 0 
+    ? film.customCredits.filter(c => c.value).map(c => ({ label: c.role.toUpperCase(), value: c.value }))
+    : [
     { label: 'DIRECTED BY',      value: film.director },
     { label: 'PRODUCED BY',      value: film.producer },
     { label: 'ASSOCIATE DIRECTOR', value: film.associateDirector },

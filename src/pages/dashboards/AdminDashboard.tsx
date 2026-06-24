@@ -224,11 +224,20 @@ export default function AdminDashboard() {
   // FILMS state
   const [films, setFilms] = useState<any[]>([]);
   const [editingFilm, setEditingFilm] = useState<any>(null);
+  const INITIAL_CREDITS = [
+    { role: 'Direction', value: '' },
+    { role: 'Writing', value: '' },
+    { role: 'Producer', value: '' },
+    { role: 'Editor', value: '' },
+    { role: 'Cinematographer', value: '' },
+    { role: 'Music', value: '' },
+    { role: 'Cast', value: '' }
+  ];
   const [newFilm, setNewFilm] = useState<any>({
     title: '', production_note: '', rating: 'UA', duration: '',
-    director: '', producer: '', synopsis: '', special_note: '',
+    synopsis: '', special_note: '',
     video_link: '', reel_image: '', coming_soon: false, stills: [],
-    cinematography: '', editing: '', music: '', cast: ''
+    credits: INITIAL_CREDITS
   });
   const [reelFile, setReelFile] = useState<File | null>(null);
   const [still1File, setStill1File] = useState<File | null>(null);
@@ -595,7 +604,16 @@ export default function AdminDashboard() {
       if (still2File) newStills[1] = await uploadFile(still2File, 'stills');
       if (still3File) newStills[2] = await uploadFile(still3File, 'stills');
 
-      const filmPayload = { ...newFilm, reel_image: finalReelUrl, stills: newStills.filter(Boolean) };
+      const directorCredit = newFilm.credits?.find((c: any) => c.role.toLowerCase() === 'direction' || c.role.toLowerCase() === 'director');
+      const producerCredit = newFilm.credits?.find((c: any) => c.role.toLowerCase() === 'producer');
+
+      const filmPayload = { 
+        ...newFilm, 
+        director: directorCredit?.value || '',
+        producer: producerCredit?.value || '',
+        reel_image: finalReelUrl, 
+        stills: newStills.filter(Boolean) 
+      };
 
       if (editingFilm) {
         const { error } = await supabase.from('films').update(filmPayload).eq('id', editingFilm.id);
@@ -610,7 +628,7 @@ export default function AdminDashboard() {
       setStill1File(null);
       setStill2File(null);
       setStill3File(null);
-      setNewFilm({ title: '', production_note: '', rating: 'UA', duration: '', director: '', producer: '', synopsis: '', special_note: '', video_link: '', reel_image: '', coming_soon: false, stills: [], cinematography: '', editing: '', music: '', cast: '' });
+      setNewFilm({ title: '', production_note: '', rating: 'UA', duration: '', synopsis: '', special_note: '', video_link: '', reel_image: '', coming_soon: false, stills: [], credits: INITIAL_CREDITS });
       fetchData();
     } catch (e: any) { 
       toast(e.message); 
@@ -1255,23 +1273,31 @@ export default function AdminDashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <CinemaInput label="TITLE" value={newFilm.title} onChange={(v) => setNewFilm({ ...newFilm, title: v })} />
                 <CinemaInput label="PRODUCTION NOTE" value={newFilm.production_note} onChange={(v) => setNewFilm({ ...newFilm, production_note: v })} />
-                <CinemaInput label="DIRECTOR" value={newFilm.director} onChange={(v) => setNewFilm({ ...newFilm, director: v })} />
-                <CinemaInput label="PRODUCER" value={newFilm.producer} onChange={(v) => setNewFilm({ ...newFilm, producer: v })} />
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <CinemaInput label="RATING" value={newFilm.rating} onChange={(v) => setNewFilm({ ...newFilm, rating: v })} />
                 <CinemaInput label="DURATION" value={newFilm.duration} onChange={(v) => setNewFilm({ ...newFilm, duration: v })} />
               </div>
 
-              <CinemaTextarea label="SYNOPSIS" value={newFilm.synopsis} onChange={(v) => setNewFilm({ ...newFilm, synopsis: v })} rows={4} />
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <CinemaInput label="CINEMATOGRAPHY" value={newFilm.cinematography} onChange={(v) => setNewFilm({ ...newFilm, cinematography: v })} />
-                <CinemaInput label="EDITING" value={newFilm.editing} onChange={(v) => setNewFilm({ ...newFilm, editing: v })} />
-                <CinemaInput label="MUSIC" value={newFilm.music} onChange={(v) => setNewFilm({ ...newFilm, music: v })} />
-                <CinemaInput label="CAST" value={newFilm.cast} onChange={(v) => setNewFilm({ ...newFilm, cast: v })} />
+              <div style={{ marginTop: 20, marginBottom: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, color: '#BCA88E', margin: 0 }}>CREDITS</p>
+                  <button type="button" onClick={() => setNewFilm({...newFilm, credits: [...(newFilm.credits || []), { role: '', value: '' }]})} style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontSize: 10, padding: '4px 12px', cursor: 'pointer' }}>+ ADD CREDIT</button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {(newFilm.credits || []).map((credit: any, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+                      <div style={{ flex: 1 }}>
+                        <CinemaInput label="ROLE" value={credit.role} onChange={v => { const newC = [...newFilm.credits]; newC[idx].role = v; setNewFilm({...newFilm, credits: newC}) }} />
+                      </div>
+                      <div style={{ flex: 2 }}>
+                        <CinemaInput label="NAMES" value={credit.value} onChange={v => { const newC = [...newFilm.credits]; newC[idx].value = v; setNewFilm({...newFilm, credits: newC}) }} />
+                      </div>
+                      <button type="button" onClick={() => { const newC = newFilm.credits.filter((_:any, i:number) => i !== idx); setNewFilm({...newFilm, credits: newC}) }} style={{ background: 'none', border: 'none', color: '#ff5050', fontSize: 16, cursor: 'pointer', padding: '0 8px', marginBottom: 12 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              <CinemaTextarea label="SYNOPSIS" value={newFilm.synopsis} onChange={(v) => setNewFilm({ ...newFilm, synopsis: v })} rows={4} />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

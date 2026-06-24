@@ -44,7 +44,8 @@ export function useFilms() {
             comingSoon: f.coming_soon,
             presentedBy: f.presented_by,
             teluguDubbingTeam: f.telugu_dubbing_team,
-            supremeTalkiesTeam: f.supreme_talkies_team
+            supremeTalkiesTeam: f.supreme_talkies_team,
+            customCredits: f.credits || []
           }));
           
           // Combine fallback films with database films
