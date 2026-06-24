@@ -49,8 +49,8 @@ export function useFilms() {
             customCredits: f.credits || []
           }));
           
-          // OVERWRITE the local 5 films with the full database list (e.g., 6 films)
-          setFilms(mappedFilms);
+          // COMBINE the local 5 films with the new database films (6th film onwards)
+          setFilms([...fallbackFilms, ...mappedFilms]);
         }
       } catch (err) {
         console.error('Error fetching films from Supabase:', err);
