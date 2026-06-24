@@ -43,15 +43,7 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
 
-  // If returning from a film detail page, read the target film id
-  const returnFilmId = (location.state as any)?.returnToFilm as string | undefined;
-  const [stripFilmId, setStripFilmId] = useState<string | undefined>();
-  const targetFilmId = stripFilmId || returnFilmId;
-
-  const handlePosterStripClick = (id: string) => {
-    setStripFilmId(id);
-    document.getElementById('reel-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const targetFilmId = (location.state as any)?.returnToFilm as string | undefined;
 
   useEffect(() => {
     if (!loading) {
