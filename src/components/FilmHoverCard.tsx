@@ -106,7 +106,7 @@ export default function FilmHoverCard({ film }: FilmHoverCardProps) {
                 letterSpacing: 1,
               }}
             >
-              {film.director}
+              {film.director || film.customCredits?.find(c => c.role.toLowerCase().includes('direct'))?.value || ''}
             </span>
           </div>
         </motion.div>

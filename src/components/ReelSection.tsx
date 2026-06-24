@@ -274,7 +274,7 @@ function PosterCard({
               letterSpacing: 1,
             }}
           >
-            A FILM BY {film.director}
+            A FILM BY {film.director || film.customCredits?.find(c => c.role.toLowerCase().includes('direct'))?.value || ''}
           </span>
         </div>
       </div>

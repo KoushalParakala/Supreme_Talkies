@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Loader from '../components/Loader';
 import Nav from '../components/Nav';
-import PosterStrip from '../components/PosterStrip';
 import ReelSection from '../components/ReelSection';
 import TearSection from '../components/TearSection';
 import JoinSection from '../components/JoinSection';
@@ -233,8 +232,6 @@ export default function Home() {
             </AnimatePresence>
           </section>
 
-          <GoldDivider />
-          <PosterStrip onFilmClick={handlePosterStripClick} />
 
           <ReelSection onFilmClick={handleFilmClick} returnFilmId={targetFilmId} />
           <GoldDivider />
