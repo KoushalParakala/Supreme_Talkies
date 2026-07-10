@@ -1055,7 +1055,7 @@ export default function AdminDashboard() {
                             <div>
                               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', margin: 0 }}>{interest.user?.full_name}</p>
                               <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0 }}>
-                                SUPR-{interest.user?.st_id} {interest.user?.role ? `• ${interest.user.role.toUpperCase()}` : ''}
+                                {interest.user?.st_id ? (interest.user.st_id.startsWith('SUPR-') ? interest.user.st_id : `SUPR-${interest.user.st_id}`) : 'NO-ID'} {interest.user?.role ? `• ${interest.user.role.toUpperCase()}` : ''}
                               </p>
                             </div>
                             {interest.note && (
@@ -1400,7 +1400,7 @@ export default function AdminDashboard() {
                     <div>
                       <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#F0EBE0', margin: '0 0 4px' }}>{screening.film_title || screening.title}</h4>
                       <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.8, margin: 0 }}>
-                        {screening.profiles?.full_name} {screening.profiles?.st_id ? `(SUPR-${screening.profiles.st_id})` : ''}
+                        {screening.profiles?.full_name} {screening.profiles?.st_id ? (screening.profiles.st_id.startsWith('SUPR-') ? `(${screening.profiles.st_id})` : `(SUPR-${screening.profiles.st_id})`) : ''}
                       </p>
                       <p style={{ fontSize: 11, color: '#F0EBE0', opacity: 0.6, maxWidth: 800, marginTop: 12, lineHeight: 1.6 }}>{screening.synopsis}</p>
                     </div>

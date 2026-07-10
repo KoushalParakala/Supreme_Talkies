@@ -766,7 +766,7 @@ export default function ProducerDashboard() {
                                             {interest.user?.st_verified && <span style={{ color: '#BCA88E', fontSize: 10 }}>✦</span>}
                                           </div>
                                           <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
-                                            {interest.user?.role?.toUpperCase()} • SUPR-{interest.user?.st_id || 'N/A'}
+                                            {interest.user?.role?.toUpperCase()} • {interest.user?.st_id ? (interest.user.st_id.startsWith('SUPR-') ? interest.user.st_id : `SUPR-${interest.user.st_id}`) : 'N/A'}
                                           </p>
                                           {interest.note && (
                                             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.5, fontStyle: 'italic', margin: '4px 0 0' }}>

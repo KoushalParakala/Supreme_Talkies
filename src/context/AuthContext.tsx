@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { deriveSuprId } from '../lib/auth';
 
 export interface Profile {
   id: string;
@@ -73,21 +74,6 @@ function checkIsAdmin(user: User | null, profile: Profile | null): boolean {
   return false;
 }
 
-/**
- * Generate a DETERMINISTIC SUPR-ID fallback from the user's UUID.
- * This ensures repeated client-side auto-creation always produces the same ID
- * so it won't collide with a subsequently loaded DB value.
- * The DB trigger is still the authoritative source — this is only a fallback.
- */
-function deriveSuprId(userId: string): string {
-  const clean = userId.replace(/-/g, '');
-  let hash = 0;
-  for (let i = 0; i < clean.length; i++) {
-    hash = (hash * 31 + clean.charCodeAt(i)) >>> 0;
-  }
-  const num = (hash % 90000) + 10000;
-  return `SUPR-${num.toString().padStart(5, '0')}`;
-}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

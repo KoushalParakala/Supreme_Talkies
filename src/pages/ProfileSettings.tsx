@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import Nav from '../components/Nav';
+import { deriveSuprId } from '../lib/auth';
 
 // ─── Design tokens ────────────────────────────────────────────────
 const C = {
@@ -193,14 +194,6 @@ function RoleBadge({ role }: { role: string }) {
 }
 
 type TabId = 'identity' | 'production' | 'account';
-
-// Derive a deterministic fallback SUPR ID from user UUID (matches AuthContext logic)
-function deriveFallbackId(uid: string): string {
-  const clean = uid.replace(/-/g, '');
-  let hash = 0;
-  for (let i = 0; i < clean.length; i++) hash = (hash * 31 + clean.charCodeAt(i)) >>> 0;
-  return `SUPR-${((hash % 90000) + 10000).toString().padStart(5, '0')}`;
-}
 
 // ─── Main component ───────────────────────────────────────────────
 
@@ -402,7 +395,7 @@ export default function ProfileSettings() {
   const avatarDisp = (!imgError && avatarUrl) ? avatarUrl : fallback;
 
   const rawId     = profile?.st_id || '';
-  const displayId = rawId ? (rawId.startsWith('SUPR-') ? rawId : `SUPR-${rawId}`) : (user ? deriveFallbackId(user.id) : '—');
+  const displayId = rawId ? (rawId.startsWith('SUPR-') ? rawId : `SUPR-${rawId}`) : (user ? deriveSuprId(user.id) : '—');
   const primaryRole = (profile?.roles?.[0] || profile?.role || 'MEMBER');
   const cleanRole   = primaryRole.toLowerCase() === 'amplifier' ? 'MEMBER' : primaryRole.toUpperCase();
   const allRoles    = Array.from(new Set([...(profile?.roles || []), profile?.role].filter(Boolean) as string[]));
