@@ -82,7 +82,7 @@ export default function AmplifierDashboard() {
       
       if (error) throw error;
       await refreshProfile();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setLoggingShare(false); }
   };
 
@@ -99,7 +99,7 @@ export default function AmplifierDashboard() {
       setShoutoutMsg('');
       setShoutoutLink('');
       fetchShoutouts();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setPostingShoutout(false); }
   };
 

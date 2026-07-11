@@ -187,6 +187,7 @@ export default function ProducerDashboard() {
       fetchAllBriefs();
       fetchMyBriefInterests();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchBriefs = async () => {
@@ -354,7 +355,7 @@ export default function ProducerDashboard() {
         message: "A Producer has expressed interest in your script and would like to discuss potential development."
       });
       toast('INTEREST LOGGED ✦ The writer has been notified.');
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setExpressing(null); }
   };
 
@@ -365,7 +366,7 @@ export default function ProducerDashboard() {
 
     try {
       await supabase.from('audience_reactions').insert({ submission_id: scriptId, user_id: user.id, reaction: 'fire' });
-    } catch (err) {
+    } catch {
       fetchData();
     }
   };
@@ -390,8 +391,8 @@ export default function ProducerDashboard() {
         setAllBriefs(prev => prev.map(b => b.id === briefId ? { ...b, brief_interests: [{ count: (b.brief_interests?.[0]?.count || 0) + 1 }] } : b));
         toast('INTEREST LOGGED ✦');
       }
-    } catch (err: any) {
-      toast(err.message || 'Error updating interest');
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Error updating interest');
     } finally {
       setTogglingInterest(null);
     }
@@ -426,8 +427,8 @@ export default function ProducerDashboard() {
         if (insertError) throw insertError;
         toast('COLLAB ACCEPTED ✦');
       }
-    } catch (err: any) {
-      toast(err.message || 'Error accepting collab');
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'Error accepting collab');
     }
   };
 
@@ -440,8 +441,8 @@ export default function ProducerDashboard() {
       
       if (error) throw error;
       fetchBriefs();
-    } catch (err: any) {
-      toast(err.message);
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -452,8 +453,8 @@ export default function ProducerDashboard() {
       if (error) throw error;
       fetchBriefs();
       fetchData();
-    } catch (err: any) {
-      toast(err.message);
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -472,7 +473,7 @@ export default function ProducerDashboard() {
       fetchBriefs();
       fetchData();
       toast('BRIEF PUBLISHED ✦');
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setSubmittingBrief(false); }
   };
 

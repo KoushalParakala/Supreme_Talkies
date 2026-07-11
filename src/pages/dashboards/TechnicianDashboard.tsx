@@ -100,6 +100,7 @@ export default function TechnicianDashboard() {
         socialHandle: (profile as any).social_handle || ''
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile]);
 
   const fetchOtherCrewRef = useRef(0);
@@ -184,7 +185,7 @@ export default function TechnicianDashboard() {
         toast('INTEREST LOGGED ✦ The producer has been notified.');
         fetchOpenBriefs();
       }
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setExpressingBriefId(null); }
   };
 
@@ -226,7 +227,7 @@ export default function TechnicianDashboard() {
     try {
       await supabase.from('profiles').update({ availability: newVal }).eq('id', user?.id);
       refreshProfile();
-    } catch (err) { setAvailable(!newVal); }
+    } catch { setAvailable(!newVal); }
   };
 
   const handleSave = async () => {
@@ -245,7 +246,7 @@ export default function TechnicianDashboard() {
       if (error) throw error;
       refreshProfile();
       toast('Crew Card updated.');
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setSaving(false); }
   };
 
@@ -269,7 +270,7 @@ export default function TechnicianDashboard() {
       setExpandingNewCollab(false);
       fetchRequests();
       toast('Collaboration request sent! ✦');
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setSendingCollab(false); }
   };
 
@@ -289,6 +290,7 @@ export default function TechnicianDashboard() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

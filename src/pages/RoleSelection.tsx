@@ -308,9 +308,9 @@ export default function RoleSelection() {
       setTimeout(() => {
         navigate('/dashboard', { state: { activeRole: roleId }, replace: true });
       }, 500);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Role Selection Error:', e);
-      toast(`CASTING ERROR: ${e.message}`);
+      toast(`CASTING ERROR: ${e instanceof Error ? e.message : String(e)}`);
       setLoading(false);
       setPendingRole(null);
     }

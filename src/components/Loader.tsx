@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface LoaderProps {
   onComplete: () => void;
@@ -9,19 +9,19 @@ export default function Loader({ onComplete }: LoaderProps) {
   const [clapDone, setClapDone] = useState(false);
   const [flashing, setFlashing] = useState(false);
 
-  const handleClapComplete = () => {
+  const handleClapComplete = useCallback(() => {
     if (clapDone || flashing) return;
     setFlashing(true);
     setTimeout(() => {
       setClapDone(true);
       setTimeout(onComplete, 800);
     }, 180);
-  };
+  }, [clapDone, flashing, onComplete]);
 
   useEffect(() => {
     const safety = setTimeout(handleClapComplete, 4000);
     return () => clearTimeout(safety);
-  }, []);
+  }, [handleClapComplete]);
 
   const BOARD_W = 280;
 

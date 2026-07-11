@@ -322,7 +322,7 @@ export default function WriterDashboard() {
         toast('INTEREST LOGGED ✦ The producer has been notified.');
         fetchOpenBriefs();
       }
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setExpressingBriefId(null); }
   };
 
@@ -348,7 +348,7 @@ export default function WriterDashboard() {
       if (fetchId !== fetchSubmissionsRef.current) return;
       if (scriptsError) throw scriptsError;
       setSubmissions(scriptsData || []);
-    } catch (err: any) {
+    } catch (err) {
       if (fetchId !== fetchSubmissionsRef.current) return;
       console.error('Error fetching scripts:', err);
     } finally {
@@ -377,7 +377,7 @@ export default function WriterDashboard() {
       if (error) throw error;
       setPinForm({ title: '', url: '', note: '', type: 'LINK' });
       fetchInspirationPins();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setSubmittingPin(false); }
   };
 
@@ -386,7 +386,7 @@ export default function WriterDashboard() {
       const { error } = await supabase.from('inspiration_pins').delete().eq('id', id);
       if (error) throw error;
       fetchInspirationPins();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
   };
 
   useEffect(() => {
@@ -442,8 +442,8 @@ export default function WriterDashboard() {
       });
       fetchSubmissions();
 
-    } catch (err: any) { 
-      toast(err.message); 
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
     } finally { 
       setSubmitting(false); 
     }
@@ -476,8 +476,8 @@ export default function WriterDashboard() {
       setRevisionScriptId(null);
       setRevisionForm({ note: '', link: '' });
       fetchSubmissions();
-    } catch (err: any) {
-      toast(err.message);
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmittingRevision(false);
     }
@@ -500,8 +500,8 @@ export default function WriterDashboard() {
         toast('SCRIPT DELETED ✕');
         fetchSubmissions();
       }
-    } catch (err: any) {
-      alert(`Delete Error: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Delete Error: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 

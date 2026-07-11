@@ -319,11 +319,12 @@ export default function AdminDashboard() {
         setAcceptedScripts(scripts || []);
       }
       setDebugStep('Try block complete');
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (fetchId !== fetchIdRef.current) return;
-      setDebugStep('Caught error: ' + err.message);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setDebugStep('Caught error: ' + errMsg);
       console.error('Error fetching dashboard data:', err);
-      setError(err.message);
+      setError(errMsg);
     } finally {
       if (fetchId === fetchIdRef.current) {
         setDebugStep(prev => prev + ' -> Finally block');
@@ -332,10 +333,10 @@ export default function AdminDashboard() {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { 
     if (adminUser && isAdmin) fetchData(); 
     else if (!authLoading) setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, adminUser, authLoading, isAdmin]);
 
   // Actions
@@ -385,8 +386,8 @@ export default function AdminDashboard() {
       const { error } = await supabase.from('presentations').delete().eq('id', id);
       if (error) throw error;
       fetchData();
-    } catch (err: any) {
-      toast(err.message);
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -401,7 +402,7 @@ export default function AdminDashboard() {
       const { error } = await supabase.from('film_briefs').delete().eq('id', projectId);
       if (error) throw error;
       fetchData();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
   };
 
   const submitProject = async () => {
@@ -418,7 +419,7 @@ export default function AdminDashboard() {
       setShowNewProjectForm(false);
       fetchData();
       toast('PROJECT PUBLISHED ✦');
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setSubmittingProject(false); }
   };
 
@@ -475,7 +476,7 @@ export default function AdminDashboard() {
 
       setNewRoom({ title: '', script_id: '', brief: '' }); 
       fetchData();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setCreatingRoom(false); }
   };
 
@@ -528,7 +529,7 @@ export default function AdminDashboard() {
 
       setRoomMemberId({ ...roomMemberId, [roomId]: '' });
       fetchData();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
   };
 
   const createCampaign = async () => {
@@ -563,7 +564,7 @@ export default function AdminDashboard() {
       setNewChallenge({ title: '' });
       toast('CHALLENGE POSTED ✦');
       fetchData(); // re-fetch challenges
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setSubmittingChallenge(false); }
   };
 
@@ -574,7 +575,7 @@ export default function AdminDashboard() {
       if (error) throw error;
       toast('CHALLENGE DELETED ✕');
       fetchData();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
   };
 
 
@@ -630,8 +631,8 @@ export default function AdminDashboard() {
       setStill3File(null);
       setNewFilm({ title: '', production_note: '', rating: 'UA', duration: '', synopsis: '', special_note: '', video_link: '', reel_image: '', coming_soon: false, stills: [], credits: INITIAL_CREDITS });
       fetchData();
-    } catch (e: any) { 
-      toast(e.message); 
+    } catch (e: unknown) { 
+      toast(e instanceof Error ? e.message : String(e)); 
     } finally {
       setUploadingFilm(false);
     }

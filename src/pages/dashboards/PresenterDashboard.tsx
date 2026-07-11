@@ -82,7 +82,7 @@ export default function PresenterDashboard() {
       setForm({ title: '', synopsis: '', link: '', contact: '', note: '' });
       toast('PRESENTATION SUBMITTED ✦');
       fetchScreenings();
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
     finally { setSubmitting(false); }
   };
 

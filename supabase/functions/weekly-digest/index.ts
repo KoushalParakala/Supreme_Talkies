@@ -1,12 +1,16 @@
+// @ts-expect-error: Deno url import
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+// @ts-expect-error: Deno url import
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+
+declare const Deno: any;
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const ADMIN_EMAILS = Deno.env.get('ADMIN_EMAILS')
 
-serve(async (req) => {
+serve(async (_req: any) => {
   try {
     const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -23,7 +27,7 @@ serve(async (req) => {
     ])
 
     const topAmplifier = topAmplifierRes.data || { full_name: 'No activity', share_streak: 0 }
-    const adminList = ADMIN_EMAILS?.split(',').map(e => e.trim()) || []
+    const adminList = ADMIN_EMAILS?.split(',').map((e: string) => e.trim()) || []
 
     if (adminList.length === 0) {
       return new Response(JSON.stringify({ error: 'No admin emails configured' }), { status: 400 })
@@ -84,8 +88,9 @@ serve(async (req) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     })
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { 
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return new Response(JSON.stringify({ error: message }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     })

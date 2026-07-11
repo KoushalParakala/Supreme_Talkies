@@ -72,7 +72,8 @@ serve(async (req) => {
     })
 
     return new Response(JSON.stringify({ ok: true }), { status: 200 })
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return new Response(JSON.stringify({ error: message }), { status: 500 })
   }
 })

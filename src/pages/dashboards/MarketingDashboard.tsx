@@ -68,6 +68,7 @@ export default function MarketingDashboard() {
   useEffect(() => {
     if (!user) return;
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchIdRef = useRef(0);
@@ -136,9 +137,9 @@ export default function MarketingDashboard() {
       if (error) throw error;
       setCollabForm({ platform: '', follower_count: '', collab_idea: '' });
       toast('Proposal submitted to database! Our marketing lead will reach out. ✦');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error submitting collab brief:', err);
-      toast(`FAILED TO SUBMIT: ${err.message}`);
+      toast(`FAILED TO SUBMIT: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setCollabSubmitting(false);
     }
@@ -161,8 +162,8 @@ export default function MarketingDashboard() {
       setNewIdeaText('');
       fetchData();
       toast('IDEA PINNED TO BOARD 📌');
-    } catch (err: any) {
-      toast(err.message);
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
     } finally {
       setPostingIdea(false);
     }
@@ -179,7 +180,7 @@ export default function MarketingDashboard() {
       if (error) throw error;
       fetchData();
       toast('JOINED CAMPAIGN ✦');
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
   };
 
   const handleLogPost = async (campaignId: string) => {
@@ -197,7 +198,7 @@ export default function MarketingDashboard() {
       
       fetchData();
       toast('POST LOGGED ✦');
-    } catch (err: any) { toast(err.message); }
+    } catch (err: unknown) { toast(err instanceof Error ? err.message : String(err)); }
   };
 
   const handleDeleteIdea = async (ideaId: string) => {
@@ -207,8 +208,8 @@ export default function MarketingDashboard() {
       if (error) throw error;
       fetchData();
       toast('IDEA DELETED ✕');
-    } catch (err: any) {
-      toast(err.message);
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
     }
   };
 

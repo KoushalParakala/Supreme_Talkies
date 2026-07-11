@@ -85,8 +85,8 @@ export default function CrewDirectory(){
       setCrew(prev => prev.filter(c => c.id !== id));
       if (selectedCrew?.id === id) setSelectedCrew(null);
       toast('Account deleted successfully.');
-    } catch (err: any) {
-      toast('Error deleting account: ' + err.message);
+    } catch (err: unknown) {
+      toast('Error deleting account: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 

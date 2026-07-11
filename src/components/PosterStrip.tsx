@@ -1,5 +1,5 @@
 // Production Build: Seamless edge-blended cinematic poster strip
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, PanInfo, useMotionValue, animate } from 'framer-motion';
 import { useFilms } from '../hooks/useFilms';
 
@@ -21,8 +21,8 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const nextPoster = () => setCurrentIndex((prev) => (prev + 1) % FILMS.length);
-  const prevPoster = () => setCurrentIndex((prev) => (prev - 1 + FILMS.length) % FILMS.length);
+  const nextPoster = useCallback(() => setCurrentIndex((prev) => (prev + 1) % FILMS.length), [FILMS.length]);
+  const prevPoster = useCallback(() => setCurrentIndex((prev) => (prev - 1 + FILMS.length) % FILMS.length), [FILMS.length]);
 
   const startInteraction = () => {
     if (interactionTimeoutRef.current) clearTimeout(interactionTimeoutRef.current);
@@ -38,7 +38,7 @@ export default function PosterStrip({ onFilmClick }: PosterStripProps) {
     if (isInteracting) return;
     const interval = setInterval(nextPoster, 4000);
     return () => clearInterval(interval);
-  }, [isInteracting, FILMS.length]);
+  }, [isInteracting, nextPoster]);
 
   const handlePanStart = () => { startInteraction(); dragX.stop(); };
   const handlePan = (_: any, info: PanInfo) => { dragX.set(info.offset.x); };
