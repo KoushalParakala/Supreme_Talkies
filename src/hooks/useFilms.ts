@@ -49,8 +49,13 @@ export function useFilms() {
             customCredits: f.credits || []
           }));
           
-          // COMBINE the local 5 films with the new database films (6th film onwards)
-          setFilms([...fallbackFilms, ...mappedFilms]);
+          // COMBINE the local 5 films with the new database films (6th film onwards).
+          // Deduped by id so a colliding/migrated DB row can never render as a duplicate card —
+          // DB rows win over the local fallback since they're the more current source of truth.
+          const byId = new Map<string, Film>();
+          for (const f of fallbackFilms) byId.set(f.id, f);
+          for (const f of mappedFilms) byId.set(f.id, f);
+          setFilms(Array.from(byId.values()));
         }
       } catch (err) {
         console.error('Error fetching films from Supabase:', err);

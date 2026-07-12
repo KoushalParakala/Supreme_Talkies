@@ -64,10 +64,9 @@ function getInitials(name: string): string {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
-function checkIsAdmin(user: User | null, profile: Profile | null): boolean {
-  const adminEmailsStr = import.meta.env.VITE_ADMIN_EMAILS || '';
-  const adminEmails = adminEmailsStr.split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
-  if (user?.email && adminEmails.includes(user.email.toLowerCase())) return true;
+function checkIsAdmin(_user: User | null, profile: Profile | null): boolean {
+  // Admin status is a UI convenience only — the actual gate is Postgres's is_admin()
+  // (RLS + the guard trigger on profiles), which a client-side email list can't influence.
   const rArray = Array.isArray(profile?.roles) ? profile.roles : [];
   if (rArray.some((r: string) => r.toLowerCase() === 'admin')) return true;
   if (profile?.role?.toLowerCase() === 'admin') return true;
@@ -194,27 +193,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(safeProfile);
           loadedProfileRef.current = safeProfile;
 
-          // Auto-sync Google avatar/name if missing — never touches st_id
-          // Awaited so that profile state is updated before consumers render
-          supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
-            const googleAvatar = currentUser?.user_metadata?.avatar_url;
-            const googleName = currentUser?.user_metadata?.full_name;
-            const updates: Record<string, string> = {};
-            if (!safeProfile.avatar_url && googleAvatar) updates.avatar_url = googleAvatar;
-            if ((!safeProfile.full_name || safeProfile.full_name === 'Anonymous Creator') && googleName) {
-              updates.full_name = googleName;
+          // Auto-sync Google avatar/name if missing — never touches st_id.
+          // Actually awaited (not fire-and-forget) so profile state reflects the sync
+          // before this function returns, instead of landing a beat later as an extra render.
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          const googleAvatar = currentUser?.user_metadata?.avatar_url;
+          const googleName = currentUser?.user_metadata?.full_name;
+          const updates: Record<string, string> = {};
+          if (!safeProfile.avatar_url && googleAvatar) updates.avatar_url = googleAvatar;
+          if ((!safeProfile.full_name || safeProfile.full_name === 'Anonymous Creator') && googleName) {
+            updates.full_name = googleName;
+          }
+          if (Object.keys(updates).length > 0) {
+            const { error: syncErr } = await supabase.from('profiles').update(updates).eq('id', userId);
+            if (!syncErr) {
+              const merged = { ...safeProfile, ...updates } as Profile;
+              setProfile(merged);
+              loadedProfileRef.current = merged;
             }
-            if (Object.keys(updates).length > 0) {
-              supabase.from('profiles').update(updates).eq('id', userId).then(({ error: syncErr }) => {
-                if (!syncErr) {
-                  // Update profile state so displayName re-derives immediately
-                  const merged = { ...safeProfile, ...updates } as Profile;
-                  setProfile(merged);
-                  loadedProfileRef.current = merged;
-                }
-              });
-            }
-          });
+          }
         } else {
           setProfile(null);
           loadedProfileRef.current = null;

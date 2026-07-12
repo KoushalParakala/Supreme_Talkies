@@ -258,48 +258,31 @@ export default function RoleSelection() {
 
     // Second click — commit
     const id = roleId.toLowerCase();
-    const wasAdmin = existingRoles.some(r => r === 'admin') || user?.email === 'koushal.sub@gmail.com';
-
-    // Prepend new role, keep existing ones, de-duplicate
-    const merged = Array.from(new Set([id, ...existingRoles]));
-
-    // Never strip admin
-    if (wasAdmin && !merged.includes('admin')) merged.push('admin');
 
     setLoading(true);
     try {
       setLastConfirmed(roleId);
-      
-      const payload: Record<string, unknown> = {
-        roles: merged,
-        role: merged[0],
+
+      // Server-side RPC: whitelists which roles a user may self-assign and can
+      // never grant 'admin'. Replaces the old raw `.update({ role, roles })`,
+      // which had no protection against a client sending role: 'admin' directly.
+      const { error: rpcError } = await supabase.rpc('assign_role', { new_role: id });
+      if (rpcError) throw rpcError;
+
+      // avatar_symbol / full_name are ordinary, non-privileged columns — still fine
+      // to update directly.
+      const extraFields: Record<string, unknown> = {
         avatar_symbol: profile?.avatar_symbol || '🎬',
         updated_at: new Date().toISOString(),
       };
-      // Only set full_name if the profile doesn't already have one
-      // Prevents overwriting a user-entered name with a stale displayName fallback
       if (!profile?.full_name || profile.full_name === 'Anonymous Creator') {
-        payload.full_name = displayName || 'Anonymous Creator';
+        extraFields.full_name = displayName || 'Anonymous Creator';
       }
-
-      // Try UPDATE first and demand a return row. If no row exists, fall back to INSERT.
-      const { error: updateError } = await supabase
+      const { error: extraError } = await supabase
         .from('profiles')
-        .update(payload)
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        if (updateError.code === 'PGRST116' || updateError.message?.includes('no rows')) {
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({ id: user.id, ...payload });
-          if (insertError) throw insertError;
-        } else {
-          throw updateError;
-        }
-      }
+        .update(extraFields)
+        .eq('id', user.id);
+      if (extraError) throw extraError;
 
       // Ensure profile is refreshed before navigating
       await refreshProfile(user.id);

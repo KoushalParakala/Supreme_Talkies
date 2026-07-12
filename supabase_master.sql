@@ -476,6 +476,94 @@ CREATE POLICY "profiles_insert_own"  ON public.profiles FOR INSERT  TO authentic
 CREATE POLICY "profiles_update_own"  ON public.profiles FOR UPDATE  TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 CREATE POLICY "profiles_delete_own"  ON public.profiles FOR DELETE  TO authenticated USING (auth.uid() = id);
 
+-- ── PROFILES: privileged-column guard ──
+-- "profiles_update_own" above only checks *who* owns the row, not *what* they can change.
+-- Without this, any authenticated user could set their own role/roles to 'admin', or flip
+-- st_verified / is_early_access, via a direct .update() call. This trigger blocks that for
+-- non-admins on both INSERT and UPDATE, regardless of what the client sends. Admins (and the
+-- service role used by edge functions, which bypasses RLS/triggers entirely) are unaffected.
+CREATE OR REPLACE FUNCTION public.guard_profile_privileged_columns()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  -- Admins, the service role (edge functions), and assign_role()'s own
+  -- internal update are all trusted callers.
+  IF public.is_admin()
+     OR auth.role() = 'service_role'
+     OR current_setting('app.assign_role_in_progress', true) = 'true'
+  THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    -- Self-created rows always start as a plain member, no matter what the client sent.
+    NEW.role := 'member';
+    NEW.roles := ARRAY['member'];
+    NEW.st_verified := FALSE;
+    NEW.is_early_access := FALSE;
+    RETURN NEW;
+  END IF;
+
+  -- TG_OP = 'UPDATE'
+  IF NEW.role IS DISTINCT FROM OLD.role OR NEW.roles IS DISTINCT FROM OLD.roles THEN
+    RAISE EXCEPTION 'role/roles can only be changed via public.assign_role()';
+  END IF;
+  IF NEW.st_verified IS DISTINCT FROM OLD.st_verified THEN
+    RAISE EXCEPTION 'st_verified cannot be set directly';
+  END IF;
+  IF NEW.is_early_access IS DISTINCT FROM OLD.is_early_access THEN
+    RAISE EXCEPTION 'is_early_access cannot be set directly';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_guard_profile_privileged_insert ON public.profiles;
+CREATE TRIGGER trg_guard_profile_privileged_insert
+  BEFORE INSERT ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.guard_profile_privileged_columns();
+
+DROP TRIGGER IF EXISTS trg_guard_profile_privileged_update ON public.profiles;
+CREATE TRIGGER trg_guard_profile_privileged_update
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.guard_profile_privileged_columns();
+
+-- ── PROFILES: safe self-service role assignment ──
+-- Replaces the raw client-side `.update({ role, roles })` call in RoleSelection.tsx.
+-- Whitelists which roles a user may grant themselves and can never assign 'admin'.
+CREATE OR REPLACE FUNCTION public.assign_role(new_role TEXT)
+RETURNS public.profiles LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  allowed TEXT[] := ARRAY['writer','technician','producer','presenter','marketing','amplifier'];
+  merged_roles TEXT[];
+  result public.profiles;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  IF NOT (lower(new_role) = ANY(allowed)) THEN
+    RAISE EXCEPTION 'Invalid role: %', new_role;
+  END IF;
+
+  SELECT roles INTO merged_roles FROM public.profiles WHERE id = auth.uid();
+  merged_roles := ARRAY(SELECT DISTINCT unnest(COALESCE(merged_roles, '{}') || ARRAY[lower(new_role)]));
+
+  PERFORM set_config('app.assign_role_in_progress', 'true', true);
+
+  UPDATE public.profiles
+  SET roles = merged_roles,
+      role = lower(new_role),
+      updated_at = NOW()
+  WHERE id = auth.uid()
+  RETURNING * INTO result;
+
+  RETURN result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.assign_role(TEXT) TO authenticated;
+
 -- ── MEMBER DIRECTORY VIEW (public read) ──
 -- Views inherit RLS from underlying table but we grant select explicitly
 GRANT SELECT ON public.member_directory TO authenticated, anon;

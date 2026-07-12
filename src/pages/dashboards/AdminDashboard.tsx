@@ -353,12 +353,27 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const channel = supabase
-      .channel(`admin_live_updates_${section}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'scripts' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'presentations' }, () => fetchData())
-      .subscribe();
+    // Maps each admin tab to the table(s) whose changes should actually trigger a refetch
+    // of that tab. Keeps unrelated tables (e.g. a submissions edit while on FILMS) from
+    // causing a pointless loading-flicker refetch, and gives PROJECT ROOMS/CAMPAIGNS/FILMS
+    // live updates they previously never got.
+    const SECTION_TABLES: Record<string, string[]> = {
+      MARKETING: ['submissions'],
+      WRITERS: ['scripts', 'writing_challenges'],
+      PROJECTS: ['film_briefs', 'brief_interests'],
+      'PROJECT ROOMS': ['project_rooms', 'project_room_members'],
+      CAMPAIGNS: ['campaigns'],
+      FILMS: ['films'],
+      SCREENINGS: ['presentations'],
+    };
+    const tables = SECTION_TABLES[section] || [];
+    if (tables.length === 0) return;
+
+    let channel = supabase.channel(`admin_live_updates_${section}`);
+    for (const table of tables) {
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => fetchData());
+    }
+    channel.subscribe();
 
     return () => { supabase.removeChannel(channel); };
   // fetchData is stable within the section's scope; section is the key dependency

@@ -88,24 +88,26 @@ export default function Dashboard(){
     return roles[0];
   },[requestedRole,roles,isAdmin]);
 
-  const [activeRole,setActiveRole]=useState(initialRole ||roles[0]||'writer');
+  // No guessed default here (previously fell back to 'writer', which meant every user —
+  // Producer, Technician, whoever — kicked off a lazy-import of WriterDashboard's chunk
+  // on first paint before the real role was known, wasting a network request and flashing
+  // the wrong dashboard). Stays null until roles/initialRole actually resolve.
+  const [activeRole,setActiveRole]=useState<string | null>(initialRole ||roles[0]||null);
 
-  // Sync activeRole when initialRole or roles changes (e.g. after profile loads)
+  // Single source of truth for syncing activeRole: prefer an explicitly requested role
+  // (if valid), otherwise fall back to whatever initialRole/roles resolves to.
   useEffect(()=>{
-    const target =initialRole ||roles[0];
+    const valid =[...Object.keys(ROLE_LABELS),'admin'];
+    let target: string | undefined;
+    if (requestedRole &&(roles.includes(requestedRole)||valid.includes(requestedRole))){
+      target =requestedRole;
+    } else {
+      target =initialRole ||roles[0];
+    }
     if (target){
       setActiveRole(prev=>prev!==target?target:prev);
     }
-  },[initialRole,roles]);
-
-  useEffect(()=>{
-    if (requestedRole){
-      const valid =[...Object.keys(ROLE_LABELS),'admin'];
-      if (roles.includes(requestedRole)||valid.includes(requestedRole)){
-        setActiveRole(prev=>prev!==requestedRole?requestedRole:prev);
-      }
-    }
-  },[requestedRole,roles]);
+  },[requestedRole,initialRole,roles]);
 
   useEffect(()=>{
     if (loading) return;
@@ -140,6 +142,8 @@ export default function Dashboard(){
   }
 
   if (roles.length===0 &&!isAdmin) return null;
+
+  if (!activeRole) return null;
 
   const title =ROLE_LABELS[activeRole]??activeRole.toUpperCase();
   const subtitle =ROLE_SUBTITLES[activeRole]??'';

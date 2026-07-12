@@ -1,20 +1,35 @@
-// @ts-expect-error: Deno url import
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-// @ts-expect-error: Deno url import
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-
-declare const Deno: any;
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 const ADMIN_EMAILS = Deno.env.get('ADMIN_EMAILS')
+const WEBHOOK_SECRET = Deno.env.get('EDGE_FUNCTION_SECRET')
 
-serve(async (_req: any) => {
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret',
+}
+
+serve(async (_req) => {
+  // Handle CORS preflight
+  if (_req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS_HEADERS })
+  }
+
+  if (!WEBHOOK_SECRET || _req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    })
+  }
+
   try {
     const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    
+
     // Aggregate Data
     const [scripts, portfolios, films, collabs, producerBriefs, pendingCount, topAmplifierRes] = await Promise.all([
       supabaseAdmin.from('submissions').select('id', { count: 'exact', head: true }).eq('type', 'script').gte('created_at', since),
@@ -30,7 +45,10 @@ serve(async (_req: any) => {
     const adminList = ADMIN_EMAILS?.split(',').map((e: string) => e.trim()) || []
 
     if (adminList.length === 0) {
-      return new Response(JSON.stringify({ error: 'No admin emails configured' }), { status: 400 })
+      return new Response(JSON.stringify({ error: 'No admin emails configured' }), {
+        status: 400,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
     }
 
     const html = `
@@ -38,7 +56,7 @@ serve(async (_req: any) => {
         <div style="max-width: 600px; margin: 0 auto; border: 1px solid rgba(188,168,142,0.2); padding: 40px; background-color: #0a0b0e; text-align: left;">
           <h1 style="color: #BCA88E; letter-spacing: 5px; font-size: 20px; margin-bottom: 30px; text-transform: uppercase; text-align: center;">WEEKLY PRODUCTION DIGEST</h1>
           <div style="height: 1px; background: rgba(188,168,142,0.2); margin-bottom: 30px;"></div>
-          
+
           <h3 style="color: #BCA88E; font-size: 10px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 15px;">NEW THIS WEEK</h3>
           <ul style="list-style: none; padding: 0; margin-bottom: 35px; color: rgba(240,235,224,0.8); font-size: 14px;">
             <li style="margin-bottom: 10px;">📽️ <b>${scripts.count || 0}</b> Script Submissions</li>
@@ -70,29 +88,29 @@ serve(async (_req: any) => {
 
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${RESEND_API_KEY}`, 
-        'Content-Type': 'application/json' 
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         from: 'Supreme Talkies Reports <reports@resend.dev>',
         to: adminList,
         subject: `Weekly Production Report — ${new Date().toLocaleDateString()}`,
         html,
-      })
+      }),
     })
 
     const resendData = await resendRes.json()
 
-    return new Response(JSON.stringify({ ok: true, resend: resendData }), { 
+    return new Response(JSON.stringify({ ok: true, resend: resendData }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    return new Response(JSON.stringify({ error: message }), { 
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   }
 })

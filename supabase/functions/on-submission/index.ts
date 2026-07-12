@@ -1,9 +1,16 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+const WEBHOOK_SECRET = Deno.env.get('EDGE_FUNCTION_SECRET')
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret',
+}
 
 const TYPE_LABELS: Record<string, string> = {
   script: 'Script Submission',
@@ -20,25 +27,44 @@ const SUBJECT_MAP: Record<string, string> = {
   film: 'Your film submission is with us 📽️',
   collab: 'Collab proposal received ✦',
   producer_brief: 'Your brief is with our team 🎬',
+  producer_interest: 'Your interest has been noted ✦',
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS_HEADERS })
+  }
+
+  if (!WEBHOOK_SECRET || req.headers.get('x-webhook-secret') !== WEBHOOK_SECRET) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    })
+  }
+
   try {
     const payload = await req.json()
     const record = payload.record // new submission row
-    
+
     if (!record || !record.user_id) {
-      return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 })
+      return new Response(JSON.stringify({ error: 'Invalid payload' }), {
+        status: 400,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
     }
 
     const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
-    
+
     // Fetch submitter email from auth.users
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(record.user_id)
-    
+
     if (userError || !user) {
       console.error('Error fetching user:', userError)
-      return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 })
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      })
     }
 
     const user_email = user.email
@@ -70,29 +96,29 @@ serve(async (req) => {
 
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${RESEND_API_KEY}`, 
-        'Content-Type': 'application/json' 
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Supreme Talkies <onboarding@resend.dev>', // Use verified domain later, onboarding works for testing
+        from: 'Supreme Talkies <onboarding@resend.dev>',
         to: [user_email],
         subject,
         html,
-      })
+      }),
     })
 
     const resendData = await resendRes.json()
 
-    return new Response(JSON.stringify({ ok: true, resend: resendData }), { 
+    return new Response(JSON.stringify({ ok: true, resend: resendData }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    return new Response(JSON.stringify({ error: message }), { 
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     })
   }
 })
