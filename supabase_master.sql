@@ -413,8 +413,8 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
     '🎬',
-    'member',
-    ARRAY['member'],
+    CASE WHEN NEW.email IN ('admin@supremetalkies.com', 'koushal.sub@gmail.com', 'postbox5858@gmail.com') THEN 'admin' ELSE 'member' END,
+    CASE WHEN NEW.email IN ('admin@supremetalkies.com', 'koushal.sub@gmail.com', 'postbox5858@gmail.com') THEN ARRAY['admin'] ELSE ARRAY['member'] END,
     'SUPR-' || LPAD((floor(random() * 90000) + 10000)::TEXT, 5, '0')
   )
   ON CONFLICT (id) DO NOTHING;
@@ -458,7 +458,7 @@ CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER STABLE AS $$
 BEGIN
   -- Fast-path JWT check: avoids database queries for predefined admin emails
-  IF auth.jwt() ->> 'email' IN ('admin@supremetalkies.com', 'koushal.sub@gmail.com') THEN
+  IF auth.jwt() ->> 'email' IN ('admin@supremetalkies.com', 'koushal.sub@gmail.com', 'postbox5858@gmail.com') THEN
     RETURN TRUE;
   END IF;
 
@@ -710,10 +710,9 @@ UPDATE public.profiles
 SET st_id = 'SUPR-' || LPAD((floor(random() * 90000) + 10000)::TEXT, 5, '0')
 WHERE st_id IS NULL;
 
--- Make koushal.sub@gmail.com admin (adjust email if needed)
+-- Make admins (adjust email if needed)
 UPDATE public.profiles
-SET role = 'admin', roles = array_append(COALESCE(roles, '{}'), 'admin')
+SET role = 'admin', roles = ARRAY['admin']::TEXT[]
 WHERE id IN (
-  SELECT id FROM auth.users WHERE email = 'koushal.sub@gmail.com'
-)
-AND NOT ('admin' = ANY(COALESCE(roles, '{}')));
+  SELECT id FROM auth.users WHERE email IN ('koushal.sub@gmail.com', 'postbox5858@gmail.com')
+);
