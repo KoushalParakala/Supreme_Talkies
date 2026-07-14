@@ -281,6 +281,26 @@ export default function TechnicianDashboard() {
     } catch (err) { console.error(err); }
   };
 
+  const handleRemoveConnection = async (peerId: string) => {
+    if (!user || !peerId) return;
+    if (!window.confirm('Are you sure you want to disconnect from this collaborator?')) return;
+    
+    try {
+      const [res1, res2] = await Promise.all([
+        supabase.from('collab_requests').delete().eq('sender_id', user.id).eq('receiver_id', peerId),
+        supabase.from('collab_requests').delete().eq('sender_id', peerId).eq('receiver_id', user.id)
+      ]);
+      
+      if (res1.error) throw res1.error;
+      if (res2.error) throw res2.error;
+      
+      toast('Connection removed.');
+      fetchRequests();
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
+    }
+  };
+
 
   useEffect(() => {
     const channel = supabase
@@ -661,6 +681,32 @@ export default function TechnicianDashboard() {
                     ) : (
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: '8px 0 0', letterSpacing: 2 }}>NO PORTFOLIO</p>
                     )}
+                    <button 
+                      onClick={() => handleRemoveConnection(collab.peer?.id)}
+                      style={{ 
+                        alignSelf: 'flex-start', 
+                        background: 'none', 
+                        border: '1px solid rgba(255,100,100,0.15)', 
+                        color: 'rgba(255,150,150,0.8)', 
+                        padding: '6px 14px', 
+                        fontFamily: 'Montserrat, sans-serif', 
+                        fontSize: 9, 
+                        letterSpacing: 2, 
+                        cursor: 'pointer',
+                        marginTop: 4,
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(255,100,100,0.4)';
+                        e.currentTarget.style.background = 'rgba(255,100,100,0.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(255,100,100,0.15)';
+                        e.currentTarget.style.background = 'none';
+                      }}
+                    >
+                      DISCONNECT
+                    </button>
                   </div>
                 ))
               }
