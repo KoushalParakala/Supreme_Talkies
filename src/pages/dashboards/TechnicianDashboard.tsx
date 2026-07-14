@@ -630,10 +630,20 @@ export default function TechnicianDashboard() {
               <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>ACTIVE COLLABORATORS</p>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
-                {[
-                  ...receivedRequests.filter(req => req.status === 'accepted').map(req => ({ id: req.id, peer: req.sender })),
-                  ...sentRequests.filter(req => req.status === 'accepted').map(req => ({ id: req.id, peer: req.receiver }))
-                ].map(collab => (
+                {(() => {
+                  const seen = new Set();
+                  return [
+                    ...receivedRequests.filter(req => req.status === 'accepted').map(req => ({ id: req.id, peer: req.sender })),
+                    ...sentRequests.filter(req => req.status === 'accepted').map(req => ({ id: req.id, peer: req.receiver }))
+                  ].filter(collab => {
+                    if (!collab.peer) return false;
+                    const key = collab.peer.st_id || collab.peer.id;
+                    if (!key) return false;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                  });
+                })().map(collab => (
                   <div key={collab.id} style={{ border: '1px solid rgba(188,168,142,0.2)', background: 'rgba(188,168,142,0.05)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -652,7 +662,8 @@ export default function TechnicianDashboard() {
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', opacity: 0.4, margin: '8px 0 0', letterSpacing: 2 }}>NO PORTFOLIO</p>
                     )}
                   </div>
-                ))}
+                ))
+              }
               </div>
             </div>
 
