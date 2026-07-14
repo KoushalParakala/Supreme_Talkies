@@ -4,7 +4,7 @@ const SUPABASE_SERVICE_ROLE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOi
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 async function run() {
-  const email = process.argv[2] || 'koushal.sub@gmail.com';
+  const email = 'koushal.sub@gmail.com';
   console.log(`Setting role to admin for ${email}...`);
   // Assuming profiles table has a user_id or id that matches auth.users.id
   // First get the user id
