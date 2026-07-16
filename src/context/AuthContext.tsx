@@ -116,6 +116,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchPromiseRef.current = (async () => {
       try {
         console.log('[fetchProfile] Starting for user:', userId);
+
+        // Force-validate the auth token before polling. On a hard refresh
+        // the cached JWT from getSession() may be expired, causing all
+        // RLS-protected queries to silently return 0 rows. getUser() makes
+        // a server roundtrip that refreshes the token if needed.
+        try {
+          await supabase.auth.getUser();
+        } catch (e) {
+          console.warn('[fetchProfile] Token pre-validation failed:', e);
+        }
+
         let profileData: Record<string, unknown> | null = null;
 
         // Poll up to 6× with 500ms gaps (3s total) to handle DB trigger race on first login
@@ -339,6 +350,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setLoading(true);
           await fetchProfile(newSession.user.id);
           if (mounted) setLoading(false);
+        } else if (event === 'TOKEN_REFRESHED') {
+          // If a previous fetch ran with an expired token and got a null
+          // profile, retry now that we have a fresh token.
+          if (!loadedProfileRef.current) {
+            console.log('[AuthContext] TOKEN_REFRESHED with null profile — retrying fetch');
+            lastFetchedUserId.current = null;
+            fetchPromiseRef.current = null;
+            await fetchProfile(newSession.user.id);
+          }
         } else {
           await fetchProfile(newSession.user.id);
         }
