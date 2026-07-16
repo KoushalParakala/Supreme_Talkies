@@ -118,8 +118,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('[fetchProfile] Starting for user:', userId);
         let profileData: Record<string, unknown> | null = null;
 
-        // Poll up to 4× with 500ms gaps to handle DB trigger race on first login
-        for (let i = 0; i < 4; i++) {
+        // Poll up to 6× with 500ms gaps (3s total) to handle DB trigger race on first login
+        // and give extra headroom for slow page-load conditions.
+        for (let i = 0; i < 6; i++) {
           console.log(`[fetchProfile] Poll attempt ${i + 1}`);
           const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
           if (!error && data) {
@@ -131,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error('[fetchProfile] Error fetching profile:', error);
             break;
           }
-          if (i < 3) await new Promise(r => setTimeout(r, 500));
+          if (i < 5) await new Promise(r => setTimeout(r, 500));
         }
 
         // If still no profile, auto-create with a DETERMINISTIC SUPR-ID
@@ -159,9 +160,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           };
 
           console.log('[fetchProfile] Attempting upsert for:', newProfile.id);
+          // ignoreDuplicates: true — if a row already exists (e.g. a slow fetch
+          // falsely timed out), the insert is silently skipped instead of
+          // overwriting the real profile with fresh defaults.
           const { data: insertedData, error: insertError } = await supabase
             .from('profiles')
-            .upsert(newProfile, { onConflict: 'id', ignoreDuplicates: false })
+            .upsert(newProfile, { onConflict: 'id', ignoreDuplicates: true })
             .select()
             .single();
 
@@ -169,8 +173,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error('[fetchProfile] Error auto-creating profile:', insertError);
           }
           if (!insertError && insertedData) {
-            console.log('[fetchProfile] Upsert successful');
+            console.log('[fetchProfile] Upsert successful (new user row created)');
             profileData = insertedData;
+          } else if (!insertError && !insertedData) {
+            // Row already existed — upsert was skipped (ignoreDuplicates: true).
+            // Re-fetch to get the real, untouched profile.
+            console.log('[fetchProfile] Upsert skipped (row exists) — re-fetching real profile…');
+            const { data: existingData } = await supabase
+              .from('profiles').select('*').eq('id', userId).single();
+            if (existingData) profileData = existingData;
           }
         }
 
