@@ -117,14 +117,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         console.log('[fetchProfile] Starting for user:', userId);
 
-        // Force-validate the auth token before polling. On a hard refresh
-        // the cached JWT from getSession() may be expired, causing all
-        // RLS-protected queries to silently return 0 rows. getUser() makes
-        // a server roundtrip that refreshes the token if needed.
+        // Force-refresh the auth session before polling. On a hard refresh
+        // the cached JWT from getSession() is often expired, causing all
+        // RLS-protected queries to silently return 0 rows. refreshSession()
+        // explicitly gets a new access token using the stored refresh token.
         try {
-          await supabase.auth.getUser();
+          const { error: refreshErr } = await supabase.auth.refreshSession();
+          if (refreshErr) {
+            console.warn('[fetchProfile] Session refresh failed:', refreshErr.message);
+          } else {
+            console.log('[fetchProfile] Session refreshed successfully');
+          }
         } catch (e) {
-          console.warn('[fetchProfile] Token pre-validation failed:', e);
+          console.warn('[fetchProfile] Session refresh threw:', e);
         }
 
         let profileData: Record<string, unknown> | null = null;
@@ -319,11 +324,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         if (!mounted) return;
         if (sessionError) throw sessionError;
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+
         if (currentSession?.user) {
+          // Proactively refresh before any DB calls — the cached JWT
+          // from getSession() may be expired after a hard page reload.
+          try {
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            if (refreshData?.session) {
+              setSession(refreshData.session);
+              setUser(refreshData.session.user);
+            } else {
+              setSession(currentSession);
+              setUser(currentSession.user);
+            }
+          } catch {
+            setSession(currentSession);
+            setUser(currentSession.user);
+          }
+          if (!mounted) return;
           await fetchProfile(currentSession.user.id);
         } else {
+          setSession(null);
+          setUser(null);
           setProfileAttempted(true);
         }
       } catch (err) {
