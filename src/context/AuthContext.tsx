@@ -36,6 +36,7 @@ interface AuthContextType {
   loading: boolean;
   authSlow: boolean;
   profileAttempted: boolean;
+  profileFetchFailed: boolean;
   signOut: () => Promise<void>;
   refreshProfile: (userId?: string) => Promise<void>;
   displayName: string;
@@ -50,6 +51,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   authSlow: false,
   profileAttempted: false,
+  profileFetchFailed: false,
   signOut: async () => {},
   refreshProfile: async (_userId?: string) => {},
   displayName: 'MEMBER',
@@ -81,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [authSlow, setAuthSlow] = useState(false);
   const [profileAttempted, setProfileAttempted] = useState(false);
+  const [profileFetchFailed, setProfileFetchFailed] = useState(false);
   const initialised = useRef(false);
   const lastFetchedUserId = useRef<string | null>(null);
   const loadedProfileRef = useRef<Profile | null>(null);
@@ -128,6 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         let profileData: Record<string, unknown> | null = null;
+        let hardError = false; // a real error/timeout occurred — NOT the same as "confirmed no row"
 
         // Poll up to 6× with 500ms gaps (3s total) to handle DB trigger race on first login
         // and give extra headroom for slow page-load conditions.
@@ -141,10 +145,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
           if (error && error.code !== 'PGRST116') {
             console.error('[fetchProfile] Error fetching profile:', error);
+            hardError = true;
             break;
           }
           if (i < 5) await new Promise(r => setTimeout(r, 500));
         }
+        // Only PGRST116 on every single attempt counts as "confirmed no row exists".
+        // Anything else (network error, RLS error, timeout) must NOT be treated as a new user.
+        setProfileFetchFailed(hardError);
 
         if (profileData) {
           // CRITICAL: If DB returned a profile without st_id (edge case), patch it once
@@ -192,6 +200,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error fetching profile:', err);
         setProfile(null);
         loadedProfileRef.current = null;
+        setProfileFetchFailed(true);
       } finally {
         setProfileAttempted(true);
         fetchPromiseRef.current = null;
@@ -335,6 +344,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setSession(null);
     setProfileAttempted(false);
+    setProfileFetchFailed(false);
     lastFetchedUserId.current = null;
     loadedProfileRef.current = null;
     try {
@@ -352,7 +362,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, session, profile, loading, authSlow, profileAttempted,
+      user, session, profile, loading, authSlow, profileAttempted, profileFetchFailed,
       signOut, refreshProfile, displayName, avatarInitials, isAdmin,
     }}>
       {children}
