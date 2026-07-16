@@ -13,6 +13,7 @@ import { Toaster } from 'react-hot-toast';
 const Home = lazy(() => import('./pages/Home'));
 const FilmDetail = lazy(() => import('./pages/FilmDetail'));
 const Auth = lazy(() => import('./pages/Auth'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const RoleSelection = lazy(() => import('./pages/RoleSelection'));
 const CrewDirectory = lazy(() => import('./pages/CrewDirectory'));
@@ -117,6 +118,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/film/:id" element={<FilmDetail />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/about" element={<About />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>

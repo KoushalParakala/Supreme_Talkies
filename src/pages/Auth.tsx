@@ -275,7 +275,10 @@ export default function Auth(){
                   <div style={{display:'flex',gap:12}}>
                     <button type="button" onClick={()=>supabase.auth.signInWithOAuth({
                       provider:'google',
-                      options: { redirectTo: `${window.location.origin}/auth` }
+                      options: {
+                        redirectTo: `${window.location.origin}/auth/callback`,
+                        queryParams: { prompt: 'select_account' }
+                      }
                     })}
                       style={{flex:1,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(188,168,142,0.2)',padding:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:8,cursor:'pointer',transition:'background 0.2s'}}
                       onMouseEnter={(e)=>((e.currentTarget as HTMLElement).style.background='rgba(255,255,255,0.08)')}

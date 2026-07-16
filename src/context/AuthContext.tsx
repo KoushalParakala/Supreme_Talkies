@@ -146,59 +146,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (i < 5) await new Promise(r => setTimeout(r, 500));
         }
 
-        // If still no profile, auto-create with a DETERMINISTIC SUPR-ID
-        if (!profileData) {
-          console.warn('[fetchProfile] Profile not found after polling, auto-creating on frontend…');
-          console.log('[fetchProfile] Calling supabase.auth.getUser()...');
-          const { data: { user: currentUser } } = await supabase.auth.getUser();
-          console.log('[fetchProfile] getUser() returned:', !!currentUser);
-          const googleAvatar = currentUser?.user_metadata?.avatar_url || null;
-          const googleName = currentUser?.user_metadata?.full_name || '';
-          const fromEmail = currentUser?.email?.split('@')[0] || 'Member';
-          const newName = googleName || (fromEmail.charAt(0).toUpperCase() + fromEmail.slice(1));
-          
-          const deterministicStId = deriveSuprId(userId);
-
-          const newProfile = {
-            id: userId,
-            full_name: newName,
-            avatar_url: googleAvatar,
-            avatar_symbol: '🎬',
-            st_id: deterministicStId,
-            role: 'member',
-            roles: ['member'],
-            updated_at: new Date().toISOString(),
-          };
-
-          console.log('[fetchProfile] Attempting upsert for:', newProfile.id);
-          // ignoreDuplicates: true — if a row already exists (e.g. a slow fetch
-          // falsely timed out), the insert is silently skipped instead of
-          // overwriting the real profile with fresh defaults.
-          const { data: insertedData, error: insertError } = await supabase
-            .from('profiles')
-            .upsert(newProfile, { onConflict: 'id', ignoreDuplicates: true })
-            .select()
-            .maybeSingle();
-
-          const isDuplicateSkip = (!insertError && !insertedData) || (insertError?.code === 'PGRST116');
-
-          if (insertError && insertError.code !== 'PGRST116') {
-            console.error('[fetchProfile] Error auto-creating profile:', insertError);
-          }
-          
-          if (!insertError && insertedData) {
-            console.log('[fetchProfile] Upsert successful (new user row created)');
-            profileData = insertedData;
-          } else if (isDuplicateSkip) {
-            // Row already existed — upsert was skipped (ignoreDuplicates: true).
-            // Re-fetch to get the real, untouched profile.
-            console.log('[fetchProfile] Upsert skipped (row exists) — re-fetching real profile…');
-            const { data: existingData } = await supabase
-              .from('profiles').select('*').eq('id', userId).single();
-            if (existingData) profileData = existingData;
-          }
-        }
-
         if (profileData) {
           // CRITICAL: If DB returned a profile without st_id (edge case), patch it once
           if (!profileData.st_id) {
