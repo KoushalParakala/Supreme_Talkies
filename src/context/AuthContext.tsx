@@ -167,15 +167,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .from('profiles')
             .upsert(newProfile, { onConflict: 'id', ignoreDuplicates: true })
             .select()
-            .single();
+            .maybeSingle();
 
-          if (insertError) {
+          const isDuplicateSkip = (!insertError && !insertedData) || (insertError?.code === 'PGRST116');
+
+          if (insertError && insertError.code !== 'PGRST116') {
             console.error('[fetchProfile] Error auto-creating profile:', insertError);
           }
+          
           if (!insertError && insertedData) {
             console.log('[fetchProfile] Upsert successful (new user row created)');
             profileData = insertedData;
-          } else if (!insertError && !insertedData) {
+          } else if (isDuplicateSkip) {
             // Row already existed — upsert was skipped (ignoreDuplicates: true).
             // Re-fetch to get the real, untouched profile.
             console.log('[fetchProfile] Upsert skipped (row exists) — re-fetching real profile…');
