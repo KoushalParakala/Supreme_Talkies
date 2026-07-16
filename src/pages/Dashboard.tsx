@@ -68,7 +68,7 @@ function DashboardErrorFallback(){
 export default function Dashboard(){
   const navigate =useNavigate();
   const location =useLocation();
-  const {user,profile,loading,session,profileAttempted,displayName,isAdmin} =useAuth();
+  const {user,profile,loading,session,profileAttempted,profileFetchFailed,displayName,isAdmin} =useAuth();
 
   const requestedRole =location.state?.activeRole as string |undefined;
 
@@ -115,16 +115,16 @@ export default function Dashboard(){
       navigate('/auth',{replace:true});
       return;
     }
-    if (session &&profileAttempted &&!profile &&!isAdmin){
+    if (session &&profileAttempted &&!profile &&!isAdmin &&!profileFetchFailed){
       navigate('/role-select',{replace:true});
     }
-  },[loading,session,profile,profileAttempted,isAdmin,navigate]);
+  },[loading,session,profile,profileAttempted,profileFetchFailed,isAdmin,navigate]);
 
   useEffect(()=>{
-    if (profileAttempted &&roles.length===0 &&!isAdmin){
+    if (profileAttempted &&roles.length===0 &&!isAdmin &&!profileFetchFailed){
       navigate('/role-select',{replace:true});
     }
-  },[profileAttempted,roles,isAdmin,navigate]);
+  },[profileAttempted,roles,isAdmin,profileFetchFailed,navigate]);
 
   if (!session ||!user) return null;
 
