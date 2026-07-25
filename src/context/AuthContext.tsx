@@ -1,50 +1,14 @@
-import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { deriveSuprId } from '../lib/auth';
+import { AuthContextType, Profile } from '../types/auth';
+import { fetchUserProfile, syncGoogleProfileMetadata, computeDisplayName, getInitials, checkIsAdmin } from '../lib/profile';
+import { useAuth } from '../hooks/useAuth';
 
-export interface Profile {
-  id: string;
-  full_name: string;
-  avatar_url?: string;
-  avatar_symbol: string;
-  role: string | null;
-  roles: string[] | null;
-  st_id?: string;
-  st_verified?: boolean;
-  is_early_access?: boolean;
-  availability?: boolean;
-  share_streak?: number;
-  last_share_at?: string;
-  age?: number;
-  phone?: string;
-  niche?: string;
-  experience?: string;
-  portfolio_url?: string;
-  skills?: string[];
-  contact?: string;
-  social_handle?: string;
-  note_to_team?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+export type { Profile } from '../types/auth';
+export { useAuth };
 
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  profile: Profile | null;
-  loading: boolean;
-  authSlow: boolean;
-  profileAttempted: boolean;
-  profileFetchFailed: boolean;
-  signOut: () => Promise<void>;
-  refreshProfile: (userId?: string) => Promise<void>;
-  displayName: string;
-  avatarInitials: string;
-  isAdmin: boolean;
-}
-
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   profile: null,
@@ -59,23 +23,6 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
 });
 
-function getInitials(name: string): string {
-  const parts = name.split(' ').filter(Boolean);
-  if (parts.length === 0) return 'M';
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
-
-function checkIsAdmin(_user: User | null, profile: Profile | null): boolean {
-  // Admin status is a UI convenience only — the actual gate is Postgres's is_admin()
-  // (RLS + the guard trigger on profiles), which a client-side email list can't influence.
-  const rArray = Array.isArray(profile?.roles) ? profile.roles : [];
-  if (rArray.some((r: string) => r.toLowerCase() === 'admin')) return true;
-  if (profile?.role?.toLowerCase() === 'admin') return true;
-  return false;
-}
-
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -84,295 +31,156 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authSlow, setAuthSlow] = useState(false);
   const [profileAttempted, setProfileAttempted] = useState(false);
   const [profileFetchFailed, setProfileFetchFailed] = useState(false);
-  const initialised = useRef(false);
-  const lastFetchedUserId = useRef<string | null>(null);
-  const loadedProfileRef = useRef<Profile | null>(null);
 
-  const displayName = useMemo(() => {
-    if (profile?.full_name && profile.full_name.trim()) {
-      return profile.full_name.trim();
-    }
-    const metaName = (user?.user_metadata as Record<string, unknown>)?.full_name as string;
-    if (metaName && metaName.trim()) {
-      return metaName.trim();
-    }
-    const fromEmail = user?.email?.split('@')[0];
-    return fromEmail ? fromEmail.charAt(0).toUpperCase() + fromEmail.slice(1) : 'Member';
-  }, [profile?.full_name, user?.user_metadata, user?.email]);
+  const isInitialisedRef = useRef(false);
+  const activeFetchUserIdRef = useRef<string | null>(null);
 
+  const displayName = useMemo(() => computeDisplayName(profile, user), [profile, user]);
   const avatarInitials = useMemo(() => getInitials(displayName), [displayName]);
   const isAdmin = useMemo(() => checkIsAdmin(user, profile), [user, profile]);
 
-  const fetchPromiseRef = useRef<Promise<void> | null>(null);
+  const loadProfile = useCallback(async (u: User) => {
+    activeFetchUserIdRef.current = u.id;
+    try {
+      const { profile: fetchedProfile, hardError } = await fetchUserProfile(u.id);
 
-  const fetchProfile = useCallback(async (userId: string) => {
-    if (lastFetchedUserId.current === userId && loadedProfileRef.current) {
-      return;
-    }
+      // Verify that active user hasn't changed during fetch
+      if (activeFetchUserIdRef.current !== u.id) return;
 
-    if (fetchPromiseRef.current) {
-      return fetchPromiseRef.current;
-    }
+      setProfileFetchFailed(hardError);
 
-    lastFetchedUserId.current = userId;
-
-    fetchPromiseRef.current = (async () => {
-      try {
-        console.log('[fetchProfile] Starting for user:', userId);
-
-        // Force-validate the auth token before polling. On a hard refresh
-        // the cached JWT from getSession() may be expired, causing all
-        // RLS-protected queries to silently return 0 rows. getUser() makes
-        // a server roundtrip that refreshes the token if needed.
-        try {
-          await supabase.auth.getUser();
-        } catch (e) {
-          console.warn('[fetchProfile] Token pre-validation failed:', e);
+      if (fetchedProfile) {
+        setProfile(fetchedProfile);
+        const syncedProfile = await syncGoogleProfileMetadata(fetchedProfile, u);
+        if (activeFetchUserIdRef.current === u.id) {
+          setProfile(syncedProfile);
         }
-
-        let profileData: Record<string, unknown> | null = null;
-        let hardError = false; // a real error/timeout occurred — NOT the same as "confirmed no row"
-
-        // Poll up to 6× with 500ms gaps (3s total) to handle DB trigger race on first login
-        // and give extra headroom for slow page-load conditions.
-        for (let i = 0; i < 6; i++) {
-          console.log(`[fetchProfile] Poll attempt ${i + 1}`);
-          const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-          if (!error && data) {
-            console.log(`[fetchProfile] Profile found on attempt ${i + 1}`);
-            profileData = data;
-            break;
-          }
-          if (error && error.code !== 'PGRST116') {
-            console.error('[fetchProfile] Error fetching profile:', error);
-            hardError = true;
-            break;
-          }
-          if (i < 5) await new Promise(r => setTimeout(r, 500));
-        }
-        // Only PGRST116 on every single attempt counts as "confirmed no row exists".
-        // Anything else (network error, RLS error, timeout) must NOT be treated as a new user.
-        setProfileFetchFailed(hardError);
-
-        if (profileData) {
-          // CRITICAL: If DB returned a profile without st_id (edge case), patch it once
-          if (!profileData.st_id) {
-            const deterministicStId = deriveSuprId(userId);
-            const { data: patched } = await supabase
-              .from('profiles')
-              .update({ st_id: deterministicStId })
-              .eq('id', userId)
-              .is('st_id', null)
-              .select()
-              .single();
-            if (patched) profileData = patched;
-            else profileData.st_id = deterministicStId;
-          }
-
-          const safeProfile = profileData as unknown as Profile;
-          setProfile(safeProfile);
-          loadedProfileRef.current = safeProfile;
-
-          // Auto-sync Google avatar/name if missing — never touches st_id.
-          // Actually awaited (not fire-and-forget) so profile state reflects the sync
-          // before this function returns, instead of landing a beat later as an extra render.
-          const { data: { user: currentUser } } = await supabase.auth.getUser();
-          const googleAvatar = currentUser?.user_metadata?.avatar_url;
-          const googleName = currentUser?.user_metadata?.full_name;
-          const updates: Record<string, string> = {};
-          if (!safeProfile.avatar_url && googleAvatar) updates.avatar_url = googleAvatar;
-          if ((!safeProfile.full_name || safeProfile.full_name === 'Anonymous Creator') && googleName) {
-            updates.full_name = googleName;
-          }
-          if (Object.keys(updates).length > 0) {
-            const { error: syncErr } = await supabase.from('profiles').update(updates).eq('id', userId);
-            if (!syncErr) {
-              const merged = { ...safeProfile, ...updates } as Profile;
-              setProfile(merged);
-              loadedProfileRef.current = merged;
-            }
-          }
-        } else {
-          setProfile(null);
-          loadedProfileRef.current = null;
-        }
-      } catch (err) {
-        console.error('Error fetching profile:', err);
+      } else {
         setProfile(null);
-        loadedProfileRef.current = null;
-        setProfileFetchFailed(true);
-      } finally {
-        setProfileAttempted(true);
-        fetchPromiseRef.current = null;
-      }
-    })();
-
-    return fetchPromiseRef.current;
-  }, []);
-
-  const refreshProfile = useCallback(async (userId?: string) => {
-    const id = userId ?? user?.id;
-    if (!id) return;
-
-    // Clear ALL caches including any in-flight fetchProfile promise
-    lastFetchedUserId.current = null;
-    loadedProfileRef.current = null;
-    fetchPromiseRef.current = null;
-
-    // Ensure a fresh auth session before hitting DB
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        await supabase.auth.refreshSession();
-      }
-      // Small delay to let any recent auth.updateUser() calls propagate
-      await new Promise(r => setTimeout(r, 150));
-      const { data: { user: updatedUser } } = await supabase.auth.getUser();
-      if (updatedUser) setUser(updatedUser);
-    } catch (e) {
-      console.warn('refreshProfile: auth refresh failed:', e);
-    }
-
-    // Direct DB fetch — bypass fetchProfile's caching/polling entirely
-    try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
-      if (error) {
-        console.error('refreshProfile: fetch error:', error);
-        return;
-      }
-      if (data) {
-        const profileData = data as Record<string, unknown>;
-        if (!profileData.st_id) {
-          profileData.st_id = deriveSuprId(id);
-          supabase.from('profiles').update({ st_id: profileData.st_id }).eq('id', id).is('st_id', null).then(() => {});
-        }
-        const safeProfile = profileData as unknown as Profile;
-        setProfile(safeProfile);
-        loadedProfileRef.current = safeProfile;
-        lastFetchedUserId.current = id;
       }
     } catch (err) {
-      console.error('refreshProfile error:', err);
+      console.error('[AuthProvider] Failed to load profile:', err);
+      if (activeFetchUserIdRef.current === u.id) {
+        setProfile(null);
+        setProfileFetchFailed(true);
+      }
+    } finally {
+      if (activeFetchUserIdRef.current === u.id) {
+        setProfileAttempted(true);
+      }
     }
-  }, [user?.id]);
+  }, []);
+
+  const refreshProfile = useCallback(async (targetUserId?: string) => {
+    const id = targetUserId ?? user?.id;
+    if (!id) return;
+
+    try {
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      if (freshSession?.user) {
+        setUser(freshSession.user);
+        setSession(freshSession);
+        await loadProfile(freshSession.user);
+      }
+    } catch (err) {
+      console.error('[AuthProvider] Error during refreshProfile:', err);
+    }
+  }, [user?.id, loadProfile]);
 
   useEffect(() => {
-    let mounted = true;
-    const slowTimeout = setTimeout(() => {
-      if (mounted && !initialised.current) setAuthSlow(true);
+    let isMounted = true;
+
+    const slowTimer = setTimeout(() => {
+      if (isMounted && !isInitialisedRef.current) setAuthSlow(true);
     }, 3000);
-    const safetyTimeout = setTimeout(() => {
-      if (mounted && !initialised.current) {
-        console.warn('Auth initialization timed out after 10s.');
+
+    const safetyTimer = setTimeout(() => {
+      if (isMounted && !isInitialisedRef.current) {
+        console.warn('[AuthProvider] Auth initialization safety timeout reached (10s)');
         setLoading(false);
         setProfileAttempted(true);
-        initialised.current = true;
+        isInitialisedRef.current = true;
       }
     }, 10000);
 
-    async function initializeAuth() {
-      try {
-        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-        if (!mounted) return;
-        if (sessionError) throw sessionError;
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        if (currentSession?.user) {
-          await fetchProfile(currentSession.user.id);
-        } else {
-          setProfileAttempted(true);
-        }
-      } catch (err) {
-        console.error('Auth init error:', err);
-        setProfileAttempted(true);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-          setAuthSlow(false);
-          initialised.current = true;
-          clearTimeout(slowTimeout);
-          clearTimeout(safetyTimeout);
-        }
-      }
-    }
-    initializeAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (!isMounted) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      if (!mounted) return;
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      if (newSession?.user) {
+      console.log(`[AuthProvider] Auth State Event: ${event}`);
+
+      setSession(currentSession);
+      const currentUser = currentSession?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
         if (event === 'SIGNED_IN') {
           setLoading(true);
-          await fetchProfile(newSession.user.id);
-          if (mounted) setLoading(false);
-        } else if (event === 'TOKEN_REFRESHED') {
-          // If a previous fetch ran with an expired token and got a null
-          // profile, retry now that we have a fresh token.
-          if (!loadedProfileRef.current) {
-            console.log('[AuthContext] TOKEN_REFRESHED with null profile — retrying fetch');
-            lastFetchedUserId.current = null;
-            fetchPromiseRef.current = null;
-            await fetchProfile(newSession.user.id);
-          }
+          await loadProfile(currentUser);
+          if (isMounted) setLoading(false);
+        } else if (event === 'TOKEN_REFRESHED' && !profile) {
+          await loadProfile(currentUser);
         } else {
-          await fetchProfile(newSession.user.id);
+          await loadProfile(currentUser);
         }
       } else {
         setProfile(null);
         setProfileAttempted(true);
+        setProfileFetchFailed(false);
+        activeFetchUserIdRef.current = null;
       }
-      if (!initialised.current && mounted) {
+
+      if (isMounted && !isInitialisedRef.current) {
         setLoading(false);
         setAuthSlow(false);
-        initialised.current = true;
-        clearTimeout(slowTimeout);
-        clearTimeout(safetyTimeout);
+        isInitialisedRef.current = true;
+        clearTimeout(slowTimer);
+        clearTimeout(safetyTimer);
       }
     });
 
     return () => {
-      mounted = false;
+      isMounted = false;
       subscription.unsubscribe();
-      clearTimeout(slowTimeout);
-      clearTimeout(safetyTimeout);
+      clearTimeout(slowTimer);
+      clearTimeout(safetyTimer);
     };
-  }, [fetchProfile]);
+  }, [loadProfile, profile]);
 
   const signOut = useCallback(async () => {
+    activeFetchUserIdRef.current = null;
     setProfile(null);
     setUser(null);
     setSession(null);
     setProfileAttempted(false);
     setProfileFetchFailed(false);
-    lastFetchedUserId.current = null;
-    loadedProfileRef.current = null;
+
     try {
-      const keys = Object.keys(localStorage);
-      for (const key of keys) {
-        if (key.startsWith('sb-')) localStorage.removeItem(key);
-      }
-      localStorage.removeItem('supabase.auth.token');
-    } catch (e) {
-      console.warn('Storage clear failed:', e);
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('[AuthProvider] SignOut request error:', err);
+    } finally {
+      setLoading(false);
     }
-    supabase.auth.signOut().catch((err) => console.error('Async signOut server call error:', err));
-    setLoading(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{
-      user, session, profile, loading, authSlow, profileAttempted, profileFetchFailed,
-      signOut, refreshProfile, displayName, avatarInitials, isAdmin,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        loading,
+        authSlow,
+        profileAttempted,
+        profileFetchFailed,
+        signOut,
+        refreshProfile,
+        displayName,
+        avatarInitials,
+        isAdmin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
 };
