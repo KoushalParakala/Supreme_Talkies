@@ -4,6 +4,7 @@ import {motion} from 'framer-motion';
 import {useNavigate} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import {supabase} from '../lib/supabase';
+import {deduplicateProfiles} from '../lib/profile';
 import Nav from '../components/Nav';
 
 function CinemaInput({placeholder,value,onChange}:{placeholder:string;value:string;onChange:(v:string)=>void}){
@@ -42,7 +43,8 @@ export default function CrewDirectory(){
           supabase.from('submissions').select('*').order('created_at', { ascending: false }),
         ]);
         
-        const profilesMap = (pData || []).map((p: any) => ({
+        const deduplicatedP = deduplicateProfiles(pData || []);
+        const profilesMap = deduplicatedP.map((p: any) => ({
           ...p,
           submissions: (subData || []).filter((s: any) => s.user_id === p.id)
         }));

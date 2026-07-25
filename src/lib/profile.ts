@@ -45,8 +45,9 @@ export interface FetchProfileResult {
 
 /**
  * Fetches user profile with clean retry mechanism for DB triggers and auto-patches missing st_id.
+ * If no profile row exists in DB after retries, creates a single fallback profile row.
  */
-export async function fetchUserProfile(userId: string): Promise<FetchProfileResult> {
+export async function fetchUserProfile(userId: string, user?: User | null): Promise<FetchProfileResult> {
   const backoffs = [0, 200, 500];
   let hardError = false;
   let profileData: Record<string, unknown> | null = null;
@@ -71,7 +72,7 @@ export async function fetchUserProfile(userId: string): Promise<FetchProfileResu
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // Row does not exist yet (could be immediate post-signup before trigger finishes)
+          // Row does not exist yet
           hardError = false;
         } else {
           console.error(`[fetchUserProfile] DB error (attempt ${i + 1}):`, error);
@@ -83,6 +84,37 @@ export async function fetchUserProfile(userId: string): Promise<FetchProfileResu
       console.error(`[fetchUserProfile] Unexpected error (attempt ${i + 1}):`, err);
       hardError = true;
       break;
+    }
+  }
+
+  // Fallback: If no profile row exists and no network error occurred, ensure single profile row exists
+  if (!profileData && !hardError && user) {
+    try {
+      const deterministicStId = deriveSuprId(userId);
+      const fallbackProfile = {
+        id: userId,
+        email: user.email || '',
+        full_name: computeDisplayName(null, user),
+        avatar_symbol: '🎬',
+        role: 'member',
+        roles: ['member'],
+        st_id: deterministicStId,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: created, error: createErr } = await supabase
+        .from('profiles')
+        .upsert(fallbackProfile, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!createErr && created) {
+        profileData = created as Record<string, unknown>;
+      } else {
+        console.warn('[fetchUserProfile] Profile fallback upsert warning:', createErr);
+      }
+    } catch (createEx) {
+      console.warn('[fetchUserProfile] Profile fallback upsert exception:', createEx);
     }
   }
 
@@ -150,4 +182,29 @@ export async function syncGoogleProfileMetadata(profile: Profile, user: User): P
   }
 
   return profile;
+}
+
+/**
+ * Deduplicates an array of profile objects by primary key ID, email, or st_id.
+ */
+export function deduplicateProfiles<T extends { id?: string; email?: string; st_id?: string }>(profiles: T[]): T[] {
+  if (!Array.isArray(profiles)) return [];
+  const seenIds = new Set<string>();
+  const seenEmails = new Set<string>();
+  const result: T[] = [];
+
+  for (const item of profiles) {
+    if (!item) continue;
+    const id = item.id;
+    const email = item.email?.toLowerCase().trim();
+
+    if (id && seenIds.has(id)) continue;
+    if (email && seenEmails.has(email)) continue;
+
+    if (id) seenIds.add(id);
+    if (email) seenEmails.add(email);
+    result.push(item);
+  }
+
+  return result;
 }

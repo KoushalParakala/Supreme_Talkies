@@ -34,15 +34,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isInitialisedRef = useRef(false);
   const activeFetchUserIdRef = useRef<string | null>(null);
+  const loadedProfileIdRef = useRef<string | null>(null);
 
   const displayName = useMemo(() => computeDisplayName(profile, user), [profile, user]);
   const avatarInitials = useMemo(() => getInitials(displayName), [displayName]);
   const isAdmin = useMemo(() => checkIsAdmin(user, profile), [user, profile]);
 
-  const loadProfile = useCallback(async (u: User) => {
+  const loadProfile = useCallback(async (u: User, forceFetch = false) => {
+    // Avoid redundant refetches if we already loaded profile for this user and not forcing
+    if (!forceFetch && loadedProfileIdRef.current === u.id && profile !== null) {
+      setProfileAttempted(true);
+      return;
+    }
+
     activeFetchUserIdRef.current = u.id;
     try {
-      const { profile: fetchedProfile, hardError } = await fetchUserProfile(u.id);
+      const { profile: fetchedProfile, hardError } = await fetchUserProfile(u.id, u);
 
       // Verify that active user hasn't changed during fetch
       if (activeFetchUserIdRef.current !== u.id) return;
@@ -51,25 +58,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (fetchedProfile) {
         setProfile(fetchedProfile);
+        loadedProfileIdRef.current = u.id;
         const syncedProfile = await syncGoogleProfileMetadata(fetchedProfile, u);
         if (activeFetchUserIdRef.current === u.id) {
           setProfile(syncedProfile);
         }
       } else {
         setProfile(null);
+        loadedProfileIdRef.current = null;
       }
     } catch (err) {
       console.error('[AuthProvider] Failed to load profile:', err);
       if (activeFetchUserIdRef.current === u.id) {
         setProfile(null);
         setProfileFetchFailed(true);
+        loadedProfileIdRef.current = null;
       }
     } finally {
       if (activeFetchUserIdRef.current === u.id) {
         setProfileAttempted(true);
       }
     }
-  }, []);
+  }, [profile]);
 
   const refreshProfile = useCallback(async (targetUserId?: string) => {
     const id = targetUserId ?? user?.id;
@@ -80,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (freshSession?.user) {
         setUser(freshSession.user);
         setSession(freshSession);
-        await loadProfile(freshSession.user);
+        await loadProfile(freshSession.user, true);
       }
     } catch (err) {
       console.error('[AuthProvider] Error during refreshProfile:', err);
@@ -113,20 +123,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentUser);
 
       if (currentUser) {
-        if (event === 'SIGNED_IN') {
+        // IMPORTANT: Only set loading = true on initial application boot.
+        // NEVER set loading = true on tab focus, token refresh, or background auth events,
+        // as doing so unmounts ProtectedRoute components and causes full page reloads!
+        if (!isInitialisedRef.current) {
           setLoading(true);
-          await loadProfile(currentUser);
-          if (isMounted) setLoading(false);
-        } else if (event === 'TOKEN_REFRESHED' && !profile) {
-          await loadProfile(currentUser);
-        } else {
-          await loadProfile(currentUser);
         }
+        await loadProfile(currentUser);
       } else {
         setProfile(null);
         setProfileAttempted(true);
         setProfileFetchFailed(false);
         activeFetchUserIdRef.current = null;
+        loadedProfileIdRef.current = null;
       }
 
       if (isMounted && !isInitialisedRef.current) {
@@ -144,10 +153,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearTimeout(slowTimer);
       clearTimeout(safetyTimer);
     };
-  }, [loadProfile, profile]);
+  }, [loadProfile]);
 
   const signOut = useCallback(async () => {
     activeFetchUserIdRef.current = null;
+    loadedProfileIdRef.current = null;
     setProfile(null);
     setUser(null);
     setSession(null);
