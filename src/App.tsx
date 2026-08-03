@@ -47,14 +47,15 @@ function App() {
   const isFirstRender = useRef(true);
 
   useEffect(() => {
+    const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
     const lenis = new Lenis({
-      duration: 1.2,
+      duration: isMobile ? 0.7 : 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
+      smoothWheel: !isMobile,
+      wheelMultiplier: isMobile ? 0.9 : 1,
+      touchMultiplier: isMobile ? 1.2 : 2,
     });
 
     lenisRef.current = lenis;

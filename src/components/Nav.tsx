@@ -2,6 +2,7 @@ import {useState,useEffect} from 'react';
 import {motion,AnimatePresence} from 'framer-motion';
 import {useNavigate,useLocation} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 interface NavProps {scrolled:boolean;}
 interface NavItem {label:string;route?:string;action?:string;state?:Record<string,unknown>}
@@ -282,7 +283,17 @@ export default function Nav({scrolled}:NavProps){
             {navItems.map((item)=><NavLink key={item.label} item={item} onClick={()=>handleNav(item)}/>)}
           </nav>
         )}
-        {isMobile?<Hamburger isOpen={isMenuOpen} onClick={()=>setIsMenuOpen(!isMenuOpen)}/>:<UserIndicator/>}
+        {isMobile?(
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            {user&&<NotificationBell/>}
+            <Hamburger isOpen={isMenuOpen} onClick={()=>setIsMenuOpen(!isMenuOpen)}/>
+          </div>
+        ):(
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            {user&&<NotificationBell/>}
+            <UserIndicator/>
+          </div>
+        )}
       </motion.header>
 
       <AnimatePresence>

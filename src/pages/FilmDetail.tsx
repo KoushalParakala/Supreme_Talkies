@@ -239,9 +239,24 @@ export default function FilmDetail() {
 
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} transition={{ delay: 0.3 }}
-            style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 600, color: '#F0EBE0', letterSpacing: 4, marginBottom: 40, textTransform: 'uppercase' }}
+            style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 600, color: '#F0EBE0', letterSpacing: 4, marginBottom: 24, textTransform: 'uppercase' }}
           >
             {film.duration} · {film.rating}
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} style={{ marginBottom: 36 }}>
+            {film.videoLink ? (
+              <a href={film.videoLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <motion.button
+                  whileHover={{ scale: 1.03, backgroundColor: '#BCA88E', color: '#000' }} whileTap={{ scale: 0.98 }}
+                  style={{ background: '#BCA88E', border: '1px solid #BCA88E', padding: '16px 40px', fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#0e0f13', letterSpacing: 3, cursor: 'pointer' }}
+                >
+                  WATCH ON YOUTUBE →
+                </motion.button>
+              </a>
+            ) : (
+              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#BCA88E', opacity: 0.4, letterSpacing: 2 }}>RELEASING SOON</div>
+            )}
           </motion.div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 40 }}>
@@ -256,23 +271,6 @@ export default function FilmDetail() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} style={{ maxWidth: 420 }}>
             <div style={{ fontFamily: '"Montserrat", sans-serif', fontSize: 8, fontWeight: 700, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, marginBottom: 12 }}>SYNOPSIS</div>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', lineHeight: 1.8, opacity: 0.7, margin: 0 }}>{film.synopsis}</p>
-          </motion.div>
-
-
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }} style={{ marginTop: 48 }}>
-            {film.videoLink ? (
-              <a href={film.videoLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                <motion.button
-                  whileHover={{ scale: 1.05, backgroundColor: '#BCA88E', color: '#000' }} whileTap={{ scale: 0.98 }}
-                  style={{ background: 'transparent', border: '1px solid #BCA88E', padding: '14px 48px', fontFamily: 'Montserrat, sans-serif', fontSize: 14, fontWeight: 600, color: '#BCA88E', letterSpacing: 4, cursor: 'pointer', transition: 'all 0.3s ease' }}
-                >
-                  WATCH NOW
-                </motion.button>
-              </a>
-            ) : (
-              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#BCA88E', opacity: 0.4, letterSpacing: 2 }}>RELEASING SOON</div>
-            )}
           </motion.div>
         </div>
       </div>

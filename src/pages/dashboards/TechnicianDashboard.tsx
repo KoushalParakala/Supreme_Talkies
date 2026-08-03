@@ -79,6 +79,9 @@ export default function TechnicianDashboard() {
   const [expandingNewCollab, setExpandingNewCollab] = useState(false);
   const [newCollab, setNewCollab] = useState({ stId: '', title: '', message: '' });
   const [sendingCollab, setSendingCollab] = useState(false);
+  const [nameQuery, setNameQuery] = useState('');
+  const [nameResults, setNameResults] = useState<DirectoryProfile[]>([]);
+  const [searchingName, setSearchingName] = useState(false);
   const [openBriefs, setOpenBriefs] = useState<any[]>([]);
   const [expressingBriefId, setExpressingBriefId] = useState<string | null>(null);
   const [userBriefInterests, setUserBriefInterests] = useState<Set<string>>(new Set());
@@ -102,6 +105,43 @@ export default function TechnicianDashboard() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile]);
+
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'tech-portfolio') setActiveTab('portfolio');
+    if (hash === 'tech-collab') setActiveTab('collab');
+  }, []);
+
+  useEffect(() => {
+    const q = nameQuery.trim();
+    if (q.length < 2) {
+      setNameResults([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setSearchingName(true);
+      try {
+        const { data, error } = await supabase
+          .from('member_directory')
+          .select('id, full_name, avatar_symbol, st_id, st_verified, role, roles, niche')
+          .ilike('full_name', `%${q}%`)
+          .neq('id', user?.id || '')
+          .limit(8);
+        if (cancelled) return;
+        if (error) throw error;
+        setNameResults((data || []) as DirectoryProfile[]);
+      } catch {
+        if (!cancelled) setNameResults([]);
+      } finally {
+        if (!cancelled) setSearchingName(false);
+      }
+    }, 280);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [nameQuery, user?.id]);
 
   const fetchOtherCrewRef = useRef(0);
   const fetchOpenBriefsRef = useRef(0);
@@ -267,6 +307,8 @@ export default function TechnicianDashboard() {
       if (error) throw error;
       
       setNewCollab({ stId: '', title: '', message: '' });
+      setNameQuery('');
+      setNameResults([]);
       setExpandingNewCollab(false);
       fetchRequests();
       toast('Collaboration request sent! ✦');
@@ -346,6 +388,7 @@ export default function TechnicianDashboard() {
       <AnimatePresence mode="wait">
         {activeTab === 'portfolio' && (
           <motion.div
+            id="tech-portfolio"
             key="portfolio-tab"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -541,6 +584,7 @@ export default function TechnicianDashboard() {
 
         {activeTab === 'collab' && (
           <motion.div
+            id="tech-collab"
             key="collab-tab"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -558,6 +602,45 @@ export default function TechnicianDashboard() {
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 32, maxWidth: 680, padding: 32, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)', marginTop: 24 }}>
                       <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, margin: 0 }}>NEW CONNECTION</p>
+                      <CinemaInput
+                        label="SEARCH BY NAME"
+                        placeholder="Type a crew member's name..."
+                        value={nameQuery}
+                        onChange={(v) => setNameQuery(v)}
+                      />
+                      {(searchingName || nameResults.length > 0 || nameQuery.trim().length >= 2) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: -8 }}>
+                          {searchingName && (
+                            <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.5, margin: 0 }}>Searching directory…</p>
+                          )}
+                          {!searchingName && nameQuery.trim().length >= 2 && nameResults.length === 0 && (
+                            <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.35, margin: 0 }}>No members matched that name.</p>
+                          )}
+                          {nameResults.map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => {
+                                setNewCollab({ ...newCollab, stId: m.st_id || '' });
+                                setNameQuery(m.full_name || '');
+                                setNameResults([]);
+                              }}
+                              style={{
+                                textAlign: 'left', background: 'rgba(188,168,142,0.06)', border: '1px solid rgba(188,168,142,0.15)',
+                                padding: '10px 14px', cursor: 'pointer', color: '#F0EBE0',
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+                              }}
+                            >
+                              <span style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14 }}>
+                                {m.avatar_symbol || '·'} {m.full_name}
+                              </span>
+                              <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', letterSpacing: 1 }}>
+                                {m.st_id ? (m.st_id.startsWith('SUPR-') ? m.st_id : `SUPR-${m.st_id}`) : 'NO ID'}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
                         <CinemaInput label="RECEIVER SUPR ID" placeholder="SUPR-XXXX" value={newCollab.stId} onChange={(v) => setNewCollab({ ...newCollab, stId: v })} required />
                         <CinemaInput label="PROJECT TITLE" placeholder="The name of your film..." value={newCollab.title} onChange={(v) => setNewCollab({ ...newCollab, title: v })} />
@@ -579,9 +662,22 @@ export default function TechnicianDashboard() {
               <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>INCOMING CONNECTIONS ({receivedRequests.filter(req => req.status === 'pending').length})</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 800 }}>
-                {receivedRequests.filter(req => req.status === 'pending').length === 0 ? (
+                {receivedRequests.filter(req => req.status === 'pending').length === 0 && sentRequests.filter(req => req.status === 'pending').length === 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16, padding: '8px 0' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.3, fontStyle: 'italic', margin: 0 }}>
+                      No collab activity yet. Search by name or SUPR-ID to send your first request.
+                    </p>
+                    <CinemaButton
+                      onClick={() => setExpandingNewCollab(true)}
+                      style={{ padding: '10px 28px', fontSize: 13, letterSpacing: 3 }}
+                    >
+                      SEND A COLLAB →
+                    </CinemaButton>
+                  </div>
+                ) : receivedRequests.filter(req => req.status === 'pending').length === 0 ? (
                   <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.2, fontStyle: 'italic' }}>No pending requests.</p>
-                ) : receivedRequests.filter(req => req.status === 'pending').map(req => (
+                ) : null}
+                {receivedRequests.filter(req => req.status === 'pending').map(req => (
                   <div key={req.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(188,168,142,0.1)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -622,7 +718,9 @@ export default function TechnicianDashboard() {
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 800 }}>
                 {sentRequests.filter(req => req.status === 'pending').length === 0 ? (
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.2, fontStyle: 'italic' }}>No pending sent requests.</p>
+                  receivedRequests.filter(req => req.status === 'pending').length === 0 ? null : (
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.2, fontStyle: 'italic' }}>No pending sent requests.</p>
+                  )
                 ) : sentRequests.filter(req => req.status === 'pending').map(req => (
                   <div key={req.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(188,168,142,0.1)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

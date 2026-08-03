@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import Nav from '../components/Nav';
 import { deriveSuprId } from '../lib/auth';
+import { getVerifyProgress } from '../lib/verified';
 
 // ─── Design tokens ────────────────────────────────────────────────
 const C = {
@@ -221,7 +222,9 @@ export default function ProfileSettings() {
   const [portfolioUrl, setPortfolioUrl] = useState('');
   const [contact, setContact]           = useState('');
   const [socialHandle, setSocialHandle] = useState('');
+  const [noteToTeam, setNoteToTeam]     = useState('');
   const [avatarUrl, setAvatarUrl]       = useState('');
+  const [copiedId, setCopiedId]         = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastProfileId = useRef<string | null>(null);
@@ -240,6 +243,7 @@ export default function ProfileSettings() {
     setPortfolioUrl(profile.portfolio_url || '');
     setContact(profile.contact || '');
     setSocialHandle(profile.social_handle || '');
+    setNoteToTeam(profile.note_to_team || '');
     setImgError(false);
   }, [profile, displayName]);
 
@@ -311,6 +315,7 @@ export default function ProfileSettings() {
       setAvatarUrl(publicUrl);
       setImgError(false);
       await persistToDb({ avatar_url: publicUrl });
+      await supabase.rpc('evaluate_and_set_st_verified');
       await refreshProfile(user.id);
       showToast('PHOTO UPDATED', 'success');
     } catch (err: unknown) {
@@ -335,6 +340,7 @@ export default function ProfileSettings() {
       portfolio_url: portfolioUrl.trim(),
       contact:       contact.trim(),
       social_handle: socialHandle.trim(),
+      note_to_team:  noteToTeam.trim(),
     };
     setSaving(true);
     try {
@@ -348,7 +354,8 @@ export default function ProfileSettings() {
         const { error: metaErr } = await supabase.auth.updateUser({ data: metaChanges });
         if (metaErr) console.warn('Auth metadata sync failed:', metaErr);
       }
-      // Refresh profile in context so Nav etc. update
+      const { error: verifyErr } = await supabase.rpc('evaluate_and_set_st_verified');
+      if (verifyErr) console.warn('[ProfileSettings] verify eval failed:', verifyErr);
       await refreshProfile(user.id);
       showToast('PROFILE SAVED', 'success');
     } catch (err: unknown) {
@@ -400,9 +407,31 @@ export default function ProfileSettings() {
   const cleanRole   = primaryRole.toLowerCase() === 'amplifier' ? 'MEMBER' : primaryRole.toUpperCase();
   const allRoles    = Array.from(new Set([...(profile?.roles || []), profile?.role].filter(Boolean) as string[]));
 
+  const copySuprId = async () => {
+    try {
+      await navigator.clipboard.writeText(displayId);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 1800);
+    } catch {
+      showToast('COPY FAILED', 'error');
+    }
+  };
+
   const memberSince = user?.created_at
     ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase()
     : '—';
+
+  const verifyProgress = getVerifyProgress(profile, {
+    full_name: fullName,
+    phone,
+    age,
+    avatar_url: avatarUrl,
+    niche,
+    note_to_team: noteToTeam,
+    social_handle: socialHandle,
+    portfolio_url: portfolioUrl,
+    skills: skills.split(',').map((s) => s.trim()).filter(Boolean),
+  });
 
   const tabs: { id: TabId; label: string }[] = [
     { id: 'identity',   label: 'IDENTITY'   },
@@ -569,15 +598,54 @@ export default function ProfileSettings() {
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: 16 }}>
                 <div style={{ fontFamily: F.ui, fontSize: 8, letterSpacing: 3, color: C.goldDim, marginBottom: 10 }}>SUPREME ID</div>
                 <div style={{
-                  fontFamily: F.mono, fontSize: 16, color: C.gold,
-                  letterSpacing: 4, padding: '10px 12px',
+                  fontFamily: F.mono, fontSize: 20, color: C.gold,
+                  letterSpacing: 4, padding: '14px 12px',
                   background: 'rgba(0,0,0,0.3)', border: `1px solid rgba(188,168,142,0.15)`,
                   textAlign: 'center', borderRadius: 2,
                 }}>
                   {displayId}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void copySuprId()}
+                  style={{
+                    width: '100%', marginTop: 10, background: 'rgba(188,168,142,0.08)',
+                    border: `1px solid rgba(188,168,142,0.25)`, color: C.gold,
+                    fontFamily: F.ui, fontSize: 9, letterSpacing: 3, padding: '10px 12px', cursor: 'pointer',
+                  }}
+                >
+                  {copiedId ? 'COPIED' : 'COPY ID'}
+                </button>
                 <div style={{ fontFamily: F.ui, fontSize: 7, color: C.textMuted, letterSpacing: 1, marginTop: 8, textAlign: 'center' }}>
-                  Permanent · Cannot be changed
+                  Share this ID for collabs · Permanent
+                </div>
+              </div>
+
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: 16 }}>
+                <div style={{ fontFamily: F.ui, fontSize: 8, letterSpacing: 3, color: C.goldDim, marginBottom: 10 }}>
+                  SUPR VERIFIED
+                </div>
+                <div style={{ fontFamily: F.mono, fontSize: 12, color: C.gold, marginBottom: 10, letterSpacing: 1 }}>
+                  {verifyProgress.done}/{verifyProgress.total} complete
+                  {profile?.st_verified ? ' · VERIFIED' : ' · complete to verify'}
+                </div>
+                <div style={{ height: 3, background: 'rgba(188,168,142,0.12)', marginBottom: 12 }}>
+                  <div style={{
+                    height: '100%', width: `${(verifyProgress.done / verifyProgress.total) * 100}%`,
+                    background: C.gold, transition: 'width 0.3s ease',
+                  }}/>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {verifyProgress.checks.map((c) => (
+                    <div key={c.id} style={{
+                      fontFamily: F.ui, fontSize: 9, letterSpacing: 1,
+                      color: c.done ? C.gold : C.textMuted,
+                      display: 'flex', gap: 8, alignItems: 'center',
+                    }}>
+                      <span>{c.done ? '✓' : '○'}</span>
+                      <span>{c.label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -642,6 +710,7 @@ export default function ProfileSettings() {
                         <TextField label="Portfolio / Website URL" value={portfolioUrl} onChange={setPortfolioUrl} placeholder="https://mywork.com"/>
                         <TextField label="Contact Email" value={contact} onChange={setContact} placeholder="work@domain.com"/>
                         <TextField label="Social Handle" value={socialHandle} onChange={setSocialHandle} placeholder="@instagram_handle"/>
+                        <TextField label="Note to Team" value={noteToTeam} onChange={setNoteToTeam} placeholder="What should producers know about you?"/>
                       </div>
                       <div style={{ marginTop: 28, display: 'flex', justifyContent: 'flex-end' }}>
                         <GoldButton onClick={handleSave} loading={saving} disabled={uploading} variant="solid">

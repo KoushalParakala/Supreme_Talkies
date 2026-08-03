@@ -190,6 +190,12 @@ export default function ProducerDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'producer-scripts') setView('scripts');
+    if (hash === 'producer-briefs') setView('briefs');
+  }, []);
+
   const fetchBriefs = async () => {
     if (!user) return;
     const fetchId = ++fetchBriefsRef.current;
@@ -497,8 +503,16 @@ export default function ProducerDashboard() {
       {loading ? (
         <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3 }}>FILTERING THE VAULT...</p>
       ) : view === 'scripts' ? (
-        scripts.length === 0 ? (
-          <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2 }}>The vault is locked. No scripts available for production yet.</p>
+        <div id="producer-scripts">
+        {scripts.length === 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16, padding: '16px 0' }}>
+            <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, margin: 0 }}>
+              The vault is locked. No scripts available for production yet.
+            </p>
+            <CinemaButton onClick={() => setView('briefs')} style={{ padding: '10px 28px', fontSize: 12, letterSpacing: 3 }}>
+              POST A FILM BRIEF →
+            </CinemaButton>
+          </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
             {scripts.map((s) => (
@@ -540,10 +554,11 @@ export default function ProducerDashboard() {
               </div>
             ))}
           </div>
-        )
+        )}
+        </div>
       ) : view === 'briefs' ? (
         /* FILM BRIEFS TAB */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        <div id="producer-briefs" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           {/* Sub-nav */}
           <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(188,168,142,0.12)' }}>
             {(['discover', 'mine'] as const).map(sv => (
@@ -558,9 +573,14 @@ export default function ProducerDashboard() {
             /* ─── DISCOVER: All open briefs from other producers ─── */
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {allBriefs.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic', padding: '40px 0', textAlign: 'center' }}>
-                  "The stage is yours to claim." — No open briefs from other producers yet.
-                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
+                    "The stage is yours to claim." — No open briefs from other producers yet.
+                  </p>
+                  <CinemaButton onClick={() => { setBriefSubView('mine'); setShowNewBriefForm(true); }} style={{ padding: '10px 28px', fontSize: 12, letterSpacing: 3 }}>
+                    CREATE YOUR BRIEF →
+                  </CinemaButton>
+                </div>
               ) : (
                 allBriefs.map((b) => {
                   const interestCount = b.brief_interests?.[0]?.count || 0;
@@ -660,9 +680,14 @@ export default function ProducerDashboard() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 {briefs.length === 0 ? (
-                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic', padding: '40px 0', textAlign: 'center' }}>
-                    "Every great film starts with a clear vision." — No briefs published yet.
-                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
+                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
+                      "Every great film starts with a clear vision." — No briefs published yet.
+                    </p>
+                    <CinemaButton onClick={() => setShowNewBriefForm(true)} style={{ padding: '10px 28px', fontSize: 12, letterSpacing: 3 }}>
+                      + NEW BRIEF
+                    </CinemaButton>
+                  </div>
                 ) : (
                   briefs.map((b) => {
                     const interestCount = b.brief_interests?.[0]?.count || 0;

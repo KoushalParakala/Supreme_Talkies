@@ -51,10 +51,7 @@ serve(async (req) => {
 
     for (const member of members) {
       try {
-        // 2. Mark profile as ST Verified
-        await supabaseAdmin.from('profiles').update({ st_verified: true }).eq('id', member.user_id)
-
-        // 3. Fetch User and Send Email
+        // SUPR Verified is earned via profile completeness only — do not set st_verified here.
         const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(member.user_id)
         if (!user) continue
 
@@ -64,7 +61,7 @@ serve(async (req) => {
               <h1 style="color: #BCA88E; letter-spacing: 5px; font-size: 20px; margin-bottom: 30px; text-transform: uppercase; text-align: center;">PRODUCTION COMPLETED</h1>
               <div style="height: 1px; background: rgba(188,168,142,0.2); margin-bottom: 30px;"></div>
 
-              <h2 style="font-size: 24px; margin-bottom: 20px; color: #BCA88E; text-align: center;">✦ YOU'RE VERIFIED</h2>
+              <h2 style="font-size: 24px; margin-bottom: 20px; color: #BCA88E; text-align: center;">PROJECT WRAPPED</h2>
 
               <p style="font-size: 14px; line-height: 1.6; color: rgba(240,235,224,0.8); margin-bottom: 25px; text-align: center;">
                 Congratulations on completing <b style="color: #F0EBE0;">${record.title}</b> with Supreme Talkies.
@@ -72,16 +69,12 @@ serve(async (req) => {
 
               <div style="background: rgba(188,168,142,0.05); padding: 30px; border: 1px solid rgba(188,168,142,0.1); margin-bottom: 35px; text-align: center;">
                 <p style="margin: 0; font-size: 14px; color: #F0EBE0; line-height: 1.6;">
-                  Your profile now carries the <b>ST Verified</b> badge — a mark of craft, commitment, and successful collaboration within our community.
+                  This project has been marked complete. Keep creating — complete your profile on the site to earn the SUPR Verified stamp.
                 </p>
               </div>
 
-              <p style="font-size: 14px; line-height: 1.6; color: rgba(240,235,224,0.8); margin-bottom: 40px; text-align: center;">
-                This project has been added to your public portfolio. Keep creating.
-              </p>
-
               <div style="text-align: center; margin-bottom: 40px;">
-                <a href="https://supremetalkies.com/crew" style="background-color: #BCA88E; color: #0e0f13; padding: 14px 28px; text-decoration: none; font-size: 11px; font-weight: 700; letter-spacing: 3px; display: inline-block;">VIEW YOUR PROFILE →</a>
+                <a href="https://supremetalkies.com/profile" style="background-color: #BCA88E; color: #0e0f13; padding: 14px 28px; text-decoration: none; font-size: 11px; font-weight: 700; letter-spacing: 3px; display: inline-block;">COMPLETE YOUR PROFILE →</a>
               </div>
 
               <div style="height: 1px; background: rgba(188,168,142,0.1); margin-bottom: 20px;"></div>
@@ -96,7 +89,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: 'Supreme Talkies <recognition@resend.dev>',
             to: [user.email],
-            subject: "You're now ST Verified ✦",
+            subject: 'Project wrapped — Supreme Talkies',
             html,
           }),
         })

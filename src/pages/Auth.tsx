@@ -80,33 +80,6 @@ function Corner({pos}:{pos:{top?:number;bottom?:number;left?:number;right?:numbe
   );
 }
 
-function SourceSelection({label,value,onChange,options}:{label:string;value:string;onChange:(v:string)=>void;options:string[];}){
-  const [open,setOpen]=useState(false);
-  return (
-    <div style={{display:'flex',flexDirection:'column',gap:6,position:'relative'}}>
-      <label style={{fontFamily:'Playfair Display,sans-serif',fontSize:10,color:'#BCA88E',letterSpacing:5,opacity:0.7}}>{label}</label>
-      <button type="button" onClick={()=>setOpen(!open)} style={{background:'transparent',border:'none',borderBottom:'1px solid rgba(188,168,142,0.25)',paddingBottom:10,fontFamily:'Inter,monospace',fontSize:14,color:value?'#F0EBE0':'rgba(240,235,224,0.35)',textAlign:'left',cursor:'pointer'}}>
-        {value||'Select...'}
-      </button>
-      <AnimatePresence>
-        {open&&(
-          <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} style={{position:'absolute',top:'100%',left:0,right:0,background:'rgba(10,10,10,0.98)',border:'1px solid rgba(188,168,142,0.2)',zIndex:10,maxHeight:200,overflowY:'auto'}}>
-            {options.map((opt)=>(
-              <button key={opt} type="button" onClick={()=>{onChange(opt);setOpen(false);}} style={{width:'100%',textAlign:'left',padding:'10px 14px',background:'none',border:'none',fontFamily:'Inter,monospace',fontSize:12,color:'#F0EBE0',cursor:'pointer',transition:'background 0.15s'}}
-                onMouseEnter={(e)=>((e.currentTarget as HTMLElement).style.background='rgba(188,168,142,0.08)')}
-                onMouseLeave={(e)=>((e.currentTarget as HTMLElement).style.background='none')}>
-                {opt}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-const HOW_OPTIONS=['Instagram','Twitter/X','YouTube','Friend','Event','Other'];
-
 export default function Auth(){
   const {user,profile,loading:authLoading,profileAttempted,profileFetchFailed,isAdmin} =useAuth();
   const location =useLocation();
@@ -144,12 +117,8 @@ export default function Auth(){
 
   /* Signup fields */
   const [fullName,setFullName]=useState('');
-  const [age,setAge]=useState('');
   const [signupEmail,setSignupEmail]=useState('');
   const [signupPassword,setSignupPassword]=useState('');
-  const [phone,setPhone]=useState('');
-  const [address,setAddress]=useState('');
-  const [howHeard,setHowHeard]=useState('');
 
   /* Forgot fields */
   const [forgotEmail,setForgotEmail]=useState('');
@@ -166,7 +135,6 @@ export default function Auth(){
     if (!fullName.trim()) e.fullName='required';
     if (!signupEmail.includes('@')) e.email='invalid email';
     if (signupPassword.length<6) e.password='min 6 chars';
-    if (!phone.trim()) e.phone='required';
     return e;
   };
 
@@ -192,11 +160,7 @@ export default function Auth(){
         password:signupPassword,
         options:{
           data:{
-            full_name:fullName.trim(),  // FIXED: was 'fullName', now 'full_name' to match AuthContext
-            age:age?parseInt(age,10):null,
-            phone:phone.trim(),
-            address:address.trim(),
-            how_did_you_hear:howHeard,
+            full_name:fullName.trim(),
           },
         },
       });
@@ -297,26 +261,14 @@ export default function Auth(){
                     <div style={{width:32,height:1,background:'#BCA88E',opacity:0.6}}/>
                     <span style={{fontFamily:'Inter,monospace',fontSize:9,color:'#BCA88E',letterSpacing:5,opacity:0.5}}>SCENE 00</span>
                   </div>
-                  <h1 style={{fontFamily:'Playfair Display,sans-serif',fontSize:'clamp(32px,3.5vw,46px)',color:'#BCA88E',lineHeight:1.05,margin:'0 0 10px',letterSpacing:1}}>JOIN<br/>THE<br/>CULT.</h1>
-                  <p style={{fontFamily:'Inter,monospace',fontSize:11,color:'#F0EBE0',opacity:0.35,margin:0,letterSpacing:2}}>Your call sheet is being prepared.</p>
+                  <h1 style={{fontFamily:'Playfair Display,sans-serif',fontSize:'clamp(32px,3.5vw,46px)',color:'#BCA88E',lineHeight:1.05,margin:'0 0 10px',letterSpacing:1}}>JOIN<br/>THE<br/>SET.</h1>
+                  <p style={{fontFamily:'Inter,monospace',fontSize:11,color:'#F0EBE0',opacity:0.35,margin:0,letterSpacing:2}}>Name + email now. Finish your profile later for SUPR Verified.</p>
                 </div>
                 <form onSubmit={(e:FormEvent)=>{e.preventDefault();handleSignup();}} style={{display:'flex',flexDirection:'column',gap:28}}>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'20px 24px'}}>
-                    <div style={{gridColumn:'1 / -1'}}>
-                      <CinemaInput label="FULL NAME" placeholder="Your name, director" value={fullName} onChange={setFullName} error={fieldErrors.fullName}/>
-                    </div>
-                    <CinemaInput label="AGE" type="number" placeholder="21" value={age} onChange={setAge}/>
-                    <CinemaInput label="PHONE" type="tel" placeholder="+91 98765 43210" value={phone} onChange={setPhone} error={fieldErrors.phone}/>
-                    <div style={{gridColumn:'1 / -1'}}>
-                      <CinemaInput label="EMAIL" type="email" placeholder="you@domain.com" value={signupEmail} onChange={setSignupEmail} error={fieldErrors.email}/>
-                    </div>
-                    <div style={{gridColumn:'1 / -1'}}>
-                      <CinemaInput label="PASSWORD" type="password" placeholder="Min 6 characters" value={signupPassword} onChange={setSignupPassword} error={fieldErrors.password}/>
-                    </div>
-                    <CinemaInput label="PLACE / CITY" placeholder="Hyderabad" value={address} onChange={setAddress}/>
-                    <div style={{gridColumn:'1 / -1'}}>
-                      <SourceSelection label="HOW DID YOU HEAR ABOUT US?" value={howHeard} onChange={setHowHeard} options={HOW_OPTIONS}/>
-                    </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:24}}>
+                    <CinemaInput label="FULL NAME" placeholder="Your name" value={fullName} onChange={setFullName} error={fieldErrors.fullName}/>
+                    <CinemaInput label="EMAIL" type="email" placeholder="you@domain.com" value={signupEmail} onChange={setSignupEmail} error={fieldErrors.email}/>
+                    <CinemaInput label="PASSWORD" type="password" placeholder="Min 6 characters" value={signupPassword} onChange={setSignupPassword} error={fieldErrors.password}/>
                   </div>
                   {error&&<motion.p initial={{opacity:0}} animate={{opacity:1}} style={{fontFamily:'Inter,monospace',fontSize:11,color:'#ff6b6b',margin:0,letterSpacing:1}}>{error}</motion.p>}
                   <CinemaButton onClick={handleSignup} loading={loading} disabled={loading}>{loading?'PROCESSING':'GET ON BOARD →'}</CinemaButton>

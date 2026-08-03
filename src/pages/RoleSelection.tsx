@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -19,71 +19,58 @@ const ROLES = [
   {
     id: 'writer',
     label: 'WRITER',
-    scene: 'SC·01',
-    description: 'For screenwriters and storytellers',
+    scene: '01',
+    doLine: 'Write and submit scripts',
+    getLine: 'Status updates + challenges',
     line: 'Where blank pages become universes.',
-    features: ['Submit scripts with DNA tagging', 'Version history & revisions', 'Writing challenges & prompts', 'Inspiration pinboard'],
+    features: ['Submit scripts with DNA tags', 'Track review status', 'Open producer briefs'],
   },
   {
     id: 'technician',
     label: 'TECHNICIAN',
-    scene: 'SC·02',
-    description: 'For crew & technical artists',
-    line: 'The architects of cinematic reality.',
-    features: ['Crew card & showreel', 'Availability toggle', 'Collaboration requests', 'Connect with other crew'],
+    scene: '02',
+    doLine: 'Offer craft & crew skills',
+    getLine: 'Collabs + open briefs',
+    line: 'The craft behind every frame.',
+    features: ['Crew card & portfolio', 'Availability toggle', 'Find collaborators by name'],
   },
   {
     id: 'producer',
     label: 'PRODUCER',
-    scene: 'SC·03',
-    description: 'For producers & financiers',
-    line: 'Manifesting vision into tangible form.',
-    features: ['Browse accepted scripts', 'Post film briefs', 'View crew roster', 'Express interest in projects'],
+    scene: '03',
+    doLine: 'Post briefs, back stories',
+    getLine: 'Scripts + crew roster',
+    line: 'Back the story. Build the vision.',
+    features: ['Browse scripts', 'Post film briefs', 'See who is interested'],
   },
   {
     id: 'presenter',
     label: 'PRESENTER',
-    scene: 'SC·04',
-    description: 'For hosts, anchors & on-screen talent',
-    line: 'The singular eye that captures soul.',
-    features: ['Submit screening proposals', 'Countdown to your next screening', 'Reach report & analytics', 'Audience reaction feed'],
+    scene: '04',
+    doLine: 'Propose community screenings',
+    getLine: 'Approval status on each pitch',
+    line: 'Your screen. Their memory.',
+    features: ['Submit screening proposals', 'Track approval status'],
   },
   {
     id: 'marketing',
     label: 'MARKETING',
-    scene: 'SC·05',
-    description: 'For promoters & content strategists',
-    line: 'The bridge between story and world.',
-    features: ['Launch & manage campaigns', 'Submit collab briefs', 'Track reach metrics'],
+    scene: '05',
+    doLine: 'Run campaigns & share kits',
+    getLine: 'Reach logging + idea board',
+    line: 'Amplify the signal.',
+    features: ['Join campaigns', 'Copy share kits', 'Pitch marketing ideas'],
   },
   {
     id: 'amplifier',
-    label: 'MEMBER',          // Public label is "MEMBER"
-    scene: 'SC·06',
-    description: 'For fans, supporters & community',
-    line: 'Voices that echo in the silence.',
-    features: ['Log daily shares for streak', 'Shoutout wall', 'Early access perks'],
+    label: 'MEMBER',
+    scene: '06',
+    doLine: 'Share films, grow the audience',
+    getLine: 'Streaks + shoutout wall',
+    line: 'The first wave. Every time.',
+    features: ['Log daily shares (by you)', 'Shoutout wall', 'Community early access'],
   },
 ];
-
-function VF() {
-  const corners = [
-    { top: 8,    left: 8,   d: 'M0,0 L0,12 M0,0 L12,0' },
-    { top: 8,    right: 8,  d: 'M18,0 L18,12 M6,0 L18,0' },
-    { bottom: 8, left: 8,   d: 'M0,18 L0,6 M0,18 L12,18' },
-    { bottom: 8, right: 8,  d: 'M18,18 L18,6 M6,18 L18,18' },
-  ];
-  return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
-      {corners.map((c, i) => (
-        <svg key={i} style={{ position: 'absolute', top: (c as any).top, bottom: (c as any).bottom, left: (c as any).left, right: (c as any).right }}
-          width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d={c.d} stroke="#BCA88E" strokeWidth="1.8" />
-        </svg>
-      ))}
-    </div>
-  );
-}
 
 function RoleCard({
   role, onConfirm, loading, isSelected, isExisting,
@@ -104,92 +91,60 @@ function RoleCard({
       }}
       transition={{ duration: 0.4 }}
       style={{
-        position: 'relative', overflow: 'hidden', cursor: 'pointer', height: '100%',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 32px', border: '1px solid', backdropFilter: 'blur(8px)',
+        position: 'relative', overflow: 'hidden', cursor: 'pointer',
+        minHeight: 220,
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between',
+        padding: '28px 24px', border: '1px solid',
+        background: active ? 'rgba(188,168,142,0.08)' : 'rgba(10,11,14,0.55)',
       }}
     >
-      <VF />
-
-      {/* Status Indicators */}
-      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', gap: 8 }}>
+      <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 10, display: 'flex', gap: 8 }}>
         {isExisting && (
-          <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#F0EBE0', background: 'rgba(188,168,142,0.3)', border: '1px solid rgba(188,168,142,0.5)', padding: '2px 8px', letterSpacing: 2 }}>
+          <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#F0EBE0', background: 'rgba(188,168,142,0.25)', border: '1px solid rgba(188,168,142,0.4)', padding: '2px 8px', letterSpacing: 2 }}>
             IN CREW
           </span>
         )}
         {isSelected && !isExisting && (
-          <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', background: 'rgba(188,168,142,0.15)', border: '1px solid #BCA88E', padding: '2px 8px', letterSpacing: 2 }}>
-            SELECTED
+          <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 8px', letterSpacing: 2 }}>
+            SELECTED · TAP AGAIN
           </span>
         )}
       </div>
 
-      <motion.div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
-        <motion.img src={ROLE_LOGOS[role.id]} alt=""
-          animate={{ scale: active ? 1.15 : 1, opacity: active ? 0.35 : 0.15, filter: active ? 'grayscale(0) brightness(1)' : 'grayscale(1) brightness(0.6)' }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'screen', opacity: 0.2 }}
-        />
-      </motion.div>
+      <img
+        src={ROLE_LOGOS[role.id]}
+        alt=""
+        style={{
+          position: 'absolute', right: 16, bottom: 16, width: 56, height: 56,
+          objectFit: 'contain', opacity: active ? 0.45 : 0.2, pointerEvents: 'none',
+        }}
+      />
 
-      <motion.span animate={{ opacity: active ? 1 : 0.4, y: active ? 0 : 5 }}
-        style={{ position: 'absolute', top: 24, right: 28, zIndex: 10, fontFamily: 'Inter, monospace', fontSize: 10, fontWeight: 700, color: '#BCA88E', letterSpacing: 5 }}
-      >
-        {role.scene}
-      </motion.span>
-
-      <div style={{ position: 'relative', zIndex: 3, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                style={{ width: 32, height: 32, border: '2px solid rgba(188,168,142,0.2)', borderTopColor: '#BCA88E', borderRadius: '50%' }} />
-              <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, fontWeight: 700, color: '#BCA88E', letterSpacing: 6 }}>ROLLING...</p>
-            </motion.div>
-          ) : (
-            <motion.div key={active ? 'active' : 'normal'} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 4, margin: '0 0 8px' }}>
-                {role.description}
-              </p>
-              <h2 style={{
-                fontFamily: '"Impact Std Regular", Impact, sans-serif',
-                fontSize: 'clamp(32px, 3.5vw, 52px)',
-                color: active ? '#BCA88E' : '#F0EBE0',
-                letterSpacing: 2, margin: 0, lineHeight: 0.9,
-                textTransform: 'uppercase',
-                textShadow: '0 4px 20px rgba(0,0,0,0.5)',
-              }}>
-                {isSelected && !loading ? (isExisting ? 'ENTER DASHBOARD' : 'CONFIRM CALL') : role.label}
-              </h2>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <motion.p animate={{ opacity: active ? 1 : 0.4, y: active ? 0 : 5 }}
-          style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#BCA88E', fontStyle: 'italic', margin: 0, maxWidth: 280, lineHeight: 1.6 }}
-        >
-          "{role.line}"
-        </motion.p>
-
-        {/* Feature list on hover */}
-        <AnimatePresence>
-          {active && !loading && (
-            <motion.ul initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} transition={{ duration: 0.3 }}
-              style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: 6 }}
-            >
-              {role.features.map(f => (
-                <li key={f} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F0EBE0', opacity: 0.7, letterSpacing: 1 }}>
-                  ✦ {f}
-                </li>
-              ))}
-            </motion.ul>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div style={{ position: 'absolute', bottom: 24, left: 28, zIndex: 5 }}>
-        <div style={{ width: 24, height: 1, background: '#BCA88E', opacity: 0.3 }} />
+      <div style={{ position: 'relative', zIndex: 3, width: '100%' }}>
+        <div style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: 'rgba(188,168,142,0.55)', letterSpacing: 3, marginBottom: 10 }}>
+          {role.scene}
+        </div>
+        {loading ? (
+          <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', letterSpacing: 4 }}>ROLLING…</p>
+        ) : (
+          <>
+            <h2 style={{
+              fontFamily: 'Playfair Display, serif',
+              fontSize: 'clamp(22px, 2.4vw, 28px)',
+              color: '#BCA88E',
+              letterSpacing: 1, margin: '0 0 10px',
+              textTransform: 'uppercase',
+            }}>
+              {isSelected && !loading ? (isExisting ? 'Open dashboard' : 'Confirm role') : role.label}
+            </h2>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#F0EBE0', margin: '0 0 4px', letterSpacing: 0.5 }}>
+              Do: {role.doLine}
+            </p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: 'rgba(240,235,224,0.45)', margin: 0 }}>
+              Get: {role.getLine}
+            </p>
+          </>
+        )}
       </div>
     </motion.div>
   );

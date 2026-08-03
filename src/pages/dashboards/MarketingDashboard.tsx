@@ -213,6 +213,28 @@ export default function MarketingDashboard() {
     }
   };
 
+  const handleCopyKit = async (campaign: any) => {
+    const parts = [
+      campaign.title && `Campaign: ${campaign.title}`,
+      campaign.kit_captions && `Captions:\n${campaign.kit_captions}`,
+      campaign.kit_hashtags && `Hashtags:\n${campaign.kit_hashtags}`,
+      campaign.kit_drive_link && `Drive:\n${campaign.kit_drive_link}`,
+    ].filter(Boolean);
+
+    if (parts.length <= 1 && !campaign.kit_captions && !campaign.kit_hashtags && !campaign.kit_drive_link) {
+      toast('No copy kit fields on this campaign yet.');
+      return;
+    }
+
+    const text = parts.join('\n\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('COPY KIT COPIED ✦');
+    } catch {
+      toast('Could not copy — try again.');
+    }
+  };
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
@@ -221,7 +243,7 @@ export default function MarketingDashboard() {
       ) : (
         <>
           {/* CAMPAIGNS SECTION */}
-          <div>
+          <div id="marketing-campaigns">
             <div style={{ marginBottom: 32 }}>
               <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
               <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>JOIN ACTIVE MISSIONS AND TRACK PROGRESS</p>
@@ -269,7 +291,7 @@ export default function MarketingDashboard() {
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.05)', gap: 16, flexWrap: 'wrap' }}>
                         {myAssignments[c.id] ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
@@ -284,6 +306,13 @@ export default function MarketingDashboard() {
                             JOIN MISSION
                           </button>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => handleCopyKit(c)}
+                          style={{ background: 'transparent', border: '1px solid rgba(188,168,142,0.4)', color: '#BCA88E', padding: '6px 16px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}
+                        >
+                          COPY KIT
+                        </button>
                       </div>
                     </div>
                   );
@@ -293,7 +322,7 @@ export default function MarketingDashboard() {
           </div>
 
           {/* IDEA BOARD SECTION */}
-          <div style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+          <div id="marketing-ideas" style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
             <div style={{ marginBottom: 32 }}>
               <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN IDEA BOARD</p>
               <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>PIN YOUR IDEAS FOR THE TEAM</p>

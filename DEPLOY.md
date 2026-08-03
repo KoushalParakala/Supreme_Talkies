@@ -40,7 +40,21 @@ Authentication → URL configuration:
 - Site URL = production origin (e.g. `https://supremetalkies.com`)
 - Redirect allow list includes `https://<domain>/auth/callback` and local `http://localhost:5173/auth/callback`
 
-## 4. Build locally
+## 4. Apply additive SQL (required for Verified + notifications)
+
+In Supabase SQL Editor, run in order (never re-run the eraser in `supabase_master.sql`):
+
+1. `supabase/migrations/20260803_verified_and_notifications.sql`
+2. `supabase/migrations/20260804_films_credit_columns.sql` (if present)
+
+Deploy edge functions:
+
+```bash
+supabase functions deploy ban-user
+supabase functions deploy on-room-completed
+```
+
+## 5. Build locally
 
 ```bash
 cd Supreme_Talkies-main
@@ -51,7 +65,7 @@ npm run preview
 
 Confirm `/`, login, hard-refresh `/dashboard` still works against production Supabase.
 
-## 5. Deploy to Vercel
+## 6. Deploy to Vercel
 
 1. Push the clean branch to GitHub.
 2. Vercel → Import repository → Framework Preset: **Vite**.
@@ -59,12 +73,14 @@ Confirm `/`, login, hard-refresh `/dashboard` still works against production Sup
 4. Deploy. `vercel.json` already rewrites SPA routes to `index.html`.
 5. Attach custom domain when DNS is ready.
 
-## 6. Production smoke test
+## 7. Production smoke test
 
 - [ ] Hard refresh while logged in — real profile, not casting / ROLE NOT CONFIGURED
-- [ ] One write in Writer (or your primary role)
-- [ ] Admin Kanban move (if you use admin)
+- [ ] Complete profile → SUPR Verified stamp
+- [ ] Admin Kanban move → writer notification bell
+- [ ] One write in Writer (draft + submit)
 - [ ] Google OAuth callback on the production domain
+- [ ] Follow [MANUAL_QA.md](./MANUAL_QA.md) for full persona matrix
 
 ## Warnings
 

@@ -41,9 +41,16 @@ export default function Home() {
   const [loading, setLoading] = useState(!alreadyShown);
   const [heroVisible, setHeroVisible] = useState(alreadyShown);
   const [scrolled, setScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const navigate = useNavigate();
 
   const targetFilmId = (location.state as any)?.returnToFilm as string | undefined;
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -108,11 +115,13 @@ export default function Home() {
                 backgroundImage: "url('/hero-bg.webp')",
                 backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0,
               }}
-              initial={{ scale: 1.15 }} animate={{ scale: 1 }} transition={{ duration: 3, ease: 'easeOut' }}
+              initial={{ scale: isMobile ? 1 : 1.15 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: isMobile ? 0 : 3, ease: 'easeOut' }}
             />
             <div style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'linear-gradient(to bottom, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.20) 40%, rgba(0,0,0,0.70) 100%)' }} />
             <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', background: 'radial-gradient(ellipse 85% 75% at 50% 50%, transparent 25%, rgba(5,3,0,0.70) 100%)' }} />
-            <CornerAccents />
+            {!isMobile && <CornerAccents />}
 
             <AnimatePresence>
               {!scrolled && heroVisible && (
@@ -177,10 +186,15 @@ export default function Home() {
                     </motion.p>
                   )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
-                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#F0EBE0', opacity: 0.5, letterSpacing: 5 }}>STORIES THAT DEMAND TO BE TOLD</span>
-                    <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#F0EBE0', opacity: 0.5, letterSpacing: 5 }}>STORIES THAT DEMAND TO BE TOLD</span>
+                      <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
+                    </div>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: 'rgba(188,168,142,0.75)', letterSpacing: 3, textTransform: 'uppercase', whiteSpace: 'normal', textAlign: 'center', maxWidth: 360 }}>
+                      Vijayawada · Telugu / Tamil shorts · Join the set
+                    </span>
                   </div>
 
                   {/* Action Button */}

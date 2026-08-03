@@ -5,6 +5,9 @@ import {useNavigate,useLocation} from 'react-router-dom';
 import Nav from '../components/Nav';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {getUsableRoles} from '../lib/profile';
+import FirstActions from '../components/FirstActions';
+
+const roleStorageKey=(userId:string)=>`st_active_role_${userId}`;
 
 const WriterDashboard =lazy(()=>import('./dashboards/WriterDashboard'));
 const TechnicianDashboard =lazy(()=>import('./dashboards/TechnicianDashboard'));
@@ -79,12 +82,24 @@ export default function Dashboard(){
     return getUsableRoles(profile);
   },[isAdmin,profile]);
 
+  const storedRole =useMemo(()=>{
+    if (!user?.id || typeof window === 'undefined') return undefined;
+    try {
+      return localStorage.getItem(roleStorageKey(user.id)) || undefined;
+    } catch {
+      return undefined;
+    }
+  },[user?.id]);
+
   const initialRole =useMemo(()=>{
     if (requestedRole &&[...Object.keys(ROLE_LABELS),'admin'].includes(requestedRole)){
       if (roles.includes(requestedRole)||isAdmin) return requestedRole;
     }
+    if (storedRole && (roles.includes(storedRole) || (isAdmin && storedRole === 'admin'))) {
+      return storedRole;
+    }
     return roles[0];
-  },[requestedRole,roles,isAdmin]);
+  },[requestedRole,roles,isAdmin,storedRole]);
 
   // No guessed default here (previously fell back to 'writer', which meant every user —
   // Producer, Technician, whoever — kicked off a lazy-import of WriterDashboard's chunk
@@ -97,15 +112,26 @@ export default function Dashboard(){
   useEffect(()=>{
     const valid =[...Object.keys(ROLE_LABELS),'admin'];
     let target: string | undefined;
-    if (requestedRole &&(roles.includes(requestedRole)||valid.includes(requestedRole))){
+    if (requestedRole &&(roles.includes(requestedRole)||isAdmin)&&valid.includes(requestedRole)){
       target =requestedRole;
+    } else if (storedRole && (roles.includes(storedRole) || (isAdmin && storedRole === 'admin'))) {
+      target = storedRole;
     } else {
       target =initialRole ||roles[0];
     }
     if (target){
       setActiveRole(prev=>prev!==target?target:prev);
     }
-  },[requestedRole,initialRole,roles]);
+  },[requestedRole,initialRole,roles,storedRole,isAdmin]);
+
+  useEffect(()=>{
+    if (!user?.id || !activeRole) return;
+    try {
+      localStorage.setItem(roleStorageKey(user.id), activeRole);
+    } catch {
+      /* ignore quota / private mode */
+    }
+  },[user?.id, activeRole]);
 
   useEffect(()=>{
     if (loading) return;
@@ -229,12 +255,15 @@ export default function Dashboard(){
           </AnimatePresence>
           <motion.div initial={{scaleX:0}} animate={{scaleX:1}} transition={{duration:1.2,ease:[0.25,0.1,0.25,1]}} style={{width:'100%',height:1,background:'linear-gradient(90deg,#BCA88E 0%,rgba(188,168,142,0.12)60%,transparent 100%)',transformOrigin:'left'}}/>
         </div>
+        {activeRole && <FirstActions role={activeRole}/>}
         <AnimatePresence mode="wait">
           <motion.div key={activeRole} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.4}}>
             <ErrorBoundary fallback={<DashboardErrorFallback/>}>
               <Suspense fallback={
                 <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:80,gap:16}}>
-                  <motion.div animate={{opacity:[0.3,1,0.3]}} transition={{duration:2,repeat:Infinity}} style={{fontFamily:'Inter,monospace',fontSize:10,color:'#BCA88E',letterSpacing:8,textTransform:'uppercase'}}>Loading Set</motion.div>
+                  <motion.div animate={{opacity:[0.3,1,0.3]}} transition={{duration:2,repeat:Infinity}} style={{fontFamily:'Inter,monospace',fontSize:10,color:'#BCA88E',letterSpacing:8,textTransform:'uppercase'}}>
+                    Loading {ROLE_LABELS[activeRole] || 'dashboard'}…
+                  </motion.div>
                   <div style={{width:40,height:1,background:'rgba(188,168,142,0.2)'}}/>
                 </div>
               }>

@@ -46,6 +46,12 @@ export default function AmplifierDashboard() {
     }
   }, [user, activeTab]);
 
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'amp-impact') setActiveTab('impact');
+    if (hash === 'amp-wall') setActiveTab('shoutouts');
+  }, []);
+
   const fetchIdRef = useRef(0);
 
   const fetchShoutouts = async () => {
@@ -145,7 +151,7 @@ export default function AmplifierDashboard() {
 
       <AnimatePresence mode="wait">
         {activeTab === 'impact' && (
-          <motion.div key="impact" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
+          <motion.div id="amp-impact" key="impact" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
             
             {/* Story Streak */}
             <div style={{ textAlign: 'center', padding: '60px 40px', border: '1px solid rgba(188,168,142,0.15)', background: 'rgba(188,168,142,0.02)' }}>
@@ -155,6 +161,7 @@ export default function AmplifierDashboard() {
                     <span style={{ fontSize: 60 }}>🔥</span>
                     <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 72, color: '#BCA88E', margin: 0, lineHeight: 1 }}>{streak}</h2>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 8, margin: 0 }}>DAY STREAK</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 3, margin: 0, opacity: 0.7 }}>Logged by you</p>
                     {profile?.last_share_at && <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#BCA88E', opacity: 0.4, margin: 0 }}>Last share: {timeAgo(profile.last_share_at)}</p>}
                   </>
                 ) : (
@@ -181,8 +188,11 @@ export default function AmplifierDashboard() {
                   ))}
                 </div>
 
-                <div style={{ marginTop: 40 }}>
+                <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                   <CinemaButton onClick={handleLogShare} loading={loggingShare}>LOG A SHARE →</CinemaButton>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.45, letterSpacing: 2, margin: 0 }}>
+                    Logged by you — only you can add to this streak
+                  </p>
                 </div>
               </div>
             </div>
@@ -216,7 +226,7 @@ export default function AmplifierDashboard() {
         )}
 
         {activeTab === 'shoutouts' && (
-          <motion.div key="shoutouts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
+          <motion.div id="amp-wall" key="shoutouts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
             {/* Post Form */}
             <div style={{ border: '1px solid rgba(188,168,142,0.15)', padding: 32, background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 24 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

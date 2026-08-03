@@ -233,17 +233,26 @@ export default function AdminDashboard() {
     { role: 'Music', value: '' },
     { role: 'Cast', value: '' }
   ];
-  const [newFilm, setNewFilm] = useState<any>({
-    title: '', production_note: '', rating: 'UA', duration: '',
+  const emptyFilm = () => ({
+    title: '', production_note: '', rating: 'UA', duration: '', color: '#0a0a0a',
     synopsis: '', special_note: '',
-    video_link: '', reel_image: '', coming_soon: false, stills: [],
-    credits: INITIAL_CREDITS
+    video_link: '', reel_image: '', coming_soon: false, stills: [] as string[],
+    director: '', producer: '', written_by: '', cinematography: '', music: '', editing: '',
+    cast_members: '', associate_director: '', colourist: '', publicity_design: '',
+    presented_by: '', telugu_dubbing_team: '', supreme_talkies_team: '',
+    credits: INITIAL_CREDITS.map(c => ({ ...c })),
   });
+  const [newFilm, setNewFilm] = useState<any>(emptyFilm());
   const [reelFile, setReelFile] = useState<File | null>(null);
   const [still1File, setStill1File] = useState<File | null>(null);
   const [still2File, setStill2File] = useState<File | null>(null);
   const [still3File, setStill3File] = useState<File | null>(null);
   const [uploadingFilm, setUploadingFilm] = useState(false);
+
+  // NEEDS YOUR EYES inbox (cross-tab summary)
+  const [inboxScripts, setInboxScripts] = useState<any[]>([]);
+  const [inboxScreenings, setInboxScreenings] = useState<any[]>([]);
+  const [inboxCollabs, setInboxCollabs] = useState<any[]>([]);
 
 
 
@@ -254,6 +263,36 @@ export default function AdminDashboard() {
   const [creatingRoom, setCreatingRoom] = useState(false);
 
   const fetchIdRef = useRef(0);
+
+  const fetchInbox = async () => {
+    try {
+      const [scriptsRes, screeningsRes, collabsRes] = await Promise.all([
+        supabase
+          .from('scripts')
+          .select('id, title, kanban_stage, status, created_at, user:profiles(full_name)')
+          .or('kanban_stage.eq.inbox,kanban_stage.eq.under_review')
+          .order('created_at', { ascending: false })
+          .limit(8),
+        supabase
+          .from('presentations')
+          .select('id, title, film_title, status, created_at, profiles(full_name)')
+          .in('status', ['submitted', 'pending'])
+          .order('created_at', { ascending: false })
+          .limit(8),
+        supabase
+          .from('collab_requests')
+          .select('id, project_title, message, status, created_at, sender:profiles!sender_id(full_name)')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(8),
+      ]);
+      if (!scriptsRes.error) setInboxScripts(scriptsRes.data || []);
+      if (!screeningsRes.error) setInboxScreenings(screeningsRes.data || []);
+      if (!collabsRes.error) setInboxCollabs(collabsRes.data || []);
+    } catch (err) {
+      console.error('Error fetching admin inbox:', err);
+    }
+  };
 
   const fetchData = async () => {
     const fetchId = ++fetchIdRef.current;
@@ -338,6 +377,11 @@ export default function AdminDashboard() {
     else if (!authLoading) setLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, adminUser, authLoading, isAdmin]);
+
+  useEffect(() => {
+    if (adminUser && isAdmin) fetchInbox();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminUser, isAdmin, section]);
 
   // Actions
   const moveScriptStage = async (scriptId: string, newStage: string) => {
@@ -595,6 +639,33 @@ export default function AdminDashboard() {
 
 
   
+  const buildFilmCredits = (film: any) => {
+    const roleMap: { role: string; key: string }[] = [
+      { role: 'Direction', key: 'director' },
+      { role: 'Writing', key: 'written_by' },
+      { role: 'Producer', key: 'producer' },
+      { role: 'Editor', key: 'editing' },
+      { role: 'Cinematographer', key: 'cinematography' },
+      { role: 'Music', key: 'music' },
+      { role: 'Cast', key: 'cast_members' },
+      { role: 'Associate Director', key: 'associate_director' },
+      { role: 'Colourist', key: 'colourist' },
+      { role: 'Publicity Design', key: 'publicity_design' },
+      { role: 'Presented By', key: 'presented_by' },
+      { role: 'Telugu Dubbing Team', key: 'telugu_dubbing_team' },
+      { role: 'Supreme Talkies Team', key: 'supreme_talkies_team' },
+    ];
+    const fromFields = roleMap
+      .map(({ role, key }) => ({ role, value: (film[key] || '').trim() }))
+      .filter(c => c.value);
+    const extras = (film.credits || []).filter((c: any) => {
+      if (!c?.role || !c?.value?.trim()) return false;
+      const r = c.role.toLowerCase();
+      return !roleMap.some(m => m.role.toLowerCase() === r || m.key.replace(/_/g, ' ') === r);
+    });
+    return [...fromFields, ...extras];
+  };
+
   const saveFilm = async () => {
     try {
       setUploadingFilm(true);
@@ -620,15 +691,52 @@ export default function AdminDashboard() {
       if (still2File) newStills[1] = await uploadFile(still2File, 'stills');
       if (still3File) newStills[2] = await uploadFile(still3File, 'stills');
 
-      const directorCredit = newFilm.credits?.find((c: any) => c.role.toLowerCase() === 'direction' || c.role.toLowerCase() === 'director');
-      const producerCredit = newFilm.credits?.find((c: any) => c.role.toLowerCase() === 'producer');
+      const creditVal = (roles: string[]) =>
+        newFilm.credits?.find((c: any) => roles.includes((c.role || '').toLowerCase()))?.value || '';
 
-      const filmPayload = { 
-        ...newFilm, 
-        director: directorCredit?.value || '',
-        producer: producerCredit?.value || '',
-        reel_image: finalReelUrl, 
-        stills: newStills.filter(Boolean) 
+      const director = newFilm.director || creditVal(['direction', 'director']);
+      const producer = newFilm.producer || creditVal(['producer']);
+      const written_by = newFilm.written_by || creditVal(['writing', 'written by', 'writer']);
+      const cinematography = newFilm.cinematography || creditVal(['cinematographer', 'cinematography']);
+      const music = newFilm.music || creditVal(['music']);
+      const editing = newFilm.editing || creditVal(['editor', 'editing']);
+      const cast_members = newFilm.cast_members || newFilm.cast || creditVal(['cast']);
+
+      const filmForCredits = {
+        ...newFilm,
+        director, producer, written_by, cinematography, music, editing, cast_members,
+      };
+
+      // Payload aligned with useFilms mapping. Columns missing from CREATE TABLE
+      // (production_note, written_by, cinematography, music, editing, credits, etc.)
+      // are still sent when present in live DB; credits jsonb carries role/value extras.
+      const filmPayload: Record<string, unknown> = {
+        title: newFilm.title,
+        production_note: newFilm.production_note || null,
+        logline: newFilm.production_note || null,
+        rating: newFilm.rating || 'UA',
+        duration: newFilm.duration || null,
+        color: newFilm.color || '#0a0a0a',
+        synopsis: newFilm.synopsis || null,
+        special_note: newFilm.special_note || null,
+        video_link: newFilm.video_link || null,
+        reel_image: finalReelUrl || null,
+        stills: newStills.filter(Boolean),
+        coming_soon: !!newFilm.coming_soon,
+        director: director || null,
+        producer: producer || null,
+        cast_members: cast_members || null,
+        written_by: written_by || null,
+        cinematography: cinematography || null,
+        music: music || null,
+        editing: editing || null,
+        associate_director: newFilm.associate_director || null,
+        colourist: newFilm.colourist || null,
+        publicity_design: newFilm.publicity_design || null,
+        presented_by: newFilm.presented_by || null,
+        telugu_dubbing_team: newFilm.telugu_dubbing_team || null,
+        supreme_talkies_team: newFilm.supreme_talkies_team || null,
+        credits: buildFilmCredits(filmForCredits),
       };
 
       if (editingFilm) {
@@ -644,7 +752,7 @@ export default function AdminDashboard() {
       setStill1File(null);
       setStill2File(null);
       setStill3File(null);
-      setNewFilm({ title: '', production_note: '', rating: 'UA', duration: '', synopsis: '', special_note: '', video_link: '', reel_image: '', coming_soon: false, stills: [], credits: INITIAL_CREDITS });
+      setNewFilm(emptyFilm());
       fetchData();
     } catch (e: unknown) { 
       toast(e instanceof Error ? e.message : String(e)); 
@@ -661,8 +769,77 @@ export default function AdminDashboard() {
   // Removed blocking loading screen to prevent hang.
   // The UI will now render even if fetchData is hanging, allowing the user to navigate tabs.
 
+  const inboxTotal = inboxScripts.length + inboxScreenings.length + inboxCollabs.length;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+      {/* Needs Your Eyes inbox — above tabs */}
+      <div id="admin-inbox" style={{ padding: 28, border: '1px solid rgba(188,168,142,0.2)', background: 'rgba(188,168,142,0.04)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+          <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#BCA88E', margin: 0, letterSpacing: 4 }}>NEEDS YOUR EYES</p>
+          <span style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: inboxTotal ? '#BCA88E' : 'rgba(188,168,142,0.35)', letterSpacing: 3 }}>
+            {inboxTotal === 0 ? 'ALL CLEAR' : `${inboxTotal} PENDING`}
+          </span>
+        </div>
+
+        {inboxTotal === 0 ? (
+          <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: 'rgba(240,235,224,0.35)', margin: 0 }}>Nothing waiting for triage.</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button type="button" onClick={() => setSection('WRITERS')}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 3, fontWeight: 700 }}>SCRIPTS · TRIAGE</span>
+                <span style={{ fontFamily: 'Inter, monospace', fontSize: 18, color: '#F0EBE0' }}>{inboxScripts.length}</span>
+              </button>
+              {inboxScripts.slice(0, 4).map(s => (
+                <button key={s.id} type="button" onClick={() => setSection('WRITERS')}
+                  style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(188,168,142,0.1)', padding: '10px 12px', cursor: 'pointer', textAlign: 'left' }}>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>{s.title}</p>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: 'rgba(188,168,142,0.55)', margin: 0, letterSpacing: 2 }}>
+                    {(s.user as any)?.full_name || 'Unknown'} · {(s.kanban_stage || 'inbox').toUpperCase()}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button type="button" onClick={() => setSection('SCREENINGS')}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 3, fontWeight: 700 }}>SCREENINGS · REVIEW</span>
+                <span style={{ fontFamily: 'Inter, monospace', fontSize: 18, color: '#F0EBE0' }}>{inboxScreenings.length}</span>
+              </button>
+              {inboxScreenings.slice(0, 4).map(sc => (
+                <button key={sc.id} type="button" onClick={() => setSection('SCREENINGS')}
+                  style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(188,168,142,0.1)', padding: '10px 12px', cursor: 'pointer', textAlign: 'left' }}>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>{sc.film_title || sc.title}</p>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: 'rgba(188,168,142,0.55)', margin: 0, letterSpacing: 2 }}>
+                    {(sc.profiles as any)?.full_name || 'Unknown'} · {(sc.status === 'submitted' ? 'IN REVIEW' : sc.status?.toUpperCase())}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button type="button" onClick={() => { setSection('MARKETING'); setMarketingTab('collab'); }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 3, fontWeight: 700 }}>COLLAB REQUESTS</span>
+                <span style={{ fontFamily: 'Inter, monospace', fontSize: 18, color: '#F0EBE0' }}>{inboxCollabs.length}</span>
+              </button>
+              {inboxCollabs.slice(0, 4).map(c => (
+                <button key={c.id} type="button" onClick={() => { setSection('MARKETING'); setMarketingTab('collab'); }}
+                  style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(188,168,142,0.1)', padding: '10px 12px', cursor: 'pointer', textAlign: 'left' }}>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 13, color: '#F0EBE0', margin: '0 0 4px' }}>{c.project_title || 'Untitled collab'}</p>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: 'rgba(188,168,142,0.55)', margin: 0, letterSpacing: 2 }}>
+                    {(c.sender as any)?.full_name || 'Unknown'} · PENDING
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Top Section Tabs */}
       <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0, overflowX: 'auto' }}>
         {['MARKETING', 'FILMS', 'WRITERS', 'PROJECTS', 'PROJECT ROOMS', 'CAMPAIGNS', 'SCREENINGS'].map(s => (
@@ -756,7 +933,7 @@ export default function AdminDashboard() {
           </motion.div>
         )}
         {section === 'WRITERS' && (
-          <motion.div key="scripts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <motion.div id="admin-writers" key="scripts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* Status Summary Header */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, padding: '24px 40px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(188,168,142,0.15)' }}>
               {KANBAN_STAGES.filter(st => st.id !== 'archived').map(stage => {
@@ -1291,11 +1468,34 @@ export default function AdminDashboard() {
                 <CinemaInput label="PRODUCTION NOTE" value={newFilm.production_note} onChange={(v) => setNewFilm({ ...newFilm, production_note: v })} />
                 <CinemaInput label="RATING" value={newFilm.rating} onChange={(v) => setNewFilm({ ...newFilm, rating: v })} />
                 <CinemaInput label="DURATION" value={newFilm.duration} onChange={(v) => setNewFilm({ ...newFilm, duration: v })} />
+                <CinemaInput label="COLOR" value={newFilm.color || ''} onChange={(v) => setNewFilm({ ...newFilm, color: v })} placeholder="#0a0a0a" />
+                <CinemaInput label="SPECIAL NOTE" value={newFilm.special_note || ''} onChange={(v) => setNewFilm({ ...newFilm, special_note: v })} />
               </div>
 
-              <div style={{ marginTop: 20, marginBottom: 20 }}>
+              <div style={{ marginTop: 8, marginBottom: 8 }}>
+                <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, color: '#BCA88E', margin: '0 0 16px' }}>CREDITS</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  <CinemaInput label="DIRECTOR" value={newFilm.director || ''} onChange={(v) => setNewFilm({ ...newFilm, director: v })} />
+                  <CinemaInput label="PRODUCER" value={newFilm.producer || ''} onChange={(v) => setNewFilm({ ...newFilm, producer: v })} />
+                  <CinemaInput label="WRITTEN BY" value={newFilm.written_by || ''} onChange={(v) => setNewFilm({ ...newFilm, written_by: v })} />
+                  <CinemaInput label="CINEMATOGRAPHY" value={newFilm.cinematography || ''} onChange={(v) => setNewFilm({ ...newFilm, cinematography: v })} />
+                  <CinemaInput label="MUSIC" value={newFilm.music || ''} onChange={(v) => setNewFilm({ ...newFilm, music: v })} />
+                  <CinemaInput label="EDITING" value={newFilm.editing || ''} onChange={(v) => setNewFilm({ ...newFilm, editing: v })} />
+                  <CinemaInput label="ASSOCIATE DIRECTOR" value={newFilm.associate_director || ''} onChange={(v) => setNewFilm({ ...newFilm, associate_director: v })} />
+                  <CinemaInput label="COLOURIST" value={newFilm.colourist || ''} onChange={(v) => setNewFilm({ ...newFilm, colourist: v })} />
+                  <CinemaInput label="PUBLICITY DESIGN" value={newFilm.publicity_design || ''} onChange={(v) => setNewFilm({ ...newFilm, publicity_design: v })} />
+                  <CinemaInput label="PRESENTED BY" value={newFilm.presented_by || ''} onChange={(v) => setNewFilm({ ...newFilm, presented_by: v })} />
+                  <CinemaInput label="TELUGU DUBBING TEAM" value={newFilm.telugu_dubbing_team || ''} onChange={(v) => setNewFilm({ ...newFilm, telugu_dubbing_team: v })} />
+                  <CinemaInput label="SUPREME TALKIES TEAM" value={newFilm.supreme_talkies_team || ''} onChange={(v) => setNewFilm({ ...newFilm, supreme_talkies_team: v })} />
+                </div>
+                <div style={{ marginTop: 20 }}>
+                  <CinemaTextarea label="CAST" value={newFilm.cast_members || newFilm.cast || ''} onChange={(v) => setNewFilm({ ...newFilm, cast_members: v })} rows={2} />
+                </div>
+              </div>
+
+              <div style={{ marginTop: 12, marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, color: '#BCA88E', margin: 0 }}>CREDITS</p>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, color: '#BCA88E', margin: 0 }}>EXTRA CREDITS (JSON)</p>
                   <button type="button" onClick={() => setNewFilm({...newFilm, credits: [...(newFilm.credits || []), { role: '', value: '' }]})} style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontSize: 10, padding: '4px 12px', cursor: 'pointer' }}>+ ADD CREDIT</button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1351,7 +1551,7 @@ export default function AdminDashboard() {
                 <button disabled={uploadingFilm} onClick={saveFilm} style={{ flex: 1, background: '#BCA88E', color: '#0e0f13', border: 'none', padding: '12px', fontFamily: 'Inter, monospace', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: uploadingFilm ? 'not-allowed' : 'pointer', opacity: uploadingFilm ? 0.7 : 1 }}>
                   {uploadingFilm ? 'UPLOADING...' : (editingFilm ? 'UPDATE FILM' : 'PUBLISH FILM')}
                 </button>
-                {editingFilm && <button onClick={() => { setEditingFilm(null); setReelFile(null); setStill1File(null); setStill2File(null); setStill3File(null); setNewFilm({ title: '', production_note: '', rating: 'UA', duration: '', director: '', producer: '', synopsis: '', special_note: '', video_link: '', reel_image: '', coming_soon: false, stills: [], cinematography: '', editing: '', music: '', cast: '' }); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
+                {editingFilm && <button onClick={() => { setEditingFilm(null); setReelFile(null); setStill1File(null); setStill2File(null); setStill3File(null); setNewFilm(emptyFilm()); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
               </div>
             </div>
 
@@ -1372,7 +1572,16 @@ export default function AdminDashboard() {
                   )}
 
                   <div style={{ display: 'flex', gap: 12, marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.05)' }}>
-                    <button onClick={() => { setEditingFilm(f); setNewFilm(f); window.scrollTo(0, 0); }} style={{ flex: 1, background: 'none', border: '1px solid rgba(188,168,142,0.2)', color: '#BCA88E', fontSize: 9, padding: '8px', cursor: 'pointer' }}>EDIT</button>
+                    <button onClick={() => {
+                      setEditingFilm(f);
+                      setNewFilm({
+                        ...emptyFilm(),
+                        ...f,
+                        cast_members: f.cast_members || f.cast || '',
+                        credits: Array.isArray(f.credits) && f.credits.length ? f.credits : INITIAL_CREDITS.map(c => ({ ...c })),
+                      });
+                      window.scrollTo(0, 0);
+                    }} style={{ flex: 1, background: 'none', border: '1px solid rgba(188,168,142,0.2)', color: '#BCA88E', fontSize: 9, padding: '8px', cursor: 'pointer' }}>EDIT</button>
                     <button onClick={async () => {
                       if(confirm('Delete film?')) {
                         await supabase.from('films').delete().eq('id', f.id);
@@ -1387,7 +1596,7 @@ export default function AdminDashboard() {
         )}
 
         {section === 'SCREENINGS' && (
-          <motion.div key="screenings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+          <motion.div id="admin-screenings" key="screenings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
             <div style={{ display: 'flex', gap: 12 }}>
               {['ALL', 'IN REVIEW', 'APPROVED', 'SCREENED', 'REJECTED'].map(s => (
                 <button key={s} onClick={() => setScreeningStatusFilter(s as any)}

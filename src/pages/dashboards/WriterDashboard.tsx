@@ -57,6 +57,7 @@ function CinemaButton({ children, onClick, disabled, loading, style }: {
 }
 
 const STATUS_COLORS: Record<string, { text: string; glow: string; bg: string }> = {
+  draft:        { text: '#9CA3AF',  glow: 'rgba(156,163,175,0.2)',  bg: 'rgba(156,163,175,0.06)' },
   inbox:        { text: '#BCA88E',  glow: 'rgba(188,168,142,0.25)', bg: 'rgba(188,168,142,0.06)' },
   submitted:    { text: '#BCA88E',  glow: 'rgba(188,168,142,0.25)', bg: 'rgba(188,168,142,0.06)' },
   under_review: { text: '#60A5FA',  glow: 'rgba(96,165,250,0.25)',  bg: 'rgba(96,165,250,0.06)'  },
@@ -68,6 +69,7 @@ const STATUS_COLORS: Record<string, { text: string; glow: string; bg: string }> 
 };
 
 const STATUS_LABELS: Record<string, string> = {
+  draft:        'DRAFT',
   inbox:        'INBOX',
   submitted:    'INBOX',
   under_review: 'UNDER REVIEW',
@@ -77,6 +79,62 @@ const STATUS_LABELS: Record<string, string> = {
   archived:     'ARCHIVED',
   feedback:     'FEEDBACK',
 };
+
+function ScriptStatusTimeline({ stage }: { stage: string }) {
+  if (stage === 'draft') {
+    return (
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, color: '#9CA3AF', margin: 0 }}>
+        DRAFT — NOT YET SUBMITTED
+      </p>
+    );
+  }
+
+  const normalized = stage === 'submitted' ? 'inbox' : stage;
+  const steps = [
+    { id: 'inbox', label: 'INBOX' },
+    { id: 'under_review', label: 'UNDER REVIEW' },
+    { id: 'shortlisted', label: 'SHORTLISTED' },
+    { id: 'final', label: normalized === 'rejected' ? 'REJECTED' : 'ACCEPTED' },
+  ];
+  const order = ['inbox', 'under_review', 'shortlisted', 'final'];
+  const currentKey = (normalized === 'accepted' || normalized === 'rejected') ? 'final' : normalized;
+  const currentIdx = Math.max(0, order.indexOf(currentKey));
+  const finalColor = normalized === 'rejected' ? '#F87171' : normalized === 'accepted' ? '#34D399' : '#BCA88E';
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'wrap', marginTop: 4 }}>
+      {steps.map((step, i) => {
+        const done = i < currentIdx;
+        const active = i === currentIdx;
+        const color = step.id === 'final' && active ? finalColor : active || done ? '#BCA88E' : 'rgba(188,168,142,0.25)';
+        return (
+          <div key={step.id} style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 72 }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: active || done ? color : 'transparent',
+                border: `1.5px solid ${color}`,
+                boxShadow: active ? `0 0 8px ${color}` : 'none',
+              }} />
+              <span style={{
+                fontFamily: 'Montserrat, sans-serif', fontSize: 7, letterSpacing: 1,
+                color, opacity: active ? 1 : done ? 0.7 : 0.4, textAlign: 'center', whiteSpace: 'nowrap',
+              }}>
+                {step.label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{
+                width: 28, height: 1, marginBottom: 14,
+                background: i < currentIdx ? '#BCA88E' : 'rgba(188,168,142,0.2)',
+              }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const VERSION_PALETTE = ['#BCA88E','#60A5FA','#FBBF24','#34D399','#F87171','#A78BFA','#FB923C','#E879F9'];
 
@@ -190,6 +248,7 @@ export default function WriterDashboard() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [formData, setFormData] = useState({ 
     title: '', 
     dnaForm: { mood: [] as string[], setting: [] as string[], format: '' },
@@ -197,6 +256,7 @@ export default function WriterDashboard() {
     pdfLink: '', 
     contact: '' 
   });
+  const submitFormRef = useRef<HTMLDivElement>(null);
 
   const [revisionScriptId, setRevisionScriptId] = useState<string | null>(null);
   const [revisionForm, setRevisionForm] = useState({ note: '', link: '' });
@@ -227,6 +287,12 @@ export default function WriterDashboard() {
     fetchUserInterests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'writer-scripts') setActiveTab('scripts');
+    if (hash === 'writer-briefs') setActiveTab('briefs');
+  }, []);
 
   const fetchUserInterestsRef = useRef(0);
   const fetchOpenBriefsRef = useRef(0);
@@ -404,8 +470,45 @@ export default function WriterDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); 
 
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      dnaForm: { mood: [], setting: [], format: '' },
+      logline: '',
+      pdfLink: '',
+      contact: '',
+    });
+  };
+
+  const handleSaveDraft = async () => {
+    if (!user || !formData.title.trim()) return;
+    setSavingDraft(true);
+    try {
+      const { error } = await supabase.from('scripts').insert({
+        user_id: user.id,
+        title: formData.title.trim(),
+        logline: formData.logline || null,
+        pdf_url: formData.pdfLink || null,
+        dna_mood: formData.dnaForm.mood,
+        dna_setting: formData.dnaForm.setting,
+        dna_format: formData.dnaForm.format || null,
+        status: 'draft',
+        kanban_stage: null,
+        version_number: 1,
+      });
+      if (error) throw error;
+      toast('DRAFT SAVED ✦');
+      resetForm();
+      fetchSubmissions();
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!user || !formData.title || !formData.pdfLink) return;
+    if (!user || !formData.title || !formData.pdfLink || !formData.dnaForm.format) return;
     setSubmitting(true);
     try {
       const { data: script, error } = await supabase.from('scripts').insert({ 
@@ -417,6 +520,7 @@ export default function WriterDashboard() {
         dna_setting: formData.dnaForm.setting,
         dna_format: formData.dnaForm.format,
         status: 'submitted',
+        kanban_stage: 'inbox',
         version_number: 1
       }).select().single();
 
@@ -433,13 +537,8 @@ export default function WriterDashboard() {
         version_notes: 'Initial launch'
       });
 
-      setFormData({ 
-        title: '', 
-        dnaForm: { mood: [], setting: [], format: '' }, 
-        logline: '', 
-        pdfLink: '', 
-        contact: '' 
-      });
+      resetForm();
+      toast('SCRIPT LAUNCHED ✦');
       fetchSubmissions();
 
     } catch (err: unknown) {
@@ -540,6 +639,7 @@ export default function WriterDashboard() {
       <AnimatePresence mode="wait">
         {activeTab === 'scripts' && (
           <motion.div
+            id="writer-scripts"
             key="scripts-tab"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -547,7 +647,7 @@ export default function WriterDashboard() {
             style={{ display: 'flex', flexDirection: 'column', gap: 64 }}
           >
             {/* Submit form */}
-            <div>
+            <div ref={submitFormRef}>
               <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 22, color: '#BCA88E', letterSpacing: 2, marginBottom: 6 }}>THE SCRIPT PORTAL</p>
               <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>STORIES THAT DEMAND TO BE TOLD</p>
@@ -571,24 +671,40 @@ export default function WriterDashboard() {
               </div>
 
               <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 40 }}>
-                <CinemaButton onClick={handleSubmit} loading={submitting} disabled={!formData.title || !formData.pdfLink || !formData.dnaForm.format}>
-                  {submitting ? 'SENDING TO SET' : 'LAUNCH SCRIPT  →'}
-                </CinemaButton>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <CinemaButton onClick={handleSubmit} loading={submitting} disabled={!formData.title || !formData.pdfLink || !formData.dnaForm.format || savingDraft}>
+                    {submitting ? 'SENDING TO SET' : 'LAUNCH SCRIPT  →'}
+                  </CinemaButton>
+                  <CinemaButton onClick={handleSaveDraft} loading={savingDraft} disabled={!formData.title.trim() || submitting} style={{ padding: '13px 28px', fontSize: 13, letterSpacing: 3 }}>
+                    {savingDraft ? 'SAVING…' : 'SAVE AS DRAFT'}
+                  </CinemaButton>
+                </div>
+                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3, letterSpacing: 1, margin: '-24px 0 0' }}>
+                  Drafts need only a title. Launch requires format + PDF link.
+                </p>
 
                 {/* Feature 2: Submitted Scripts */}
                 <div style={{ borderTop: '1px solid rgba(188,168,142,0.1)', paddingTop: 32 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5, color: '#BCA88E', marginBottom: 20 }}>SUBMITTED SCRIPTS</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5, color: '#BCA88E', marginBottom: 20 }}>YOUR SCRIPTS</p>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {loading ? (
-                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2 }}>SCANNING THE ARCHIVES...</p>
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2 }}>Loading scripts…</p>
                     ) : submissions.length === 0 ? (
-                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2, fontStyle: 'italic' }}>
-                        "The first draft is just you telling yourself the story." — No submissions yet.
-                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16, padding: '24px 0' }}>
+                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.35, letterSpacing: 2, fontStyle: 'italic', margin: 0 }}>
+                          No scripts yet. Start with a title — save a draft or launch when ready.
+                        </p>
+                        <CinemaButton
+                          onClick={() => submitFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                          style={{ padding: '10px 28px', fontSize: 13, letterSpacing: 3 }}
+                        >
+                          SUBMIT A SCRIPT →
+                        </CinemaButton>
+                      </div>
                     ) : (
                       submissions.map((script: any) => {
-                        const stKey = script.kanban_stage || script.status || 'inbox';
+                        const stKey = script.status === 'draft' ? 'draft' : (script.kanban_stage || script.status || 'inbox');
                         const statusMeta = STATUS_COLORS[stKey] || STATUS_COLORS['inbox'];
                         const statusLabel = STATUS_LABELS[stKey] || stKey.replace('_',' ').toUpperCase();
                         const vColor = VERSION_PALETTE[(script.version_number || 1) - 1 < VERSION_PALETTE.length ? (script.version_number || 1) - 1 : 0];
@@ -610,12 +726,14 @@ export default function WriterDashboard() {
                                     READ SCRIPT
                                   </a>
                                 )}
-                                <button
-                                  onClick={() => setRevisionScriptId(revisionScriptId === script.id ? null : script.id)}
-                                  style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 10, padding: '4px 8px', cursor: 'pointer', letterSpacing: 1 }}
-                                >
-                                  NEW REVISION
-                                </button>
+                                {script.status !== 'draft' && (
+                                  <button
+                                    onClick={() => setRevisionScriptId(revisionScriptId === script.id ? null : script.id)}
+                                    style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 10, padding: '4px 8px', cursor: 'pointer', letterSpacing: 1 }}
+                                  >
+                                    NEW REVISION
+                                  </button>
+                                )}
                                 <span style={{
                                   fontFamily: '"Montserrat", sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: 4,
                                   color: statusMeta.text, textShadow: `0 0 12px ${statusMeta.glow}`, background: statusMeta.bg,
@@ -626,6 +744,8 @@ export default function WriterDashboard() {
                                 <button onClick={() => handleDeleteScript(script.id)} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: 14, opacity: 0.7 }} title="Delete Script">✕</button>
                               </div>
                             </div>
+
+                            <ScriptStatusTimeline stage={stKey} />
                             
                             {/* Revision Form */}
                             <AnimatePresence>
@@ -661,6 +781,7 @@ export default function WriterDashboard() {
 
         {activeTab === 'briefs' && (
           <motion.div
+            id="writer-briefs"
             key="briefs-tab"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

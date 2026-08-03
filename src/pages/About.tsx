@@ -259,6 +259,9 @@ export default function About() {
                 <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 3, fontWeight: 700 }}>MESSAGE</label>
                 <textarea name="message" rows={4} required style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(188,168,142,0.2)', padding: '12px 16px', color: '#F0EBE0', outline: 'none', fontFamily: 'Inter, sans-serif', resize: 'none' }} />
               </div>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: 'rgba(188,168,142,0.7)', letterSpacing: 1, margin: 0, lineHeight: 1.6 }}>
+                Opens your email app. We’ll reply within 48 hours.
+              </p>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

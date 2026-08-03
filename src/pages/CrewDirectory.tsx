@@ -82,13 +82,16 @@ export default function CrewDirectory(){
   const banAccount = async (id: string) => {
     if (!window.confirm('Are you sure you want to ban and delete this account? This cannot be undone.')) return;
     try {
-      const { error } = await supabase.from('profiles').delete().eq('id', id);
+      const { data, error } = await supabase.functions.invoke('ban-user', {
+        body: { user_id: id },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       setCrew(prev => prev.filter(c => c.id !== id));
       if (selectedCrew?.id === id) setSelectedCrew(null);
-      toast('Account deleted successfully.');
+      toast('Account banned and deleted.');
     } catch (err: unknown) {
-      toast('Error deleting account: ' + (err instanceof Error ? err.message : String(err)));
+      toast('Error banning account: ' + (err instanceof Error ? err.message : String(err)));
     }
   };
 

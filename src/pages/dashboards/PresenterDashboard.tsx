@@ -1,5 +1,5 @@
 import toast from 'react-hot-toast';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -44,20 +44,49 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
   );
 }
 
+const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  submitted: { bg: 'rgba(188,168,142,0.15)', color: '#BCA88E', label: 'IN REVIEW' },
+  approved:  { bg: 'rgba(74,222,128,0.1)', color: '#4ade80', label: 'APPROVED' },
+  rejected:  { bg: 'rgba(255,80,80,0.1)', color: '#ff5050', label: 'REJECTED' },
+  archived:  { bg: 'rgba(100,100,100,0.1)', color: '#888', label: 'ARCHIVED' },
+};
+
 export default function PresenterDashboard() {
   const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
   
   /* Form State */
   const [form, setForm] = useState({ 
     title: '', synopsis: '', link: '', contact: '', note: '' 
   });
   const [myScreenings, setMyScreenings] = useState<any[]>([]);
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
 
   const fetchScreenings = async () => {
     if (!user) return;
     const { data } = await supabase.from('presentations').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-    setMyScreenings(data || []);
+    const list = data || [];
+    setMyScreenings(list);
+
+    if (list.length > 0) {
+      try {
+        const ids = list.map((p: any) => p.id);
+        const { data: reactions } = await supabase
+          .from('presentation_reactions')
+          .select('presentation_id')
+          .in('presentation_id', ids);
+        const counts: Record<string, number> = {};
+        (reactions || []).forEach((r: any) => {
+          counts[r.presentation_id] = (counts[r.presentation_id] || 0) + 1;
+        });
+        setReactionCounts(counts);
+      } catch {
+        // table may be unavailable — skip quietly
+      }
+    } else {
+      setReactionCounts({});
+    }
   };
 
   useEffect(() => {
@@ -89,7 +118,7 @@ export default function PresenterDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
-        <div>
+        <div id="presenter-form" ref={formRef}>
           <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 28 }}>NEW SCREENING SUBMISSION</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
             <CinemaInput label="FILM TITLE" placeholder="e.g. The Midnight Echo" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
@@ -106,28 +135,46 @@ export default function PresenterDashboard() {
           </div>
         </div>
 
-        {myScreenings.length > 0 && (
-          <div style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
-            <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
+        <div id="presenter-list" style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+          <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
+          {myScreenings.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0 }}>
+                No presentations yet. Propose a screening to get on the slate.
+              </p>
+              <CinemaButton
+                onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                style={{ padding: '10px 28px', fontSize: 13, letterSpacing: 3 }}
+              >
+                PROPOSE A SCREENING →
+              </CinemaButton>
+            </div>
+          ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {myScreenings.map(s => (
-                <div key={s.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 8px' }}>{s.title}</h4>
-                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#BCA88E', opacity: 0.6, margin: 0 }}>
-                      SUBMITTED ON: {new Date(s.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 10, padding: '6px 14px', background: s.status === 'submitted' ? 'rgba(188,168,142,0.15)' : s.status === 'approved' ? 'rgba(74,222,128,0.1)' : s.status === 'rejected' ? 'rgba(255,80,80,0.1)' : 'rgba(100,100,100,0.1)', color: s.status === 'submitted' ? '#BCA88E' : s.status === 'approved' ? '#4ade80' : s.status === 'rejected' ? '#ff5050' : '#888', border: '1px solid currentColor', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
-                      {s.status === 'submitted' ? 'IN REVIEW' : s.status?.toUpperCase()}
+              {myScreenings.map(s => {
+                const st = STATUS_STYLE[s.status] || { bg: 'rgba(100,100,100,0.1)', color: '#888', label: (s.status || 'UNKNOWN').toUpperCase() };
+                const reactions = reactionCounts[s.id] || 0;
+                return (
+                  <div key={s.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                    <div>
+                      <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 8px' }}>{s.title}</h4>
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#BCA88E', opacity: 0.6, margin: 0 }}>
+                        SUBMITTED ON: {new Date(s.created_at).toLocaleDateString()}
+                        {reactions > 0 ? ` · ${reactions} REACTION${reactions === 1 ? '' : 'S'}` : ''}
+                      </p>
+                    </div>
+                    <span style={{
+                      fontSize: 10, padding: '6px 14px', background: st.bg, color: st.color,
+                      border: '1px solid currentColor', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: 3,
+                    }}>
+                      {st.label}
                     </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
