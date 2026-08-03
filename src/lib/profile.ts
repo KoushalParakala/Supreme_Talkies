@@ -44,10 +44,42 @@ export interface FetchProfileResult {
 }
 
 /**
- * Fetches user profile with clean retry mechanism for DB triggers and auto-patches missing st_id.
- * If no profile row exists in DB after retries, creates a single fallback profile row.
+ * Production roles a member can self-assign via assign_role RPC.
+ * `member` is only the DB onboarding placeholder; `admin` is never self-service.
  */
-export async function fetchUserProfile(userId: string, user?: User | null): Promise<FetchProfileResult> {
+export const ASSIGNABLE_ROLES = [
+  'writer',
+  'technician',
+  'producer',
+  'presenter',
+  'marketing',
+  'amplifier',
+] as const;
+
+/**
+ * Returns roles that can open a dashboard. Strips placeholder `member` and `admin`
+ * (admin is handled separately via checkIsAdmin).
+ */
+export function getUsableRoles(profile: Profile | null): string[] {
+  if (!profile) return [];
+  const raw: string[] = [];
+  if (Array.isArray(profile.roles)) raw.push(...profile.roles);
+  if (profile.role && !raw.includes(profile.role)) raw.push(profile.role);
+  return Array.from(
+    new Set(
+      raw
+        .map((role) => (typeof role === 'string' ? role.toLowerCase() : ''))
+        .filter((role) => role && role !== 'admin' && role !== 'member')
+    )
+  );
+}
+
+/**
+ * Fetches user profile with retry for the signup DB trigger, and auto-patches missing st_id.
+ * Never invents a client-side fallback row — that created ghost "member" profiles on refresh.
+ * New accounts get their row from handle_new_user; missing row after retries = onboarding.
+ */
+export async function fetchUserProfile(userId: string, _user?: User | null): Promise<FetchProfileResult> {
   const backoffs = [0, 200, 500];
   let hardError = false;
   let profileData: Record<string, unknown> | null = null;
@@ -72,7 +104,7 @@ export async function fetchUserProfile(userId: string, user?: User | null): Prom
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // Row does not exist yet
+          // Row does not exist yet (trigger lag or brand-new user)
           hardError = false;
         } else {
           console.error(`[fetchUserProfile] DB error (attempt ${i + 1}):`, error);
@@ -87,38 +119,9 @@ export async function fetchUserProfile(userId: string, user?: User | null): Prom
     }
   }
 
-  // Fallback: If no profile row exists and no network error occurred, ensure single profile row exists
-  if (!profileData && !hardError && user) {
-    try {
-      const deterministicStId = deriveSuprId(userId);
-      const fallbackProfile = {
-        id: userId,
-        email: user.email || '',
-        full_name: computeDisplayName(null, user),
-        avatar_symbol: '🎬',
-        role: 'member',
-        roles: ['member'],
-        st_id: deterministicStId,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data: created, error: createErr } = await supabase
-        .from('profiles')
-        .upsert(fallbackProfile, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (!createErr && created) {
-        profileData = created as Record<string, unknown>;
-      } else {
-        console.warn('[fetchUserProfile] Profile fallback upsert warning:', createErr);
-      }
-    } catch (createEx) {
-      console.warn('[fetchUserProfile] Profile fallback upsert exception:', createEx);
-    }
-  }
-
   if (!profileData) {
+    // Confirmed missing (PGRST116) → onboarding with hardError false.
+    // Network/RLS errors leave hardError true for the retry UI.
     return { profile: null, hardError };
   }
 

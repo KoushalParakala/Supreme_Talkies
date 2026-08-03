@@ -3,6 +3,7 @@ import {motion,AnimatePresence} from 'framer-motion';
 import {useNavigate,useLocation} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import {supabase} from '../lib/supabase';
+import {getUsableRoles} from '../lib/profile';
 
 /* Shared components */
 function CinemaInput({label,type='text',placeholder,value,onChange,error}:{
@@ -107,7 +108,7 @@ function SourceSelection({label,value,onChange,options}:{label:string;value:stri
 const HOW_OPTIONS=['Instagram','Twitter/X','YouTube','Friend','Event','Other'];
 
 export default function Auth(){
-  const {user,profile,loading:authLoading,profileAttempted,isAdmin} =useAuth();
+  const {user,profile,loading:authLoading,profileAttempted,profileFetchFailed,isAdmin} =useAuth();
   const location =useLocation();
   const navigate =useNavigate();
   const [mode,setMode]=useState<'login'|'signup'|'forgot'>('login');
@@ -132,10 +133,10 @@ export default function Auth(){
     if (authLoading) return;
     if (user){
       if (isAdmin) navigate('/dashboard',{state:{activeRole:'admin'}});
-      else if (profileAttempted &&profile) navigate('/dashboard',{replace:true});
-      else if (profileAttempted) navigate('/role-select',{replace:true});
+      else if (profileAttempted &&profile &&getUsableRoles(profile).length>0) navigate('/dashboard',{replace:true});
+      else if (profileAttempted &&!profileFetchFailed) navigate('/role-select',{replace:true});
     }
-  },[authLoading,user,profile,profileAttempted,isAdmin,navigate]);
+  },[authLoading,user,profile,profileAttempted,profileFetchFailed,isAdmin,navigate]);
 
   /* Login fields */
   const [loginEmail,setLoginEmail]=useState('');

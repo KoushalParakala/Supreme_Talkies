@@ -35,14 +35,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isInitialisedRef = useRef(false);
   const activeFetchUserIdRef = useRef<string | null>(null);
   const loadedProfileIdRef = useRef<string | null>(null);
+  const profileRef = useRef<Profile | null>(null);
 
   const displayName = useMemo(() => computeDisplayName(profile, user), [profile, user]);
   const avatarInitials = useMemo(() => getInitials(displayName), [displayName]);
   const isAdmin = useMemo(() => checkIsAdmin(user, profile), [user, profile]);
 
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
+
+  const clearProfileState = useCallback(() => {
+    setProfile(null);
+    setProfileAttempted(false);
+    setProfileFetchFailed(false);
+    activeFetchUserIdRef.current = null;
+    loadedProfileIdRef.current = null;
+    profileRef.current = null;
+  }, []);
+
   const loadProfile = useCallback(async (u: User, forceFetch = false) => {
     // Avoid redundant refetches if we already loaded profile for this user and not forcing
-    if (!forceFetch && loadedProfileIdRef.current === u.id && profile !== null) {
+    if (!forceFetch && loadedProfileIdRef.current === u.id && profileRef.current !== null) {
       setProfileAttempted(true);
       return;
     }
@@ -58,19 +72,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (fetchedProfile) {
         setProfile(fetchedProfile);
+        profileRef.current = fetchedProfile;
         loadedProfileIdRef.current = u.id;
         const syncedProfile = await syncGoogleProfileMetadata(fetchedProfile, u);
         if (activeFetchUserIdRef.current === u.id) {
           setProfile(syncedProfile);
+          profileRef.current = syncedProfile;
         }
       } else {
         setProfile(null);
+        profileRef.current = null;
         loadedProfileIdRef.current = null;
       }
     } catch (err) {
       console.error('[AuthProvider] Failed to load profile:', err);
       if (activeFetchUserIdRef.current === u.id) {
         setProfile(null);
+        profileRef.current = null;
         setProfileFetchFailed(true);
         loadedProfileIdRef.current = null;
       }
@@ -79,12 +97,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfileAttempted(true);
       }
     }
-  }, [profile]);
+  }, []);
 
-  const refreshProfile = useCallback(async (targetUserId?: string) => {
-    const id = targetUserId ?? user?.id;
-    if (!id) return;
-
+  const refreshProfile = useCallback(async (_targetUserId?: string) => {
     try {
       const { data: { session: freshSession } } = await supabase.auth.getSession();
       if (freshSession?.user) {
@@ -95,8 +110,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       console.error('[AuthProvider] Error during refreshProfile:', err);
     }
-  }, [user?.id, loadProfile]);
+  }, [loadProfile]);
 
+  // Boot auth once: sync session state only inside onAuthStateChange (no DB awaits).
+  // Profile loading happens in a separate effect keyed on user.id — avoids the
+  // documented Supabase deadlock when PostgREST is awaited inside the auth callback.
   useEffect(() => {
     let isMounted = true;
 
@@ -113,38 +131,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }, 10000);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+    const finishInit = () => {
+      if (!isMounted || isInitialisedRef.current) return;
+      setLoading(false);
+      setAuthSlow(false);
+      isInitialisedRef.current = true;
+      clearTimeout(slowTimer);
+      clearTimeout(safetyTimer);
+    };
+
+    const applySession = (currentSession: Session | null) => {
       if (!isMounted) return;
-
-      console.log(`[AuthProvider] Auth State Event: ${event}`);
-
       setSession(currentSession);
-      const currentUser = currentSession?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        // IMPORTANT: Only set loading = true on initial application boot.
-        // NEVER set loading = true on tab focus, token refresh, or background auth events,
-        // as doing so unmounts ProtectedRoute components and causes full page reloads!
-        if (!isInitialisedRef.current) {
-          setLoading(true);
-        }
-        await loadProfile(currentUser);
-      } else {
+      const nextUser = currentSession?.user ?? null;
+      setUser(nextUser);
+      if (!nextUser) {
         setProfile(null);
+        profileRef.current = null;
         setProfileAttempted(true);
         setProfileFetchFailed(false);
         activeFetchUserIdRef.current = null;
         loadedProfileIdRef.current = null;
+      } else if (loadedProfileIdRef.current !== nextUser.id) {
+        // Restored or fresh sign-in for a user we haven't loaded yet — clear the
+        // signed-out "attempted" flag so Auth/Dashboard don't treat this as
+        // confirmed-missing and bounce to /role-select before the fetch finishes.
+        setProfileAttempted(false);
+        setProfileFetchFailed(false);
       }
+      finishInit();
+    };
 
-      if (isMounted && !isInitialisedRef.current) {
-        setLoading(false);
-        setAuthSlow(false);
-        isInitialisedRef.current = true;
-        clearTimeout(slowTimer);
-        clearTimeout(safetyTimer);
-      }
+    // Initial hydrate outside the auth-change callback
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      applySession(initialSession);
+    }).catch((err) => {
+      console.error('[AuthProvider] getSession failed:', err);
+      finishInit();
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      // Synchronous only — never await Supabase client calls here.
+      applySession(currentSession);
     });
 
     return () => {
@@ -153,16 +181,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearTimeout(slowTimer);
       clearTimeout(safetyTimer);
     };
-  }, [loadProfile]);
+  }, []);
+
+  // Load profile whenever the signed-in user identity changes (outside auth callback).
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    if (loadedProfileIdRef.current && loadedProfileIdRef.current !== user.id) {
+      setProfile(null);
+      profileRef.current = null;
+      loadedProfileIdRef.current = null;
+    }
+
+    setProfileAttempted(false);
+    void loadProfile(user);
+    // Keyed on user.id only — TOKEN_REFRESHED replaces the user object reference
+    // without changing identity and must not re-trigger a full profile fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, loadProfile]);
 
   const signOut = useCallback(async () => {
-    activeFetchUserIdRef.current = null;
-    loadedProfileIdRef.current = null;
-    setProfile(null);
+    clearProfileState();
     setUser(null);
     setSession(null);
-    setProfileAttempted(false);
-    setProfileFetchFailed(false);
 
     try {
       await supabase.auth.signOut();
@@ -171,7 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clearProfileState]);
 
   return (
     <AuthContext.Provider

@@ -4,6 +4,7 @@ import {useAuth} from '../context/AuthContext';
 import {useNavigate,useLocation} from 'react-router-dom';
 import Nav from '../components/Nav';
 import ErrorBoundary from '../components/ErrorBoundary';
+import {getUsableRoles} from '../lib/profile';
 
 const WriterDashboard =lazy(()=>import('./dashboards/WriterDashboard'));
 const TechnicianDashboard =lazy(()=>import('./dashboards/TechnicianDashboard'));
@@ -74,11 +75,8 @@ export default function Dashboard(){
 
   const roles =useMemo(()=>{
     if (isAdmin) return ['admin'];
-    if (!profile) return [];
-    const r:string[]=[];
-    if (profile.roles &&Array.isArray(profile.roles)) r.push(...profile.roles);
-    if (profile.role &&!r.includes(profile.role)) r.push(profile.role);
-    return Array.from(new Set(r.map(role=>role.toLowerCase()))).filter(role=>role!=='admin');
+    // Ignore placeholder `member` — that is onboarding only, not a dashboard role.
+    return getUsableRoles(profile);
   },[isAdmin,profile]);
 
   const initialRole =useMemo(()=>{

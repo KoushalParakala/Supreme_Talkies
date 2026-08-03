@@ -28,6 +28,10 @@ The portal features a scroll-driven "Film Reel" metaphor, utilizing:
    npm run dev
    ```
 
+## QA & Deploy
+- Session / role checklist: [MANUAL_QA.md](./MANUAL_QA.md)
+- Vercel + Supabase production steps: [DEPLOY.md](./DEPLOY.md)
+
 ## 📂 Project Structure
 - `/src/pages`: Cinematic page implementations.
 - `/src/components`: Reusable film-set UI components.

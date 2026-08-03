@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getUsableRoles } from '../lib/profile';
 import { motion } from 'framer-motion';
 
 export default function AuthCallback() {
@@ -24,23 +25,22 @@ export default function AuthCallback() {
 
     if (!profileAttempted) return;
 
-    if (profile) {
+    // Placeholder `member`-only profiles must go to casting, not a broken dashboard.
+    if (profile && getUsableRoles(profile).length > 0) {
       navigate('/dashboard', { replace: true });
       return;
     }
 
-    // profile is null here. Only send a user to onboarding when we've CONFIRMED
-    // there's genuinely no row for them (profileFetchFailed === false means every
-    // poll came back "not found", not an error/timeout). Anything else — a real
-    // returning user whose fetch merely failed or timed out — must never be routed
-    // into onboarding, or they'll appear to get a brand-new "fake" account.
+    // No usable role (or no profile row). Only send to onboarding when we've CONFIRMED
+    // the miss isn't a fetch failure — returning users with a timed-out load must retry.
     if (!profileFetchFailed) {
       navigate('/role-select', { replace: true });
     }
     // else: fall through to the retry UI below instead of navigating anywhere.
   }, [user, profile, profileAttempted, profileFetchFailed, isAdmin, loading, navigate]);
 
-  const showRetry = !loading && user && profileAttempted && !profile && profileFetchFailed;
+  const showRetry = !loading && user && profileAttempted && profileFetchFailed
+    && (!profile || getUsableRoles(profile).length === 0);
 
   const handleRetry = async () => {
     setRetrying(true);
