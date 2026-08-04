@@ -186,15 +186,10 @@ export default function Home() {
                     </motion.p>
                   )}
 
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
-                      <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#F0EBE0', opacity: 0.5, letterSpacing: 5 }}>STORIES THAT DEMAND TO BE TOLD</span>
-                      <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
-                    </div>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: 'rgba(188,168,142,0.75)', letterSpacing: 3, textTransform: 'uppercase', whiteSpace: 'normal', textAlign: 'center', maxWidth: 360 }}>
-                      Vijayawada · Telugu / Tamil shorts · Join the set
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#F0EBE0', opacity: 0.5, letterSpacing: 5 }}>STORIES THAT DEMAND TO BE TOLD</span>
+                    <div style={{ width: 40, height: 1, background: 'rgba(188,168,142,0.4)' }} />
                   </div>
 
                   {/* Action Button */}

@@ -140,23 +140,28 @@ export default function FilmDetail() {
     );
   }
 
-  const credits = film.customCredits && film.customCredits.length > 0 
-    ? film.customCredits.filter(c => c.value).map(c => ({ label: c.role.toUpperCase(), value: c.value }))
+  // Credits are a flexible ordered list (admin "Credits"). Fallback builds from
+  // legacy seed fields when a film has no credits array yet.
+  const credits = (film.customCredits && film.customCredits.length > 0
+    ? film.customCredits
+        .filter((c) => c.role?.trim() && c.value?.trim())
+        .map((c) => ({ label: c.role.trim().toUpperCase(), value: c.value.trim() }))
     : [
-    { label: 'DIRECTED BY',      value: film.director },
-    { label: 'PRODUCED BY',      value: film.producer },
-    { label: 'ASSOCIATE DIRECTOR', value: film.associateDirector },
-    { label: 'WRITTEN BY',       value: film.writtenBy },
-    { label: 'CINEMATOGRAPHY',   value: film.cinematography },
-    { label: 'EDITING',          value: film.editing },
-    { label: 'MUSIC',            value: film.music },
-    { label: 'COLOURIST',        value: film.colourist },
-    { label: 'PUBLICITY DESIGN', value: film.publicityDesign },
-    { label: 'PRESENTED BY',     value: film.presentedBy },
-    { label: 'TELUGU DUBBING TEAM', value: film.teluguDubbingTeam },
-    { label: 'SUPREME TALKIES TEAM', value: film.supremeTalkiesTeam },
-    { label: 'CAST',             value: film.cast },
-  ].filter(c => c.value);
+        { label: 'DIRECTION', value: film.director },
+        { label: 'PRODUCER', value: film.producer },
+        { label: 'WRITTEN BY', value: film.writtenBy },
+        { label: 'CINEMATOGRAPHY', value: film.cinematography },
+        { label: 'EDITING', value: film.editing },
+        { label: 'MUSIC', value: film.music },
+        { label: 'CAST', value: film.cast },
+        { label: 'ASSOCIATE DIRECTOR', value: film.associateDirector },
+        { label: 'COLOURIST', value: film.colourist },
+        { label: 'PUBLICITY DESIGN', value: film.publicityDesign },
+        { label: 'PRESENTED BY', value: film.presentedBy },
+        { label: 'TELUGU DUBBING TEAM', value: film.teluguDubbingTeam },
+        { label: 'SUPREME TALKIES TEAM', value: film.supremeTalkiesTeam },
+      ].filter((c) => c.value)
+  );
 
   return (
     <motion.div

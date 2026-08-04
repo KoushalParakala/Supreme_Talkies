@@ -231,16 +231,14 @@ export default function AdminDashboard() {
     { role: 'Editor', value: '' },
     { role: 'Cinematographer', value: '' },
     { role: 'Music', value: '' },
-    { role: 'Cast', value: '' }
+    { role: 'Cast', value: '' },
   ];
   const emptyFilm = () => ({
     title: '', production_note: '', rating: 'UA', duration: '', color: '#0a0a0a',
     synopsis: '', special_note: '',
     video_link: '', reel_image: '', coming_soon: false, stills: [] as string[],
-    director: '', producer: '', written_by: '', cinematography: '', music: '', editing: '',
-    cast_members: '', associate_director: '', colourist: '', publicity_design: '',
-    presented_by: '', telugu_dubbing_team: '', supreme_talkies_team: '',
-    credits: INITIAL_CREDITS.map(c => ({ ...c })),
+    director: '', producer: '',
+    credits: INITIAL_CREDITS.map((c) => ({ ...c })),
   });
   const [newFilm, setNewFilm] = useState<any>(emptyFilm());
   const [reelFile, setReelFile] = useState<File | null>(null);
@@ -248,6 +246,7 @@ export default function AdminDashboard() {
   const [still2File, setStill2File] = useState<File | null>(null);
   const [still3File, setStill3File] = useState<File | null>(null);
   const [uploadingFilm, setUploadingFilm] = useState(false);
+  const [creditDragIndex, setCreditDragIndex] = useState<number | null>(null);
 
   // NEEDS YOUR EYES inbox (cross-tab summary)
   const [inboxScripts, setInboxScripts] = useState<any[]>([]);
@@ -639,31 +638,45 @@ export default function AdminDashboard() {
 
 
   
-  const buildFilmCredits = (film: any) => {
-    const roleMap: { role: string; key: string }[] = [
-      { role: 'Direction', key: 'director' },
-      { role: 'Writing', key: 'written_by' },
-      { role: 'Producer', key: 'producer' },
-      { role: 'Editor', key: 'editing' },
-      { role: 'Cinematographer', key: 'cinematography' },
-      { role: 'Music', key: 'music' },
-      { role: 'Cast', key: 'cast_members' },
-      { role: 'Associate Director', key: 'associate_director' },
-      { role: 'Colourist', key: 'colourist' },
-      { role: 'Publicity Design', key: 'publicity_design' },
-      { role: 'Presented By', key: 'presented_by' },
-      { role: 'Telugu Dubbing Team', key: 'telugu_dubbing_team' },
-      { role: 'Supreme Talkies Team', key: 'supreme_talkies_team' },
-    ];
-    const fromFields = roleMap
-      .map(({ role, key }) => ({ role, value: (film[key] || '').trim() }))
-      .filter(c => c.value);
-    const extras = (film.credits || []).filter((c: any) => {
-      if (!c?.role || !c?.value?.trim()) return false;
-      const r = c.role.toLowerCase();
-      return !roleMap.some(m => m.role.toLowerCase() === r || m.key.replace(/_/g, ' ') === r);
-    });
-    return [...fromFields, ...extras];
+  /** Ordered credits list is the source of truth. Common roles also mirror to columns for reel cards. */
+  const normalizeFilmCredits = (credits: any[]) =>
+    (credits || [])
+      .map((c: any) => ({ role: (c?.role || '').trim(), value: (c?.value || '').trim() }))
+      .filter((c: { role: string; value: string }) => c.role && c.value);
+
+  const creditVal = (roles: string[]) =>
+    newFilm.credits?.find((c: any) => roles.includes((c.role || '').toLowerCase()))?.value?.trim() || '';
+
+  const hydrateCreditsFromFilm = (f: any) => {
+    if (Array.isArray(f.credits) && f.credits.length) {
+      return f.credits.map((c: any) => ({ role: c.role || '', value: c.value || '' }));
+    }
+    // Legacy rows: fold fixed columns into the flexible credits list
+    const legacy: { role: string; value: string }[] = [
+      { role: 'Direction', value: f.director || '' },
+      { role: 'Writing', value: f.written_by || '' },
+      { role: 'Producer', value: f.producer || '' },
+      { role: 'Editor', value: f.editing || '' },
+      { role: 'Cinematographer', value: f.cinematography || '' },
+      { role: 'Music', value: f.music || '' },
+      { role: 'Cast', value: f.cast_members || f.cast || '' },
+      { role: 'Associate Director', value: f.associate_director || '' },
+      { role: 'Colourist', value: f.colourist || '' },
+      { role: 'Publicity Design', value: f.publicity_design || '' },
+      { role: 'Presented By', value: f.presented_by || '' },
+      { role: 'Telugu Dubbing Team', value: f.telugu_dubbing_team || '' },
+      { role: 'Supreme Talkies Team', value: f.supreme_talkies_team || '' },
+    ].filter((c) => c.value);
+    return legacy.length ? legacy : INITIAL_CREDITS.map((c) => ({ ...c }));
+  };
+
+  const moveCredit = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0) return;
+    const list = [...(newFilm.credits || [])];
+    if (from >= list.length || to >= list.length) return;
+    const [item] = list.splice(from, 1);
+    list.splice(to, 0, item);
+    setNewFilm({ ...newFilm, credits: list });
   };
 
   const saveFilm = async () => {
@@ -691,25 +704,16 @@ export default function AdminDashboard() {
       if (still2File) newStills[1] = await uploadFile(still2File, 'stills');
       if (still3File) newStills[2] = await uploadFile(still3File, 'stills');
 
-      const creditVal = (roles: string[]) =>
-        newFilm.credits?.find((c: any) => roles.includes((c.role || '').toLowerCase()))?.value || '';
+      const credits = normalizeFilmCredits(newFilm.credits);
+      const director = creditVal(['direction', 'director']);
+      const producer = creditVal(['producer']);
+      const written_by = creditVal(['writing', 'written by', 'writer']);
+      const cinematography = creditVal(['cinematographer', 'cinematography']);
+      const music = creditVal(['music']);
+      const editing = creditVal(['editor', 'editing']);
+      const cast_members = creditVal(['cast']);
 
-      const director = newFilm.director || creditVal(['direction', 'director']);
-      const producer = newFilm.producer || creditVal(['producer']);
-      const written_by = newFilm.written_by || creditVal(['writing', 'written by', 'writer']);
-      const cinematography = newFilm.cinematography || creditVal(['cinematographer', 'cinematography']);
-      const music = newFilm.music || creditVal(['music']);
-      const editing = newFilm.editing || creditVal(['editor', 'editing']);
-      const cast_members = newFilm.cast_members || newFilm.cast || creditVal(['cast']);
-
-      const filmForCredits = {
-        ...newFilm,
-        director, producer, written_by, cinematography, music, editing, cast_members,
-      };
-
-      // Payload aligned with useFilms mapping. Columns missing from CREATE TABLE
-      // (production_note, written_by, cinematography, music, editing, credits, etc.)
-      // are still sent when present in live DB; credits jsonb carries role/value extras.
+      // Flexible credits jsonb is primary; common roles mirrored for reel/hover fallbacks.
       const filmPayload: Record<string, unknown> = {
         title: newFilm.title,
         production_note: newFilm.production_note || null,
@@ -730,13 +734,7 @@ export default function AdminDashboard() {
         cinematography: cinematography || null,
         music: music || null,
         editing: editing || null,
-        associate_director: newFilm.associate_director || null,
-        colourist: newFilm.colourist || null,
-        publicity_design: newFilm.publicity_design || null,
-        presented_by: newFilm.presented_by || null,
-        telugu_dubbing_team: newFilm.telugu_dubbing_team || null,
-        supreme_talkies_team: newFilm.supreme_talkies_team || null,
-        credits: buildFilmCredits(filmForCredits),
+        credits,
       };
 
       if (editingFilm) {
@@ -1472,44 +1470,113 @@ export default function AdminDashboard() {
                 <CinemaInput label="SPECIAL NOTE" value={newFilm.special_note || ''} onChange={(v) => setNewFilm({ ...newFilm, special_note: v })} />
               </div>
 
-              <div style={{ marginTop: 8, marginBottom: 8 }}>
-                <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, color: '#BCA88E', margin: '0 0 16px' }}>CREDITS</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                  <CinemaInput label="DIRECTOR" value={newFilm.director || ''} onChange={(v) => setNewFilm({ ...newFilm, director: v })} />
-                  <CinemaInput label="PRODUCER" value={newFilm.producer || ''} onChange={(v) => setNewFilm({ ...newFilm, producer: v })} />
-                  <CinemaInput label="WRITTEN BY" value={newFilm.written_by || ''} onChange={(v) => setNewFilm({ ...newFilm, written_by: v })} />
-                  <CinemaInput label="CINEMATOGRAPHY" value={newFilm.cinematography || ''} onChange={(v) => setNewFilm({ ...newFilm, cinematography: v })} />
-                  <CinemaInput label="MUSIC" value={newFilm.music || ''} onChange={(v) => setNewFilm({ ...newFilm, music: v })} />
-                  <CinemaInput label="EDITING" value={newFilm.editing || ''} onChange={(v) => setNewFilm({ ...newFilm, editing: v })} />
-                  <CinemaInput label="ASSOCIATE DIRECTOR" value={newFilm.associate_director || ''} onChange={(v) => setNewFilm({ ...newFilm, associate_director: v })} />
-                  <CinemaInput label="COLOURIST" value={newFilm.colourist || ''} onChange={(v) => setNewFilm({ ...newFilm, colourist: v })} />
-                  <CinemaInput label="PUBLICITY DESIGN" value={newFilm.publicity_design || ''} onChange={(v) => setNewFilm({ ...newFilm, publicity_design: v })} />
-                  <CinemaInput label="PRESENTED BY" value={newFilm.presented_by || ''} onChange={(v) => setNewFilm({ ...newFilm, presented_by: v })} />
-                  <CinemaInput label="TELUGU DUBBING TEAM" value={newFilm.telugu_dubbing_team || ''} onChange={(v) => setNewFilm({ ...newFilm, telugu_dubbing_team: v })} />
-                  <CinemaInput label="SUPREME TALKIES TEAM" value={newFilm.supreme_talkies_team || ''} onChange={(v) => setNewFilm({ ...newFilm, supreme_talkies_team: v })} />
-                </div>
-                <div style={{ marginTop: 20 }}>
-                  <CinemaTextarea label="CAST" value={newFilm.cast_members || newFilm.cast || ''} onChange={(v) => setNewFilm({ ...newFilm, cast_members: v })} rows={2} />
-                </div>
-              </div>
-
               <div style={{ marginTop: 12, marginBottom: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, color: '#BCA88E', margin: 0 }}>EXTRA CREDITS (JSON)</p>
-                  <button type="button" onClick={() => setNewFilm({...newFilm, credits: [...(newFilm.credits || []), { role: '', value: '' }]})} style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontSize: 10, padding: '4px 12px', cursor: 'pointer' }}>+ ADD CREDIT</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, color: '#BCA88E', margin: 0 }}>CREDITS</p>
+                  <button
+                    type="button"
+                    onClick={() => setNewFilm({ ...newFilm, credits: [...(newFilm.credits || []), { role: '', value: '' }] })}
+                    style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontSize: 10, padding: '4px 12px', cursor: 'pointer' }}
+                  >
+                    + ADD CREDIT
+                  </button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: 'rgba(240,235,224,0.4)', margin: '0 0 16px', letterSpacing: 1 }}>
+                  Any role / name per film. Drag ☰ to reorder how they appear on the film page.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {(newFilm.credits || []).map((credit: any, idx: number) => (
-                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+                    <div
+                      key={idx}
+                      draggable
+                      onDragStart={() => setCreditDragIndex(idx)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => {
+                        if (creditDragIndex === null) return;
+                        moveCredit(creditDragIndex, idx);
+                        setCreditDragIndex(null);
+                      }}
+                      onDragEnd={() => setCreditDragIndex(null)}
+                      style={{
+                        display: 'flex',
+                        gap: 10,
+                        alignItems: 'flex-end',
+                        padding: '10px 12px',
+                        border: creditDragIndex === idx ? '1px solid #BCA88E' : '1px solid rgba(188,168,142,0.12)',
+                        background: creditDragIndex === idx ? 'rgba(188,168,142,0.08)' : 'rgba(0,0,0,0.25)',
+                        cursor: 'grab',
+                      }}
+                    >
+                      <div
+                        title="Drag to reorder"
+                        style={{
+                          fontFamily: 'Inter, monospace',
+                          fontSize: 14,
+                          color: 'rgba(188,168,142,0.55)',
+                          paddingBottom: 14,
+                          userSelect: 'none',
+                          letterSpacing: 1,
+                        }}
+                      >
+                        ☰
+                      </div>
+                      <div style={{ width: 28, paddingBottom: 14, fontFamily: 'Inter, monospace', fontSize: 10, color: 'rgba(188,168,142,0.4)' }}>
+                        {idx + 1}
+                      </div>
                       <div style={{ flex: 1 }}>
-                        <CinemaInput label="ROLE" value={credit.role} onChange={v => { const newC = [...newFilm.credits]; newC[idx].role = v; setNewFilm({...newFilm, credits: newC}) }} />
+                        <CinemaInput
+                          label="ROLE"
+                          value={credit.role}
+                          onChange={(v) => {
+                            const newC = [...newFilm.credits];
+                            newC[idx] = { ...newC[idx], role: v };
+                            setNewFilm({ ...newFilm, credits: newC });
+                          }}
+                          placeholder="e.g. Direction, Colourist…"
+                        />
                       </div>
                       <div style={{ flex: 2 }}>
-                        <CinemaInput label="NAMES" value={credit.value} onChange={v => { const newC = [...newFilm.credits]; newC[idx].value = v; setNewFilm({...newFilm, credits: newC}) }} />
+                        <CinemaInput
+                          label="NAMES"
+                          value={credit.value}
+                          onChange={(v) => {
+                            const newC = [...newFilm.credits];
+                            newC[idx] = { ...newC[idx], value: v };
+                            setNewFilm({ ...newFilm, credits: newC });
+                          }}
+                          placeholder="Who gets this credit"
+                        />
                       </div>
-                      <button type="button" onClick={() => { const newC = newFilm.credits.filter((_:any, i:number) => i !== idx); setNewFilm({...newFilm, credits: newC}) }} style={{ background: 'none', border: 'none', color: '#ff5050', fontSize: 16, cursor: 'pointer', padding: '0 8px', marginBottom: 12 }}>✕</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newC = newFilm.credits.filter((_: any, i: number) => i !== idx);
+                          setNewFilm({ ...newFilm, credits: newC });
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#ff5050', fontSize: 16, cursor: 'pointer', padding: '0 8px', marginBottom: 12 }}
+                      >
+                        ✕
+                      </button>
                     </div>
                   ))}
+                  {(newFilm.credits || []).length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setNewFilm({ ...newFilm, credits: [{ role: '', value: '' }] })}
+                      style={{
+                        background: 'rgba(188,168,142,0.04)',
+                        border: '1px dashed rgba(188,168,142,0.25)',
+                        color: '#BCA88E',
+                        padding: '20px',
+                        fontFamily: 'Inter, monospace',
+                        fontSize: 11,
+                        letterSpacing: 2,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ADD FIRST CREDIT
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1577,8 +1644,7 @@ export default function AdminDashboard() {
                       setNewFilm({
                         ...emptyFilm(),
                         ...f,
-                        cast_members: f.cast_members || f.cast || '',
-                        credits: Array.isArray(f.credits) && f.credits.length ? f.credits : INITIAL_CREDITS.map(c => ({ ...c })),
+                        credits: hydrateCreditsFromFilm(f),
                       });
                       window.scrollTo(0, 0);
                     }} style={{ flex: 1, background: 'none', border: '1px solid rgba(188,168,142,0.2)', color: '#BCA88E', fontSize: 9, padding: '8px', cursor: 'pointer' }}>EDIT</button>
