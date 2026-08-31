@@ -13,9 +13,9 @@ function CinemaButton({ children, onClick, disabled, loading, style }: {
   return (
     <motion.button type="button" onClick={onClick} disabled={disabled || loading}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !disabled ? '#BCA88E' : 'transparent', color: hov && !disabled ? '#0e0f13' : '#BCA88E', opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !disabled ? '#e8472a' : 'transparent', color: hov && !disabled ? '#fffdf7' : '#e8472a', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 14, letterSpacing: 5, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', ...style }}
+      style={{ border: '1px solid #e8472a', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 14, letterSpacing: 5, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -132,16 +132,16 @@ export default function AmplifierDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 48, paddingBottom: 100 }}>
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(23,23,23,0.12)', paddingBottom: 0 }}>
         {[
           { id: 'impact', label: 'MY IMPACT' },
           { id: 'shoutouts', label: 'SHOUTOUT WALL' }
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             style={{ 
-              background: 'none', border: 'none', borderBottom: activeTab === tab.id ? '2px solid #BCA88E' : '2px solid transparent',
-              padding: '16px 0', fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 5,
-              color: activeTab === tab.id ? '#BCA88E' : 'rgba(188,168,142,0.3)', cursor: 'pointer', transition: 'all 0.3s'
+              background: 'none', border: 'none', borderBottom: activeTab === tab.id ? '2px solid #e8472a' : '2px solid transparent',
+              padding: '16px 0', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 5,
+              color: activeTab === tab.id ? '#e8472a' : 'rgba(232,71,42,0.28)', cursor: 'pointer', transition: 'all 0.3s'
             }}
           >
             {tab.label}
@@ -154,20 +154,20 @@ export default function AmplifierDashboard() {
           <motion.div id="amp-impact" key="impact" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
             
             {/* Story Streak */}
-            <div style={{ textAlign: 'center', padding: '60px 40px', border: '1px solid rgba(188,168,142,0.15)', background: 'rgba(188,168,142,0.02)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 40px', border: '1px solid rgba(232,71,42,0.1)', background: 'rgba(232,71,42,0.04)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
                 {streak > 0 ? (
                   <>
                     <span style={{ fontSize: 60 }}>🔥</span>
-                    <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 72, color: '#BCA88E', margin: 0, lineHeight: 1 }}>{streak}</h2>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 8, margin: 0 }}>DAY STREAK</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#BCA88E', letterSpacing: 3, margin: 0, opacity: 0.7 }}>Logged by you</p>
-                    {profile?.last_share_at && <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#BCA88E', opacity: 0.4, margin: 0 }}>Last share: {timeAgo(profile.last_share_at)}</p>}
+                    <h2 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 72, color: '#e8472a', margin: 0, lineHeight: 1 }}>{streak}</h2>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 8, margin: 0 }}>DAY STREAK</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', letterSpacing: 3, margin: 0, opacity: 0.7 }}>Logged by you</p>
+                    {profile?.last_share_at && <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: '#e8472a', opacity: 0.4, margin: 0 }}>Last share: {timeAgo(profile.last_share_at)}</p>}
                   </>
                 ) : (
                   <div style={{ opacity: 0.3 }}>
-                    <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 42, color: '#BCA88E', margin: '0 0 12px' }}>0 DAYS</h2>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0' }}>Share something today to start your streak!</p>
+                    <h2 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 42, color: '#e8472a', margin: '0 0 12px' }}>0 DAYS</h2>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717' }}>Share something today to start your streak!</p>
                   </div>
                 )}
 
@@ -179,9 +179,9 @@ export default function AmplifierDashboard() {
                     { days: 100, label: '⚡ 100 Days' }
                   ].map(m => (
                     <span key={m.days} style={{ 
-                      padding: '6px 14px', border: '1px solid', borderColor: streak >= m.days ? '#BCA88E' : 'rgba(188,168,142,0.1)',
-                      color: streak >= m.days ? '#F0EBE0' : '#BCA88E', opacity: streak >= m.days ? 1 : 0.2,
-                      fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 2
+                      padding: '6px 14px', border: '1px solid', borderColor: streak >= m.days ? '#e8472a' : 'rgba(23,23,23,0.12)',
+                      color: streak >= m.days ? '#171717' : '#e8472a', opacity: streak >= m.days ? 1 : 0.2,
+                      fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 2
                     }}>
                       {m.label}
                     </span>
@@ -190,7 +190,7 @@ export default function AmplifierDashboard() {
 
                 <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                   <CinemaButton onClick={handleLogShare} loading={loggingShare}>LOG A SHARE →</CinemaButton>
-                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.45, letterSpacing: 2, margin: 0 }}>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', opacity: 0.45, letterSpacing: 2, margin: 0 }}>
                     Logged by you — only you can add to this streak
                   </p>
                 </div>
@@ -199,25 +199,25 @@ export default function AmplifierDashboard() {
 
             {/* Early Access */}
             <div>
-              <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
+              <div style={{ width: 28, height: 1, background: '#e8472a', opacity: 0.4, marginBottom: 20 }} />
               {profile?.is_early_access ? (
-                <div style={{ border: '1px solid #BCA88E', background: 'rgba(188,168,142,0.05)', padding: 40 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 8, color: '#BCA88E', marginBottom: 12 }}>⚡ EARLY ACCESS MEMBER</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#F0EBE0', opacity: 0.7, marginBottom: 40 }}>You get first look at new films, challenges, and features.</p>
+                <div style={{ border: '1px solid #e8472a', background: 'rgba(23,23,23,0.04)', padding: 40 }}>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 8, color: '#e8472a', marginBottom: 12 }}>⚡ EARLY ACCESS MEMBER</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', opacity: 0.7, marginBottom: 40 }}>You get first look at new films, challenges, and features.</p>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {['Script DNA Marketplace', 'Live Screening Rooms', 'Director Matchmaking'].map(f => (
-                      <div key={f} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(188,168,142,0.1)', paddingBottom: 12 }}>
-                        <span style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: '#F0EBE0' }}>{f}</span>
-                        <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, letterSpacing: 2, background: 'rgba(188,168,142,0.1)', padding: '2px 8px', color: '#BCA88E' }}>COMING SOON</span>
+                      <div key={f} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(23,23,23,0.12)', paddingBottom: 12 }}>
+                        <span style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: '#171717' }}>{f}</span>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 2, background: 'rgba(23,23,23,0.12)', padding: '2px 8px', color: '#e8472a' }}>COMING SOON</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div style={{ border: '1px solid rgba(188,168,142,0.2)', padding: 40, opacity: 0.8 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 8, color: '#BCA88E', marginBottom: 12 }}>APPLY FOR EARLY ACCESS</p>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#F0EBE0', opacity: 0.6, marginBottom: 32 }}>Join our inner circle for first access to new features and unreleased films.</p>
+                <div style={{ border: '1px solid rgba(23,23,23,0.18)', padding: 40, opacity: 0.8 }}>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 8, color: '#e8472a', marginBottom: 12 }}>APPLY FOR EARLY ACCESS</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', opacity: 0.6, marginBottom: 32 }}>Join our inner circle for first access to new features and unreleased films.</p>
                   <CinemaButton onClick={() => window.location.href='mailto:early@supremetalkies.com'}>APPLY NOW</CinemaButton>
                 </div>
               )}
@@ -228,20 +228,20 @@ export default function AmplifierDashboard() {
         {activeTab === 'shoutouts' && (
           <motion.div id="amp-wall" key="shoutouts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
             {/* Post Form */}
-            <div style={{ border: '1px solid rgba(188,168,142,0.15)', padding: 32, background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ border: '1px solid rgba(232,71,42,0.1)', padding: 32, background: 'rgba(247,245,239,1)', display: 'flex', flexDirection: 'column', gap: 24 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5 }}>MESSAGE</label>
+                <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 5 }}>MESSAGE</label>
                 <textarea 
                   rows={2} placeholder="Shout out a film, a crew member, or share an update..."
                   value={shoutoutMsg} onChange={e => setShoutoutMsg(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(188,168,142,0.3)', color: '#F0EBE0', fontFamily: 'Inter, sans-serif', fontSize: 14, outline: 'none', resize: 'none' }}
+                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(232,71,42,0.28)', color: '#171717', fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, outline: 'none', resize: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5 }}>LINK (OPTIONAL)</label>
+                <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 5 }}>LINK (OPTIONAL)</label>
                 <input 
                   type="text" placeholder="Attach a link" value={shoutoutLink} onChange={e => setShoutoutLink(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(188,168,142,0.3)', color: '#F0EBE0', fontFamily: 'Inter, monospace', fontSize: 13, outline: 'none' }}
+                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(232,71,42,0.28)', color: '#171717', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none' }}
                 />
               </div>
               <CinemaButton onClick={handleShoutout} loading={postingShoutout} disabled={!shoutoutMsg}>POST SHOUTOUT</CinemaButton>
@@ -250,25 +250,25 @@ export default function AmplifierDashboard() {
             {/* List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {shoutouts.map(sh => (
-                <div key={sh.id} style={{ background: 'rgba(14,15,20,0.8)', border: '1px solid rgba(188,168,142,0.08)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div key={sh.id} style={{ background: 'rgba(14,15,20,0.8)', border: '1px solid rgba(232,71,42,0.08)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <span style={{ fontSize: 24 }}>{sh.profiles?.avatar_symbol || '👤'}</span>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', margin: 0, fontWeight: 700 }}>{sh.profiles?.full_name?.toUpperCase()}</p>
-                      <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.4, background: 'rgba(188,168,142,0.1)', padding: '2px 6px' }}>{sh.profiles?.st_id ? (sh.profiles.st_id.startsWith('SUPR-') ? sh.profiles.st_id : 'SUPR-' + sh.profiles.st_id) : 'NO-ID'}</span>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#e8472a', margin: 0, fontWeight: 700 }}>{sh.profiles?.full_name?.toUpperCase()}</p>
+                      <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', opacity: 0.4, background: 'rgba(23,23,23,0.12)', padding: '2px 6px' }}>{sh.profiles?.st_id ? (sh.profiles.st_id.startsWith('SUPR-') ? sh.profiles.st_id : 'SUPR-' + sh.profiles.st_id) : 'NO-ID'}</span>
                     </div>
-                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.3, margin: 0 }}>{timeAgo(sh.created_at)}</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', opacity: 0.3, margin: 0 }}>{timeAgo(sh.created_at)}</p>
                   </div>
                   
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#F0EBE0', lineHeight: 1.7, margin: 0 }}>{sh.message}</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', lineHeight: 1.7, margin: 0 }}>{sh.message}</p>
                   
                   {sh.link && (
-                    <a href={sh.link} target="_blank" rel="noopener noreferrer" style={{ alignSelf: 'flex-start', background: 'rgba(188,168,142,0.1)', color: '#BCA88E', textDecoration: 'none', fontSize: 9, padding: '4px 10px', fontFamily: 'Inter, monospace', letterSpacing: 1 }}>{sh.link.substring(0, 30)}...</a>
+                    <a href={sh.link} target="_blank" rel="noopener noreferrer" style={{ alignSelf: 'flex-start', background: 'rgba(23,23,23,0.12)', color: '#e8472a', textDecoration: 'none', fontSize: 9, padding: '4px 10px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: 1 }}>{sh.link.substring(0, 30)}...</a>
                   )}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#BCA88E' }}>{sh.likes || 0}</span>
+                      <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#e8472a' }}>{sh.likes || 0}</span>
                       <button onClick={() => handleLike(sh.id, sh.likes)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}>❤️</button>
                     </div>
                     {sh.user_id === user?.id && (
