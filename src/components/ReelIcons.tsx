@@ -32,6 +32,14 @@ export function IconPlus({ size = 18 }: IconProps) {
 export function IconX({ size = 18 }: IconProps) {
   return <Svg size={size}><path d="M18 6L6 18" /><path d="M6 6l12 12" /></Svg>;
 }
+export function IconBell({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10 21a2 2 0 0 0 4 0" />
+    </Svg>
+  );
+}
 export function IconPlay({ size = 16 }: IconProps) {
   return <Svg size={size}><circle cx="12" cy="12" r="9" /><path d="M10 8l6 4-6 4z" /></Svg>;
 }

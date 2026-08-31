@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -20,14 +20,36 @@ function BrandLockup() {
   );
 }
 
-function UserMenu() {
+function UserMenu({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { user, profile, signOut, loading, displayName, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setImgError(false); }, [profile?.avatar_url]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onOpenChange(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, onOpenChange]);
 
   if (loading || !user) return null;
 
@@ -42,18 +64,32 @@ function UserMenu() {
     finally { navigate('/auth', { replace: true }); }
   };
 
+  const go = (path: string) => {
+    onOpenChange(false);
+    navigate(path);
+  };
+
   return (
-    <div className="nav-user-menu" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <button type="button" className="nav-user-btn" onClick={() => navigate('/profile')} aria-label="Account">
+    <div className="nav-user-menu" ref={rootRef}>
+      <button
+        type="button"
+        className={`nav-bubble nav-bubble-avatar ${open ? 'is-open' : ''}`}
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => onOpenChange(!open)}
+      >
         <img className="nav-avatar" src={avatarSrc} alt="" onError={() => setImgError(true)} />
       </button>
       {open && (
-        <div className="nav-user-drop">
-          <div style={{ padding: '8px 16px 10px', fontSize: 10, letterSpacing: '.1em' }}>{displayName}</div>
-          <button type="button" onClick={() => { navigate('/profile'); setOpen(false); }}>My profile</button>
-          <button type="button" onClick={() => { navigate('/dashboard'); setOpen(false); }}>Dashboard</button>
-          {isAdmin && <button type="button" onClick={() => { navigate('/crew'); setOpen(false); }}>Crew</button>}
-          <button type="button" onClick={handleLogout} disabled={exiting}>{exiting ? 'Exiting…' : 'Sign out'}</button>
+        <div className="nav-user-drop nav-tray" role="menu">
+          <div className="nav-tray-label">{displayName}</div>
+          <button type="button" role="menuitem" onClick={() => go('/profile')}>My profile</button>
+          <button type="button" role="menuitem" onClick={() => go('/dashboard')}>Dashboard</button>
+          {isAdmin && <button type="button" role="menuitem" onClick={() => go('/crew')}>Crew</button>}
+          <button type="button" role="menuitem" onClick={handleLogout} disabled={exiting}>
+            {exiting ? 'Exiting…' : 'Sign out'}
+          </button>
         </div>
       )}
     </div>
@@ -66,11 +102,15 @@ export default function Nav({ scrolled }: NavProps) {
   const location = useLocation();
   const { films } = useFilms();
   const [menu, setMenu] = useState(false);
+  const [tray, setTray] = useState<'bell' | 'user' | null>(null);
   const docked = scrolled;
   const hasRoles = !!(profile?.roles?.length || profile?.role);
   const filmCount = String(films.length).padStart(2, '0');
 
-  useEffect(() => { setMenu(false); }, [location.pathname]);
+  useEffect(() => {
+    setMenu(false);
+    setTray(null);
+  }, [location.pathname]);
 
   const goHomeSection = (id: string) => {
     setMenu(false);
@@ -79,49 +119,58 @@ export default function Nav({ scrolled }: NavProps) {
   };
 
   return (
-    <header className={`glass-nav ${docked ? 'docked' : ''}`}>
-      <BrandLockup />
-      <nav className={menu ? 'open' : ''}>
-        <Link to="/films" onClick={() => setMenu(false)}>Films <small>{filmCount}</small></Link>
-        <button type="button" onClick={() => goHomeSection('join-section')}>Members</button>
-        <Link to="/about" onClick={() => setMenu(false)}>About</Link>
-        {user && (
-          <>
-            <Link to="/dashboard" onClick={() => setMenu(false)}>Dashboard</Link>
-            {isAdmin ? (
-              <Link to="/crew" onClick={() => setMenu(false)}>Crew</Link>
-            ) : (
-              <Link to="/role-select" onClick={() => setMenu(false)}>{hasRoles ? 'Add role' : 'Roles'}</Link>
-            )}
-            <span className="nav-mobile-auth">
-              <Link to="/profile" onClick={() => setMenu(false)}>Profile</Link>
-            </span>
-            <button
-              type="button"
-              className="nav-mobile-auth"
-              onClick={() => { setMenu(false); signOut().then(() => navigate('/auth', { replace: true })); }}
-            >
-              Sign out
-            </button>
-          </>
-        )}
-      </nav>
-      <div className="nav-actions">
-        <span className="nav-status"><i /> LIVE REEL</span>
-        {user ? (
-          <>
-            <NotificationBell />
-            <UserMenu />
-          </>
-        ) : (
-          <Link to="/auth" className="nav-join" onClick={() => setMenu(false)}>
-            Join the room <IconArrowUpRight />
-          </Link>
-        )}
-        <button className="mobile-menu" onClick={() => setMenu(!menu)} aria-label={menu ? 'Close menu' : 'Open menu'}>
-          {menu ? <IconX /> : <IconPlus />}
-        </button>
-      </div>
-    </header>
+    <div className={`nav-cluster ${docked ? 'docked' : ''}`}>
+      <header className={`glass-nav ${docked ? 'docked' : ''}`}>
+        <BrandLockup />
+        <nav className={menu ? 'open' : ''}>
+          <Link to="/films" onClick={() => setMenu(false)}>Films <small>{filmCount}</small></Link>
+          <button type="button" onClick={() => goHomeSection('join-section')}>Members</button>
+          <Link to="/about" onClick={() => setMenu(false)}>About</Link>
+          {user && (
+            <>
+              <Link to="/dashboard" onClick={() => setMenu(false)}>Dashboard</Link>
+              {isAdmin ? (
+                <Link to="/crew" onClick={() => setMenu(false)}>Crew</Link>
+              ) : (
+                <Link to="/role-select" onClick={() => setMenu(false)}>{hasRoles ? 'Add role' : 'Roles'}</Link>
+              )}
+              <span className="nav-mobile-auth">
+                <Link to="/profile" onClick={() => setMenu(false)}>Profile</Link>
+              </span>
+              <button
+                type="button"
+                className="nav-mobile-auth"
+                onClick={() => { setMenu(false); signOut().then(() => navigate('/auth', { replace: true })); }}
+              >
+                Sign out
+              </button>
+            </>
+          )}
+        </nav>
+        <div className="nav-actions">
+          <span className="nav-status"><i /> LIVE REEL</span>
+          {!user && (
+            <Link to="/auth" className="nav-join" onClick={() => setMenu(false)}>
+              Join the room <IconArrowUpRight />
+            </Link>
+          )}
+          <button className="mobile-menu" onClick={() => setMenu(!menu)} aria-label={menu ? 'Close menu' : 'Open menu'}>
+            {menu ? <IconX /> : <IconPlus />}
+          </button>
+        </div>
+      </header>
+      {user && (
+        <div className="nav-bubbles">
+          <NotificationBell
+            open={tray === 'bell'}
+            onOpenChange={(next) => setTray(next ? 'bell' : null)}
+          />
+          <UserMenu
+            open={tray === 'user'}
+            onOpenChange={(next) => setTray(next ? 'user' : null)}
+          />
+        </div>
+      )}
+    </div>
   );
 }
