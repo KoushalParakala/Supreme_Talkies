@@ -4,14 +4,18 @@ import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 
+const ACCENT = '#86dcc9';
+const ACCENT_DIM = 'rgba(134, 220, 201, 0.32)';
+const ACCENT_FAINT = 'rgba(134, 220, 201, 0.14)';
+
 /* ── Shared UI Components ── */
 function CinemaInput({ label, type = 'text', placeholder, value, onChange }: { label: string; type?: string; placeholder?: string; value: string; onChange: (v: string) => void; }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#e8472a', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: ACCENT, letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#e8472a' : 'rgba(232,71,42,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -21,9 +25,9 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#e8472a', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: ACCENT, letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#e8472a' : 'rgba(232,71,42,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -34,9 +38,9 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
   return (
     <motion.button type="button" onClick={onClick} disabled={loading || disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !loading && !disabled ? '#e8472a' : 'transparent', color: hov && !loading && !disabled ? '#fffdf7' : '#e8472a', opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !loading && !disabled ? ACCENT : 'transparent', color: hov && !loading && !disabled ? '#171717' : ACCENT, opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #e8472a', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: `1px solid ${ACCENT}`, padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -45,7 +49,7 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  submitted: { bg: 'rgba(232,71,42,0.1)', color: '#e8472a', label: 'IN REVIEW' },
+  submitted: { bg: ACCENT_FAINT, color: ACCENT, label: 'IN REVIEW' },
   approved:  { bg: 'rgba(74,222,128,0.1)', color: '#4ade80', label: 'APPROVED' },
   rejected:  { bg: 'rgba(255,80,80,0.1)', color: '#ff5050', label: 'REJECTED' },
   archived:  { bg: 'rgba(100,100,100,0.1)', color: '#888', label: 'ARCHIVED' },
@@ -119,7 +123,7 @@ export default function PresenterDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
         <div id="presenter-form" ref={formRef}>
-          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#e8472a', letterSpacing: 2, marginBottom: 28 }}>NEW SCREENING SUBMISSION</p>
+          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: ACCENT, letterSpacing: 2, marginBottom: 28 }}>NEW SCREENING SUBMISSION</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
             <CinemaInput label="FILM TITLE" placeholder="e.g. The Midnight Echo" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
             <CinemaInput label="SCREENING LINK (OPTIONAL)" placeholder="e.g. https://youtube.com/watch?v=..." value={form.link} onChange={(v) => setForm({ ...form, link: v })} />
@@ -136,7 +140,7 @@ export default function PresenterDashboard() {
         </div>
 
         <div id="presenter-list" style={{ paddingTop: 32, borderTop: '1px solid rgba(23,23,23,0.12)' }}>
-          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#e8472a', letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
+          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: ACCENT, letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
           {myScreenings.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: '#171717', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0 }}>
@@ -158,7 +162,7 @@ export default function PresenterDashboard() {
                   <div key={s.id} style={{ padding: 24, border: '1px solid rgba(23,23,23,0.12)', background: 'rgba(247,245,239,1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                     <div>
                       <h4 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#171717', margin: '0 0 8px' }}>{s.title}</h4>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#e8472a', opacity: 0.6, margin: 0 }}>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: ACCENT, opacity: 0.75, margin: 0 }}>
                         SUBMITTED ON: {new Date(s.created_at).toLocaleDateString()}
                         {reactions > 0 ? ` · ${reactions} REACTION${reactions === 1 ? '' : 'S'}` : ''}
                       </p>

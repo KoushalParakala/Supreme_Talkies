@@ -777,6 +777,26 @@ footer .brand-lockup { color:var(--background); }
   border-color: var(--vermilion);
   color: #fffdf7;
 }
+.dash-presenter {
+  --vermilion: #86dcc9;
+  --primary: #86dcc9;
+  --ring: #86dcc9;
+}
+.dash-presenter .dash-role-switch button.is-active {
+  color: #171717;
+}
+.dash-presenter .primary-button {
+  background: #86dcc9;
+  color: #171717;
+}
+.dash-presenter .dash-ghost-btn:hover {
+  background: #86dcc9;
+  border-color: #86dcc9;
+  color: #171717;
+}
+.dash-presenter .dash-loading p {
+  color: #86dcc9;
+}
 .dash-footer-actions {
   margin-top: 4.5rem;
   padding-top: 2rem;
