@@ -17,14 +17,14 @@ export default function AuthCallback() {
     }
 
     if (isAdmin) {
-      navigate('/dashboard', { state: { activeRole: 'admin' }, replace: true });
+      navigate('/call-sheet', { replace: true });
       return;
     }
 
     if (!profileAttempted) return;
 
     if (profile && getUsableRoles(profile).length > 0) {
-      navigate('/dashboard', { replace: true });
+      navigate('/call-sheet', { replace: true });
       return;
     }
 

@@ -86,6 +86,8 @@ function UserMenu({
         <div className="nav-user-drop nav-tray" role="menu">
           <div className="nav-tray-label">{displayName}</div>
           <button type="button" role="menuitem" onClick={() => go('/profile')}>My profile</button>
+          <button type="button" role="menuitem" onClick={() => go('/call-sheet')}>Call Sheet</button>
+          <button type="button" role="menuitem" onClick={() => go('/green-room')}>Green Room</button>
           <button type="button" role="menuitem" onClick={() => go('/dashboard')}>Dashboard</button>
           {isAdmin && <button type="button" role="menuitem" onClick={() => go('/crew')}>Crew</button>}
           <button type="button" role="menuitem" onClick={handleLogout} disabled={exiting}>
@@ -129,6 +131,8 @@ export default function Nav({ scrolled }: NavProps) {
           <Link to="/about" onClick={() => setMenu(false)}>About</Link>
           {user && (
             <>
+              <Link to="/call-sheet" onClick={() => setMenu(false)}>Call Sheet</Link>
+              <Link to="/green-room" onClick={() => setMenu(false)}>Green Room</Link>
               <Link to="/dashboard" onClick={() => setMenu(false)}>Dashboard</Link>
               {isAdmin ? (
                 <Link to="/crew" onClick={() => setMenu(false)}>Crew</Link>

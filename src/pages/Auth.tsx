@@ -81,8 +81,8 @@ export default function Auth() {
   useEffect(() => {
     if (authLoading) return;
     if (user) {
-      if (isAdmin) navigate('/dashboard', { state: { activeRole: 'admin' } });
-      else if (profileAttempted && profile && getUsableRoles(profile).length > 0) navigate('/dashboard', { replace: true });
+      if (isAdmin) navigate('/call-sheet', { replace: true });
+      else if (profileAttempted && profile && getUsableRoles(profile).length > 0) navigate('/call-sheet', { replace: true });
       else if (profileAttempted && !profileFetchFailed) navigate('/role-select', { replace: true });
     }
   }, [authLoading, user, profile, profileAttempted, profileFetchFailed, isAdmin, navigate]);

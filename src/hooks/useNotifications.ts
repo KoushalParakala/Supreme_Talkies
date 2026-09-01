@@ -1,7 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+
+const SESSION_KEY = 'st_call_sheet_session_at';
+
+function sessionStartedAt(): string {
+  if (typeof sessionStorage === 'undefined') return new Date().toISOString();
+  const existing = sessionStorage.getItem(SESSION_KEY);
+  if (existing) return existing;
+  const stamp = new Date().toISOString();
+  sessionStorage.setItem(SESSION_KEY, stamp);
+  return stamp;
+}
 
 export interface AppNotification {
   id: string;
@@ -34,7 +45,7 @@ export function useNotifications() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(40);
       if (error) throw error;
       setItems((data as AppNotification[]) || []);
     } catch (err) {
@@ -63,7 +74,7 @@ export function useNotifications() {
         },
         (payload) => {
           const row = payload.new as AppNotification;
-          setItems((prev) => [row, ...prev].slice(0, 20));
+          setItems((prev) => [row, ...prev].slice(0, 40));
           toast(row.title, {
             icon: '✦',
             style: {
@@ -103,5 +114,26 @@ export function useNotifications() {
     [user?.id]
   );
 
-  return { items, loading, unreadCount, fetchNotifications, markRead };
+  const sessionStart = useMemo(() => sessionStartedAt(), [user?.id]);
+
+  const { offlineItems, liveItems } = useMemo(() => {
+    const start = new Date(sessionStart).getTime();
+    const offline: AppNotification[] = [];
+    const live: AppNotification[] = [];
+    for (const item of items) {
+      if (new Date(item.created_at).getTime() < start) offline.push(item);
+      else live.push(item);
+    }
+    return { offlineItems: offline, liveItems: live };
+  }, [items, sessionStart]);
+
+  return {
+    items,
+    loading,
+    unreadCount,
+    fetchNotifications,
+    markRead,
+    offlineItems,
+    liveItems,
+  };
 }

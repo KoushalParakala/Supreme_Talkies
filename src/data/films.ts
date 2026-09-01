@@ -1,3 +1,20 @@
+export function filmStill(film: {
+  reelImage?: string | null;
+  posterImage?: string | null;
+  stills?: string[] | null;
+  reel_image?: string | null;
+  poster_image?: string | null;
+}): string {
+  return (
+    film.reelImage ||
+    film.reel_image ||
+    film.posterImage ||
+    film.poster_image ||
+    film.stills?.[0] ||
+    '/hero-bg.webp'
+  );
+}
+
 export interface Film {
   id: string;
   title: string;

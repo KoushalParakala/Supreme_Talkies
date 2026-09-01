@@ -20,6 +20,8 @@ const CrewDirectory = lazy(() => import('./pages/CrewDirectory'));
 const About = lazy(() => import('./pages/About'));
 const Films = lazy(() => import('./pages/Films'));
 const ProfileSettings = lazy(() => import('./pages/ProfileSettings'));
+const CallSheet = lazy(() => import('./pages/CallSheet'));
+const GreenRoom = lazy(() => import('./pages/GreenRoom'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 gsap.registerPlugin(ScrollTrigger);
@@ -123,6 +125,16 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/about" element={<About />} />
             <Route path="/films" element={<Films />} />
+            <Route path="/call-sheet" element={
+              <ProtectedRoute>
+                <CallSheet />
+              </ProtectedRoute>
+            } />
+            <Route path="/green-room" element={
+              <ProtectedRoute>
+                <GreenRoom />
+              </ProtectedRoute>
+            } />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />

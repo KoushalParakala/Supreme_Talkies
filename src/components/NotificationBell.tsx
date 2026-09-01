@@ -3,16 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { IconBell } from './ReelIcons';
-
-function timeAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(ms / 60000);
-  if (m < 1) return 'NOW';
-  if (m < 60) return `${m}M`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}H`;
-  return `${Math.floor(h / 24)}D`;
-}
+import { timeAgo } from '../lib/time';
 
 export default function NotificationBell({
   open,
@@ -76,7 +67,7 @@ export default function NotificationBell({
               )}
             </div>
 
-            <div className="nav-tray-list">
+            <div className="nav-tray-list" data-lenis-prevent>
               {loading && items.length === 0 && (
                 <div className="nav-tray-empty">Loading notifications…</div>
               )}
@@ -105,6 +96,16 @@ export default function NotificationBell({
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              className="nav-tray-foot"
+              onClick={() => {
+                onOpenChange(false);
+                navigate('/call-sheet');
+              }}
+            >
+              Open the Call Sheet
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
