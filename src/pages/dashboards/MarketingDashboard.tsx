@@ -9,9 +9,9 @@ function CinemaButton({ children, onClick, disabled, loading, style }: { childre
   return (
     <motion.button type="button" onClick={onClick} disabled={disabled || loading}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !disabled ? '#BCA88E' : 'transparent', color: hov && !disabled ? '#1e2029' : '#BCA88E', opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !disabled ? '#E467A6' : 'transparent', color: hov && !disabled ? '#fffdf7' : '#E467A6', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: '1px solid #E467A6', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -24,9 +24,9 @@ function CinemaInput({ label, type = 'text', placeholder, value, onChange }: { l
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#E467A6', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#BCA88E' : 'rgba(188,168,142,0.3)'}`, paddingBottom: 10, fontFamily: 'Inter, monospace', fontSize: 14, color: '#F0EBE0', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -36,9 +36,9 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#E467A6', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#BCA88E' : 'rgba(188,168,142,0.3)'}`, paddingBottom: 10, fontFamily: 'Inter, monospace', fontSize: 14, color: '#F0EBE0', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -239,19 +239,19 @@ export default function MarketingDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
       {loading ? (
-        <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3 }}>SYNCHRONIZING MISSIONS...</p>
+        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3 }}>SYNCHRONIZING MISSIONS...</p>
       ) : (
         <>
           {/* CAMPAIGNS SECTION */}
           <div id="marketing-campaigns">
             <div style={{ marginBottom: 32 }}>
-              <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
-              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>JOIN ACTIVE MISSIONS AND TRACK PROGRESS</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#E467A6', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.4, letterSpacing: 3 }}>JOIN ACTIVE MISSIONS AND TRACK PROGRESS</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {campaigns.length === 0 ? (
-                <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25 }}>No active missions detected.</p>
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.25 }}>No active missions detected.</p>
               ) : (
                 campaigns.map((c) => {
                   const target = parseInt(c.reach_target) || 1;
@@ -259,57 +259,57 @@ export default function MarketingDashboard() {
                   const progress = Math.min((actual / target) * 100, 100);
 
                   return (
-                    <div key={c.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(188,168,142,0.1)', padding: 32 }}>
+                    <div key={c.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: 32 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                             <span style={{ 
-                              width: 8, height: 8, borderRadius: '50%', background: c.status === 'active' ? '#BCA88E' : '#666',
-                              boxShadow: c.status === 'active' ? '0 0 10px #BCA88E' : 'none',
+                              width: 8, height: 8, borderRadius: '50%', background: c.status === 'active' ? '#E467A6' : '#666',
+                              boxShadow: c.status === 'active' ? '0 0 10px #E467A6' : 'none',
                               animation: c.status === 'active' ? 'pulse 2s infinite' : 'none'
                             }} />
-                            <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#F0EBE0', margin: 0 }}>{c.title}</p>
+                            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: 0 }}>{c.title}</p>
                           </div>
                           <div style={{ display: 'flex', gap: 8 }}>
                             {c.platform?.map((p: string) => (
-                              <span key={p} style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.6, letterSpacing: 2 }}>
+                              <span key={p} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#E467A6', opacity: 0.6, letterSpacing: 2 }}>
                                 {p === 'Instagram' ? '📸' : p === 'Twitter/X' ? '🐦' : '🔗'} {p.toUpperCase()}
                               </span>
                             ))}
                           </div>
                         </div>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, border: '1px solid rgba(188,168,142,0.3)', padding: '4px 10px', color: '#BCA88E' }}>{c.status.toUpperCase()}</span>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, border: '1px solid rgba(228,103,166,0.28)', padding: '4px 10px', color: '#E467A6' }}>{c.status.toUpperCase()}</span>
                       </div>
 
                       <div style={{ marginBottom: 24 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#F0EBE0', opacity: 0.4 }}>ACTUAL REACH: {actual.toLocaleString()} / {target.toLocaleString()}</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 2, color: '#BCA88E' }}>{Math.round(progress)}%</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: 'var(--ink)', opacity: 0.4 }}>ACTUAL REACH: {actual.toLocaleString()} / {target.toLocaleString()}</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#E467A6' }}>{Math.round(progress)}%</p>
                         </div>
-                        <div style={{ height: 2, background: 'rgba(188,168,142,0.1)', overflow: 'hidden' }}>
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} style={{ height: '100%', background: '#BCA88E' }} />
+                        <div style={{ height: 2, background: 'rgba(var(--ink-rgb),0.12)', overflow: 'hidden' }}>
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} style={{ height: '100%', background: '#E467A6' }} />
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.05)', gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(var(--ink-rgb),0.04)', gap: 16, flexWrap: 'wrap' }}>
                         {myAssignments[c.id] ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
                               JOINED ({myAssignments[c.id].posts_count || 0} POSTS)
                             </span>
-                            <button onClick={() => handleLogPost(c.id)} style={{ background: 'transparent', border: '1px solid #BCA88E', color: '#BCA88E', padding: '6px 16px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>
+                            <button onClick={() => handleLogPost(c.id)} style={{ background: 'transparent', border: '1px solid #E467A6', color: '#E467A6', padding: '6px 16px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>
                               + LOG POST
                             </button>
                           </div>
                         ) : (
-                          <button onClick={() => handleJoinCampaign(c.id)} style={{ background: '#BCA88E', border: 'none', color: '#0a0a0a', padding: '8px 24px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>
+                          <button onClick={() => handleJoinCampaign(c.id)} style={{ background: '#E467A6', border: 'none', color: '#fffdf7', padding: '8px 24px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>
                             JOIN MISSION
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={() => handleCopyKit(c)}
-                          style={{ background: 'transparent', border: '1px solid rgba(188,168,142,0.4)', color: '#BCA88E', padding: '6px 16px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}
+                          style={{ background: 'transparent', border: '1px solid rgba(228,103,166,0.4)', color: '#E467A6', padding: '6px 16px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}
                         >
                           COPY KIT
                         </button>
@@ -322,13 +322,13 @@ export default function MarketingDashboard() {
           </div>
 
           {/* IDEA BOARD SECTION */}
-          <div id="marketing-ideas" style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+          <div id="marketing-ideas" style={{ paddingTop: 32, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
             <div style={{ marginBottom: 32 }}>
-              <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN IDEA BOARD</p>
-              <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>PIN YOUR IDEAS FOR THE TEAM</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#E467A6', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN IDEA BOARD</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.4, letterSpacing: 3 }}>PIN YOUR IDEAS FOR THE TEAM</p>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(188,168,142,0.2)', padding: 32, marginBottom: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(var(--ink-rgb),0.18)', padding: 32, marginBottom: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <CinemaTextarea label="NEW IDEA" placeholder="What's your campaign idea?" value={newIdeaText} onChange={setNewIdeaText} rows={3} />
               <CinemaButton onClick={handlePostIdea} loading={postingIdea} disabled={postingIdea || !newIdeaText.trim()} style={{ fontSize: 12, padding: '10px 24px' }}>
                 PIN IDEA 📌
@@ -340,7 +340,7 @@ export default function MarketingDashboard() {
                 const marketingIdeas = ideas;
 
                 if (marketingIdeas.length === 0) {
-                  return <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>;
+                  return <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>;
                 }
 
                 return marketingIdeas.map((idea) => {
@@ -369,7 +369,7 @@ export default function MarketingDashboard() {
                             right: 8,
                             background: 'none',
                             border: 'none',
-                            color: 'rgba(0,0,0,0.4)',
+                            color: 'rgba(var(--ink-rgb),0.35)',
                             cursor: 'pointer',
                             fontSize: 14,
                             fontWeight: 'bold',
@@ -387,7 +387,7 @@ export default function MarketingDashboard() {
                             e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.08)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.color = 'rgba(0,0,0,0.4)';
+                            e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.08)';
                             e.currentTarget.style.backgroundColor = 'transparent';
                           }}
                         >
@@ -405,7 +405,7 @@ export default function MarketingDashboard() {
                         height: 12,
                         background: '#ef4444',
                         borderRadius: '50%',
-                        boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.3), 1px 1px 2px rgba(0,0,0,0.2)',
+                        boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.3), 1px 1px 2px rgba(247,245,239,1)',
                         zIndex: 2
                       }} />
                       {/* Pin reflection */}
@@ -421,11 +421,11 @@ export default function MarketingDashboard() {
                         zIndex: 3
                       }} />
 
-                      <div style={{ flex: 1, marginTop: 12, fontFamily: 'Inter, monospace', fontSize: 13, lineHeight: 1.6, wordWrap: 'break-word', fontWeight: 500 }}>
+                      <div style={{ flex: 1, marginTop: 12, fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, lineHeight: 1.6, wordWrap: 'break-word', fontWeight: 500 }}>
                         {idea.data?.text || ''}
                       </div>
                       
-                      <div style={{ fontSize: 9, opacity: 0.6, marginTop: 16, textAlign: 'right', fontFamily: 'Montserrat, sans-serif', letterSpacing: 1 }}>
+                      <div style={{ fontSize: 9, opacity: 0.6, marginTop: 16, textAlign: 'right', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: 1 }}>
                         — {idea.profiles?.full_name || 'Member'} ({idea.profiles?.role === 'admin' || (Array.isArray(idea.profiles?.roles) && idea.profiles.roles.includes('admin')) ? 'Admin' : 'Marketing'})
                       </div>
                     </motion.div>
@@ -436,10 +436,10 @@ export default function MarketingDashboard() {
           </div>
 
           {/* THE COLLAB BRIEF SECTION */}
-          <div style={{ paddingTop: 64, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
-            <div style={{ width: 28, height: 1, background: '#BCA88E', opacity: 0.4, marginBottom: 20 }} />
-            <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 22, color: '#BCA88E', letterSpacing: 2, marginBottom: 6 }}>THE COLLAB BRIEF</p>
-            <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>AMPLIFY THE SIGNAL. MOVE THE CROWD.</p>
+          <div style={{ paddingTop: 64, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
+            <div style={{ width: 28, height: 1, background: '#E467A6', opacity: 0.4, marginBottom: 20 }} />
+            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#E467A6', letterSpacing: 2, marginBottom: 6 }}>THE COLLAB BRIEF</p>
+            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>AMPLIFY THE SIGNAL. MOVE THE CROWD.</p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>

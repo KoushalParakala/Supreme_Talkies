@@ -18,6 +18,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const RoleSelection = lazy(() => import('./pages/RoleSelection'));
 const CrewDirectory = lazy(() => import('./pages/CrewDirectory'));
 const About = lazy(() => import('./pages/About'));
+const Films = lazy(() => import('./pages/Films'));
 const ProfileSettings = lazy(() => import('./pages/ProfileSettings'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -101,8 +102,8 @@ function App() {
     <>
       <GlobalGrain />
       <Toaster position="bottom-right" toastOptions={{ 
-        style: { background: 'rgba(30,32,41,0.9)', color: '#F0EBE0', border: '1px solid #BCA88E', fontFamily: 'Inter, monospace', fontSize: '12px' },
-        success: { iconTheme: { primary: '#BCA88E', secondary: '#1e2029' } }
+        style: { background: 'var(--card)', color: 'var(--ink)', border: '1px solid var(--border)', fontFamily: '"Space Grotesk", sans-serif', fontSize: '12px' },
+        success: { iconTheme: { primary: '#e8472a', secondary: '#fffdf7' } }
       }} />
       <FilmBurn key={`burn-${location.pathname}`} />
       <Suspense fallback={
@@ -121,6 +122,7 @@ function App() {
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/about" element={<About />} />
+            <Route path="/films" element={<Films />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />

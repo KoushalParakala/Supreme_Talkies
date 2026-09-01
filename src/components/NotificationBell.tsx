@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
+import { IconBell } from './ReelIcons';
 
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -13,174 +14,94 @@ function timeAgo(iso: string): string {
   return `${Math.floor(h / 24)}D`;
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { items, unreadCount, markRead, loading } = useNotifications();
-  const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onOpenChange(false);
     };
     document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, onOpenChange]);
 
   return (
-    <div ref={rootRef} style={{ position: 'relative', zIndex: 110 }}>
+    <div className="nav-user-menu" ref={rootRef}>
       <button
         type="button"
+        className={`nav-bubble ${open ? 'is-open' : ''}`}
         aria-label="Notifications"
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          position: 'relative',
-          width: 40,
-          height: 40,
-          background: 'none',
-          border: '1px solid rgba(188,168,142,0.25)',
-          color: '#BCA88E',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => onOpenChange(!open)}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-          <path d="M10 21a2 2 0 0 0 4 0" />
-        </svg>
+        <IconBell size={15} />
         {unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: 4,
-              right: 4,
-              minWidth: 14,
-              height: 14,
-              borderRadius: 7,
-              background: '#BCA88E',
-              color: '#0e0f13',
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: 8,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 3px',
-            }}
-          >
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
+          <span className="nav-bubble-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
       </button>
 
       <AnimatePresence>
         {open && (
           <motion.div
+            className="nav-tray nav-tray-notify"
+            role="dialog"
+            aria-label="Notifications"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 10px)',
-              right: 0,
-              width: 320,
-              maxHeight: 420,
-              background: 'rgba(8,8,10,0.98)',
-              border: '1px solid rgba(188,168,142,0.15)',
-              zIndex: 1200,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
           >
-            <div
-              style={{
-                padding: '12px 14px',
-                borderBottom: '1px solid rgba(188,168,142,0.1)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, color: '#BCA88E' }}>
-                NOTIFICATIONS
-              </span>
+            <div className="nav-tray-head">
+              <span>Notifications</span>
               {unreadCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => void markRead()}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'rgba(188,168,142,0.7)',
-                    fontFamily: 'Inter, monospace',
-                    fontSize: 9,
-                    letterSpacing: 1,
-                    cursor: 'pointer',
-                  }}
-                >
-                  MARK ALL READ
+                <button type="button" onClick={() => void markRead()}>
+                  Mark all read
                 </button>
               )}
             </div>
 
-            <div style={{ overflowY: 'auto', flex: 1 }}>
+            <div className="nav-tray-list">
               {loading && items.length === 0 && (
-                <div style={{ padding: 24, textAlign: 'center', color: 'rgba(240,235,224,0.4)', fontSize: 10 }}>
-                  Loading notifications…
-                </div>
+                <div className="nav-tray-empty">Loading notifications…</div>
               )}
               {!loading && items.length === 0 && (
-                <div style={{ padding: 28, textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Playfair Display, serif', color: '#BCA88E', fontSize: 16, marginBottom: 8 }}>
-                    Quiet on set
-                  </div>
-                  <div style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: 'rgba(240,235,224,0.4)' }}>
-                    Script moves and collabs will show up here.
-                  </div>
+                <div className="nav-tray-empty">
+                  <strong>Quiet on set</strong>
+                  <p>Script moves and collabs will show up here.</p>
                 </div>
               )}
               {items.map((n) => (
                 <button
                   key={n.id}
                   type="button"
+                  className={`nav-tray-item ${n.read_at ? '' : 'is-unread'}`}
                   onClick={() => {
                     void markRead([n.id]);
-                    setOpen(false);
+                    onOpenChange(false);
                     if (n.link) navigate(n.link);
                   }}
-                  style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '12px 14px',
-                    background: n.read_at ? 'transparent' : 'rgba(188,168,142,0.06)',
-                    border: 'none',
-                    borderBottom: '1px solid rgba(188,168,142,0.06)',
-                    cursor: 'pointer',
-                  }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                    <span
-                      style={{
-                        fontFamily: 'Montserrat, sans-serif',
-                        fontSize: 10,
-                        fontWeight: 600,
-                        color: '#F0EBE0',
-                        letterSpacing: 1,
-                      }}
-                    >
-                      {n.title}
-                    </span>
-                    <span style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: 'rgba(188,168,142,0.5)' }}>
-                      {timeAgo(n.created_at)}
-                    </span>
+                  <div className="nav-tray-item-top">
+                    <span>{n.title}</span>
+                    <small>{timeAgo(n.created_at)}</small>
                   </div>
-                  {n.body && (
-                    <div style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: 'rgba(240,235,224,0.45)', lineHeight: 1.4 }}>
-                      {n.body}
-                    </div>
-                  )}
+                  {n.body && <p>{n.body}</p>}
                 </button>
               ))}
             </div>
