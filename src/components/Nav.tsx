@@ -120,7 +120,7 @@ export default function Nav({ scrolled }: NavProps) {
   };
 
   return (
-    <div className={`nav-cluster ${docked ? 'docked' : ''}`}>
+    <div className={`nav-cluster ${docked ? 'docked' : ''}${tray ? ' is-split' : ''}`}>
       <header className={`glass-nav ${docked ? 'docked' : ''}`}>
         <BrandLockup />
         <nav className={menu ? 'open' : ''}>

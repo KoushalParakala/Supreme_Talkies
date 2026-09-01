@@ -29,11 +29,23 @@ function Opening({ scroll }: { scroll: number }) {
   const navigate = useNavigate();
   const p = Math.min(1, scroll / 180);
   const fade = Math.min(1, Math.max(0, (scroll - 50) / 100));
+  const figureVeil = Math.min(1, Math.max(0, (scroll - 12) / 78));
+  const figureMask = figureVeil < 0.02
+    ? 'none'
+    : `radial-gradient(ellipse 54% 72% at 16% 74%, rgba(0,0,0,${(1 - figureVeil).toFixed(3)}) 0%, rgba(0,0,0,${(1 - figureVeil * 0.97).toFixed(3)}) 36%, #000 70%)`;
   return (
     <section className="opening">
       <div className="opening-backdrop landing-bg" aria-hidden="true">
-        <img src="/New_bg.png" alt="" />
-        <div className="opening-shade" />
+        <img
+          src="/New_bg.png"
+          alt=""
+          style={{
+            WebkitMaskImage: figureMask,
+            maskImage: figureMask,
+          }}
+        />
+        <div className="opening-shade" style={{ opacity: figureVeil }} />
+        <div className="opening-figure-mix" style={{ opacity: figureVeil }} />
       </div>
       <div
         className="opening-wordmark"
