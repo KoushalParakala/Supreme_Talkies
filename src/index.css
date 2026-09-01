@@ -89,6 +89,15 @@ footer .brand-lockup { color:var(--background); }
 .opening {
   background: #0c0c0c;
 }
+.opening-backdrop.landing-bg {
+  z-index: 0;
+  pointer-events: none;
+}
+.opening-backdrop.landing-bg img {
+  filter: none;
+  object-fit: cover;
+  object-position: center bottom;
+}
 .opening-wordmark {
   color: #fffdf7;
 }

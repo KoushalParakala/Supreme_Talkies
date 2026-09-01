@@ -30,6 +30,9 @@ function Opening({ scroll }: { scroll: number }) {
   const fade = Math.min(1, Math.max(0, (scroll - 50) / 100));
   return (
     <section className="opening">
+      <div className="opening-backdrop landing-bg" aria-hidden="true">
+        <img src="/New_bg.png" alt="" />
+      </div>
       <div
         className="opening-wordmark"
         style={{
