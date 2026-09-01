@@ -161,7 +161,7 @@ export default function Dashboard(){
   const subtitle =ROLE_SUBTITLES[activeRole]??'';
 
   return (
-    <motion.div className="dash-shell site-page" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.4}}>
+    <motion.div className={`dash-shell site-page${activeRole ? ` dash-role dash-role-${activeRole}` : ''}`} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.4}}>
       <Nav scrolled={true}/>
       <div className={`dash-body${activeRole ? ` dash-role dash-role-${activeRole}` : ''}`}>
         <div className="dash-masthead">

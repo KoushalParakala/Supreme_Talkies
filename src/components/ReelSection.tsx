@@ -92,7 +92,7 @@ export default function ReelSection({
   if (!film) return null;
 
   return (
-    <section ref={ref} id="reel-section" className="projector-zone" style={{ minHeight: reelMinHeight }}>
+    <section ref={ref} id="reel-section" className="projector-zone" style={{ minHeight: reelMinHeight, background: 'var(--paper-2)' }}>
       <div
         className="projector-sticky"
         onPointerMove={(e) => { if (dragging) setDrag(Math.max(-125, Math.min(125, e.clientX - dragStart))); }}
@@ -103,7 +103,7 @@ export default function ReelSection({
         <div className="projector-header">
           <div>
             <p className="eyebrow">01 / THE PROJECTOR ROOM</p>
-            <h2>Move through<br /><em>the work.</em></h2>
+            <h2>Move through<br /><em style={{ color: 'var(--gold)' }}>the work.</em></h2>
           </div>
           <p className="projector-intro">
             {films.length} films. One living archive. Drag the frame, scroll the room, or choose a card.
@@ -112,7 +112,7 @@ export default function ReelSection({
         <AmbientIcons />
         <div className="projection-line">
           <span>{pad(1)}</span>
-          <div><i style={{ height: `${((active + 1) / Math.max(1, films.length)) * 100}%` }} /></div>
+          <div><i style={{ height: `${((active + 1) / Math.max(1, films.length)) * 100}%`, background: 'var(--gold)' }} /></div>
           <span>{pad(films.length)}</span>
         </div>
         <div className="card-cluster" style={{ cursor: dragging ? 'grabbing' : 'grab' }}>
@@ -142,7 +142,7 @@ export default function ReelSection({
                   <span>{item.rating}</span>
                 </div>
                 <div className="float-card-copy">
-                  <p>{item.comingSoon ? 'COMING SOON' : 'SHORT'} / {item.duration}</p>
+                  <p style={{ color: 'var(--gold)' }}>{item.comingSoon ? 'COMING SOON' : 'SHORT'} / {item.duration}</p>
                   <h3>{item.title}</h3>
                   <span>BY {(item.director || 'SUPREME TALKIES').toUpperCase()}</span>
                 </div>

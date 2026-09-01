@@ -16,7 +16,7 @@ interface CinemaInputProps {
 function CinemaInput({ label, placeholder, value, onChange, type = "text" }: CinemaInputProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#e8472a', letterSpacing: 4 }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>{label}</label>
       <input 
         type={type}
         value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
@@ -37,7 +37,7 @@ interface CinemaTextareaProps {
 function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: CinemaTextareaProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#e8472a', letterSpacing: 4 }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>{label}</label>
       <textarea 
         rows={rows}
         value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
@@ -47,7 +47,7 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: Cinem
   );
 }
 const KANBAN_STAGES = [
-  { id: 'inbox', label: 'INBOX', color: 'rgba(232,71,42,0.28)' },
+  { id: 'inbox', label: 'INBOX', color: 'rgba(201,161,83,0.28)' },
   { id: 'under_review', label: 'UNDER REVIEW', color: 'rgba(100,160,255,0.3)' },
   { id: 'shortlisted', label: 'SHORTLISTED', color: 'rgba(255,200,80,0.3)' },
   { id: 'accepted', label: 'ACCEPTED', color: 'rgba(100,200,120,0.3)' },
@@ -62,9 +62,9 @@ function CinemaButton({ children, onClick, disabled, loading, style }: {
   return (
     <motion.button type="button" onClick={onClick} disabled={disabled || loading}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !disabled ? '#e8472a' : 'transparent', color: hov && !disabled ? '#fffdf7' : '#e8472a', opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !disabled ? '#c9a153' : 'transparent', color: hov && !disabled ? '#171717' : '#c9a153', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #e8472a', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: '1px solid #c9a153', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -123,7 +123,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 5, textTransform: 'uppercase' }}>
+      <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', letterSpacing: 5, textTransform: 'uppercase' }}>
         {label} {max && !single && <span style={{ opacity: 0.4, fontSize: 8 }}> (MAX {max})</span>}
       </label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -143,7 +143,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
                   onBlur={() => setCustomTagMode(false)}
                   style={{
                     padding: '6px 14px', borderRadius: 2, background: 'transparent',
-                    border: '1px dashed #e8472a', color: 'var(--ink)',
+                    border: '1px dashed #c9a153', color: 'var(--ink)',
                     fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
                     outline: 'none', width: 120, textTransform: 'uppercase'
                   }}
@@ -158,7 +158,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
               style={{
                 padding: '6px 14px', borderRadius: 2,
                 background: isSelected ? 'rgba(var(--ink-rgb),0.14)' : 'transparent',
-                border: `1px solid ${isSelected ? '#e8472a' : 'rgba(var(--ink-rgb),0.18)'}`,
+                border: `1px solid ${isSelected ? '#c9a153' : 'rgba(var(--ink-rgb),0.18)'}`,
                 color: isSelected ? 'var(--ink)' : 'rgba(var(--ink-rgb),0.45)',
                 fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
                 cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
@@ -772,10 +772,10 @@ export default function AdminDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
       {/* Needs Your Eyes inbox — above tabs */}
-      <div id="admin-inbox" style={{ padding: 28, border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(232,71,42,0.06)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div id="admin-inbox" style={{ padding: 28, border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(201,161,83,0.06)', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#e8472a', margin: 0, letterSpacing: 4 }}>NEEDS YOUR EYES</p>
-          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: inboxTotal ? '#e8472a' : 'rgba(var(--ink-rgb),0.4)', letterSpacing: 3 }}>
+          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#c9a153', margin: 0, letterSpacing: 4 }}>NEEDS YOUR EYES</p>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: inboxTotal ? '#c9a153' : 'rgba(var(--ink-rgb),0.4)', letterSpacing: 3 }}>
             {inboxTotal === 0 ? 'ALL CLEAR' : `${inboxTotal} PENDING`}
           </span>
         </div>
@@ -787,7 +787,7 @@ export default function AdminDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button type="button" onClick={() => setSection('WRITERS')}
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', letterSpacing: 3, fontWeight: 700 }}>SCRIPTS · TRIAGE</span>
+                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', letterSpacing: 3, fontWeight: 700 }}>SCRIPTS · TRIAGE</span>
                 <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 18, color: 'var(--ink)' }}>{inboxScripts.length}</span>
               </button>
               {inboxScripts.slice(0, 4).map(s => (
@@ -804,7 +804,7 @@ export default function AdminDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button type="button" onClick={() => setSection('SCREENINGS')}
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', letterSpacing: 3, fontWeight: 700 }}>SCREENINGS · REVIEW</span>
+                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', letterSpacing: 3, fontWeight: 700 }}>SCREENINGS · REVIEW</span>
                 <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 18, color: 'var(--ink)' }}>{inboxScreenings.length}</span>
               </button>
               {inboxScreenings.slice(0, 4).map(sc => (
@@ -821,7 +821,7 @@ export default function AdminDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button type="button" onClick={() => { setSection('MARKETING'); setMarketingTab('collab'); }}
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', letterSpacing: 3, fontWeight: 700 }}>COLLAB REQUESTS</span>
+                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', letterSpacing: 3, fontWeight: 700 }}>COLLAB REQUESTS</span>
                 <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 18, color: 'var(--ink)' }}>{inboxCollabs.length}</span>
               </button>
               {inboxCollabs.slice(0, 4).map(c => (
@@ -843,9 +843,9 @@ export default function AdminDashboard() {
         {['MARKETING', 'FILMS', 'WRITERS', 'PROJECTS', 'PROJECT ROOMS', 'CAMPAIGNS', 'SCREENINGS'].map(s => (
           <button key={s} onClick={() => setSection(s as any)}
             style={{ 
-              background: 'none', border: 'none', borderBottom: section === s ? '2px solid #e8472a' : '2px solid transparent',
+              background: 'none', border: 'none', borderBottom: section === s ? '2px solid #c9a153' : '2px solid transparent',
               padding: '16px 0', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 5, whiteSpace: 'nowrap',
-              color: section === s ? '#e8472a' : 'rgba(232,71,42,0.28)', cursor: 'pointer', transition: 'all 0.3s'
+              color: section === s ? '#c9a153' : 'rgba(201,161,83,0.28)', cursor: 'pointer', transition: 'all 0.3s'
             }}
           >
             {s}
@@ -869,7 +869,7 @@ export default function AdminDashboard() {
                     background: marketingTab === type ? 'rgba(var(--ink-rgb),0.12)' : 'none',
                     border: '1px solid rgba(var(--ink-rgb),0.12)',
                     padding: '8px 16px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 2,
-                    color: marketingTab === type ? '#e8472a' : 'rgba(var(--ink-rgb),0.45)', cursor: 'pointer'
+                    color: marketingTab === type ? '#c9a153' : 'rgba(var(--ink-rgb),0.45)', cursor: 'pointer'
                   }}
                 >
                   {type === 'marketing_idea' ? 'MARKETING IDEAS' : 'MARKETERS (COLLAB)'}
@@ -892,13 +892,13 @@ export default function AdminDashboard() {
                         <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: 'var(--ink)', margin: 0 }}>
                           {sub.type === 'collab' ? sub.data?.platform : 'Marketing Idea'}
                         </p>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', opacity: 0.5, letterSpacing: 3, margin: 0 }}>
                           {sub.profiles?.st_id ? (sub.profiles.st_id.startsWith('SUPR-') ? `(${sub.profiles.st_id})` : `(SUPR-${sub.profiles.st_id})`) : ''} · {sub.status?.toUpperCase()}
                         </p>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => updateSubStatus(sub.id, 'accepted')} style={{ background: 'none', border: '1px solid #e8472a', color: '#e8472a', fontSize: 9, padding: '4px 12px', cursor: 'pointer' }}>ACCEPT</button>
+                      <button onClick={() => updateSubStatus(sub.id, 'accepted')} style={{ background: 'none', border: '1px solid #c9a153', color: '#c9a153', fontSize: 9, padding: '4px 12px', cursor: 'pointer' }}>ACCEPT</button>
                       <button onClick={() => updateSubStatus(sub.id, 'archived')} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', fontSize: 9, padding: '4px 12px', cursor: 'pointer' }}>ARCHIVE</button>
                     </div>
                   </div>
@@ -911,16 +911,16 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--lift)', padding: 16, border: '1px solid rgba(var(--ink-rgb),0.04)' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                         <div>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#e8472a', margin: '0 0 4px' }}>PLATFORM / HANDLE</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#c9a153', margin: '0 0 4px' }}>PLATFORM / HANDLE</p>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', margin: 0 }}>{sub.data?.platform}</p>
                         </div>
                         <div>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#e8472a', margin: '0 0 4px' }}>FOLLOWER COUNT</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#c9a153', margin: '0 0 4px' }}>FOLLOWER COUNT</p>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', margin: 0 }}>{sub.data?.follower_count}</p>
                         </div>
                       </div>
                       <div>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#e8472a', margin: '0 0 4px' }}>COLLAB IDEA</p>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#c9a153', margin: '0 0 4px' }}>COLLAB IDEA</p>
                         <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', margin: 0, whiteSpace: 'pre-wrap' }}>{sub.data?.collab_idea}</p>
                       </div>
                     </div>
@@ -933,12 +933,12 @@ export default function AdminDashboard() {
         {section === 'WRITERS' && (
           <motion.div id="admin-writers" key="scripts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* Status Summary Header */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, padding: '24px 40px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(232,71,42,0.1)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, padding: '24px 40px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(201,161,83,0.1)' }}>
               {KANBAN_STAGES.filter(st => st.id !== 'archived').map(stage => {
                 const count = scripts.filter(s => (s.kanban_stage || 'inbox') === stage.id).length;
                 return (
                   <div key={stage.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 4, fontWeight: 700 }}>{stage.label}</span>
+                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', letterSpacing: 4, fontWeight: 700 }}>{stage.label}</span>
                     <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 24, color: 'var(--ink)', fontWeight: 300 }}>{count}</span>
                   </div>
                 );
@@ -952,8 +952,8 @@ export default function AdminDashboard() {
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3,
-                    color: scriptViewMode === mode.toLowerCase() ? '#e8472a' : 'rgba(232,71,42,0.4)',
-                    padding: '8px 0', borderBottom: scriptViewMode === mode.toLowerCase() ? '1px solid #e8472a' : '1px solid transparent'
+                    color: scriptViewMode === mode.toLowerCase() ? '#c9a153' : 'rgba(201,161,83,0.4)',
+                    padding: '8px 0', borderBottom: scriptViewMode === mode.toLowerCase() ? '1px solid #c9a153' : '1px solid transparent'
                   }}
                 >
                   {mode}
@@ -967,25 +967,25 @@ export default function AdminDashboard() {
                   <div key={s.id} style={{ border: '1px solid rgba(var(--ink-rgb),0.12)', background: 'rgba(247,245,239,1)', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ padding: 24, display: 'flex', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', gap: 20 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(var(--ink-rgb),0.12)', border: '1px solid rgba(var(--ink-rgb),0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#e8472a', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, flexShrink: 0 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(var(--ink-rgb),0.12)', border: '1px solid rgba(var(--ink-rgb),0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#c9a153', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, flexShrink: 0 }}>
                         {s.user?.full_name?.substring(0,1).toUpperCase() || '?'}
                       </div>
                       <div>
                         <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: '0 0 4px' }}>{s.title}</p>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
                           BY {s.user?.full_name} · V{s.version_number} · {s.kanban_stage?.toUpperCase() || 'INBOX'}
                         </p>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          {s.dna_mood?.map((m: string) => <span key={m} style={{ fontSize: 8, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#e8472a', letterSpacing: 1 }}>{m.toUpperCase()}</span>)}
+                          {s.dna_mood?.map((m: string) => <span key={m} style={{ fontSize: 8, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#c9a153', letterSpacing: 1 }}>{m.toUpperCase()}</span>)}
                         </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end', minWidth: 200 }}>
                       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                        <a href={s.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: '#e8472a', textDecoration: 'underline', letterSpacing: 2 }}>READ SCRIPT</a>
+                        <a href={s.pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: '#c9a153', textDecoration: 'underline', letterSpacing: 2 }}>READ SCRIPT</a>
                         <button
                           onClick={() => setExpandedScriptId(expandedScriptId === s.id ? null : s.id)}
-                          style={{ background: 'none', border: '1px solid rgba(232,71,42,0.28)', color: '#e8472a', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, padding: '4px 8px', cursor: 'pointer', letterSpacing: 1 }}
+                          style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, padding: '4px 8px', cursor: 'pointer', letterSpacing: 1 }}
                         >
                           {expandedScriptId === s.id ? 'HIDE DETAILS' : 'VIEW DETAILS'}
                         </button>
@@ -1001,8 +1001,8 @@ export default function AdminDashboard() {
                               onClick={() => moveScriptStage(s.id, st.id)}
                               style={{
                                 background: isActive ? st.color : 'transparent',
-                                border: `1px solid ${isActive ? 'rgba(255,255,255,0.3)' : 'rgba(232,71,42,0.1)'}`,
-                                color: isActive ? '#171717' : 'rgba(232,71,42,0.4)',
+                                border: `1px solid ${isActive ? 'rgba(255,255,255,0.3)' : 'rgba(201,161,83,0.1)'}`,
+                                color: isActive ? '#171717' : 'rgba(201,161,83,0.4)',
                                 fontFamily: 'Space Grotesk, sans-serif',
                                 fontSize: 7,
                                 letterSpacing: 2,
@@ -1032,19 +1032,19 @@ export default function AdminDashboard() {
                         <div style={{ padding: '24px', border: '1px solid rgba(var(--ink-rgb),0.12)', borderTop: '1px solid rgba(var(--ink-rgb),0.12)', background: 'rgba(0,0,0,0.1)' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 48 }}>
                             <div>
-                              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 2, marginBottom: 8 }}>LOGLINE</p>
+                              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', letterSpacing: 2, marginBottom: 8 }}>LOGLINE</p>
                               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.8, lineHeight: 1.6 }}>{s.logline || 'N/A'}</p>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                               <div>
-                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 2, marginBottom: 8 }}>SETTING</p>
+                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', letterSpacing: 2, marginBottom: 8 }}>SETTING</p>
                                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                  {s.dna_setting?.map((m: string) => <span key={m} style={{ fontSize: 9, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#e8472a', letterSpacing: 1 }}>{m.toUpperCase()}</span>) || 'N/A'}
+                                  {s.dna_setting?.map((m: string) => <span key={m} style={{ fontSize: 9, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#c9a153', letterSpacing: 1 }}>{m.toUpperCase()}</span>) || 'N/A'}
                                 </div>
                               </div>
                               <div>
-                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 2, marginBottom: 8 }}>FORMAT</p>
-                                <span style={{ fontSize: 9, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#e8472a', letterSpacing: 1 }}>{s.dna_format?.toUpperCase() || 'N/A'}</span>
+                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', letterSpacing: 2, marginBottom: 8 }}>FORMAT</p>
+                                <span style={{ fontSize: 9, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#c9a153', letterSpacing: 1 }}>{s.dna_format?.toUpperCase() || 'N/A'}</span>
                               </div>
                             </div>
                           </div>
@@ -1068,8 +1068,8 @@ export default function AdminDashboard() {
                       {/* Column Header */}
                       <div style={{ borderTop: `2px solid ${stage.color}`, paddingTop: 14 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 6, color: '#e8472a', margin: 0 }}>{stage.label}</p>
-                          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: 'rgba(232,71,42,0.1)', color: '#e8472a', fontSize: 11, fontFamily: 'Space Grotesk, sans-serif' }}>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 6, color: '#c9a153', margin: 0 }}>{stage.label}</p>
+                          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: 'rgba(201,161,83,0.1)', color: '#c9a153', fontSize: 11, fontFamily: 'Space Grotesk, sans-serif' }}>
                             {stageScripts.length}
                           </span>
                         </div>
@@ -1092,16 +1092,16 @@ export default function AdminDashboard() {
                               {script.title}
                             </h4>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(var(--ink-rgb),0.12)', border: '1px solid rgba(var(--ink-rgb),0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#e8472a', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, flexShrink: 0 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(var(--ink-rgb),0.12)', border: '1px solid rgba(var(--ink-rgb),0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#c9a153', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, flexShrink: 0 }}>
                                 {script.user?.full_name?.substring(0,1).toUpperCase() || '?'}
                               </div>
-                              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', margin: 0 }}>{script.user?.full_name}</p>
+                              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', margin: 0 }}>{script.user?.full_name}</p>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', opacity: 0.6, background: 'rgba(var(--ink-rgb),0.12)', padding: '2px 6px', letterSpacing: 1 }}>
+                              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#c9a153', opacity: 0.6, background: 'rgba(var(--ink-rgb),0.12)', padding: '2px 6px', letterSpacing: 1 }}>
                                 {script.user?.role?.toUpperCase() || 'WRITER'}
                               </span>
-                              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'rgba(232,71,42,0.4)' }}>
+                              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'rgba(201,161,83,0.4)' }}>
                                 {new Date(script.created_at).toLocaleDateString()}
                               </span>
                             </div>
@@ -1146,7 +1146,7 @@ export default function AdminDashboard() {
 
             {/* Writer Challenges Section */}
             <div style={{ marginTop: 40, borderTop: '1px solid rgba(var(--ink-rgb),0.12)', paddingTop: 40 }}>
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 24, color: '#e8472a', margin: '0 0 16px' }}>WRITER CHALLENGES</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 24, color: '#c9a153', margin: '0 0 16px' }}>WRITER CHALLENGES</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.5, marginBottom: 24 }}>
                 Add a quick logline prompt. It will appear as a sticky note on the Writer Dashboard.
               </p>
@@ -1172,7 +1172,7 @@ export default function AdminDashboard() {
               {/* Existing Challenges List */}
               {adminChallenges.length > 0 && (
                 <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 5, color: '#e8472a', margin: 0 }}>ACTIVE CHALLENGES</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 5, color: '#c9a153', margin: 0 }}>ACTIVE CHALLENGES</p>
                   {adminChallenges.map(chal => (
                     <div key={chal.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(247,245,239,1)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '16px 24px' }}>
                       <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', margin: 0, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
@@ -1195,8 +1195,8 @@ export default function AdminDashboard() {
             ) : (
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: 32, border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(var(--ink-rgb),0.03)', display: 'flex', flexDirection: 'column', gap: 32 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20, color: '#e8472a', margin: 0 }}>NEW PROJECT</p>
-                  <button onClick={() => setShowNewProjectForm(false)} style={{ background: 'none', border: 'none', color: '#e8472a', fontSize: 20, cursor: 'pointer' }}>✕</button>
+                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20, color: '#c9a153', margin: 0 }}>NEW PROJECT</p>
+                  <button onClick={() => setShowNewProjectForm(false)} style={{ background: 'none', border: 'none', color: '#c9a153', fontSize: 20, cursor: 'pointer' }}>✕</button>
                 </div>
                 
                 <CinemaInput label="PROJECT TITLE" value={newProject.title} onChange={v => setNewProject({...newProject, title: v})} />
@@ -1221,13 +1221,13 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div>
                       <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: '0 0 6px' }}>{b.title}</p>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', opacity: 0.5, letterSpacing: 3, margin: '0 0 12px' }}>
                         BY {b.producer?.full_name} · BUDGET: {b.budget_range}
                       </p>
                       <p style={{ fontSize: 11, color: 'var(--ink)', opacity: 0.7, maxWidth: 500, lineHeight: 1.5 }}>{b.description}</p>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-                      <button onClick={() => toggleProjectStatus(b.id, b.is_open)} style={{ background: 'none', border: `1px solid ${b.is_open ? '#4ade80' : '#e8472a'}`, color: b.is_open ? '#4ade80' : '#e8472a', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
+                      <button onClick={() => toggleProjectStatus(b.id, b.is_open)} style={{ background: 'none', border: `1px solid ${b.is_open ? '#4ade80' : '#c9a153'}`, color: b.is_open ? '#4ade80' : '#c9a153', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
                         {b.is_open ? 'OPEN' : 'CLOSED'}
                       </button>
                       <button onClick={() => deleteProject(b.id)} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', fontSize: 9, padding: '4px 12px', letterSpacing: 2, cursor: 'pointer', width: 100 }}>
@@ -1238,14 +1238,14 @@ export default function AdminDashboard() {
                   
                   {b.brief_interests && b.brief_interests.length > 0 && (
                     <div style={{ marginTop: 12, borderTop: '1px solid rgba(var(--ink-rgb),0.12)', paddingTop: 16 }}>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3, color: '#e8472a', margin: '0 0 12px' }}>INTERESTED USERS ({b.brief_interests.length})</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3, color: '#c9a153', margin: '0 0 12px' }}>INTERESTED USERS ({b.brief_interests.length})</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {b.brief_interests.map((interest: any) => (
                           <div key={interest.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(var(--ink-rgb),0.04)', padding: '8px 16px' }}>
                             <span style={{ fontSize: 16 }}>{interest.user?.avatar_symbol || '👤'}</span>
                             <div>
                               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', margin: 0 }}>{interest.user?.full_name}</p>
-                              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.6, margin: 0 }}>
+                              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>
                                 {interest.user?.st_id ? (interest.user.st_id.startsWith('SUPR-') ? interest.user.st_id : `SUPR-${interest.user.st_id}`) : 'NO-ID'} {interest.user?.role ? `• ${interest.user.role.toUpperCase()}` : ''}
                               </p>
                             </div>
@@ -1271,8 +1271,8 @@ export default function AdminDashboard() {
                 <button key={s} onClick={() => setRoomStatusFilter(s as any)}
                   style={{
                     background: roomStatusFilter === s ? 'rgba(var(--ink-rgb),0.12)' : 'none',
-                    border: '1px solid rgba(232,71,42,0.1)', padding: '6px 14px',
-                    color: roomStatusFilter === s ? '#e8472a' : 'rgba(232,71,42,0.4)',
+                    border: '1px solid rgba(201,161,83,0.1)', padding: '6px 14px',
+                    color: roomStatusFilter === s ? '#c9a153' : 'rgba(201,161,83,0.4)',
                     fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer'
                   }}
                 >
@@ -1283,11 +1283,11 @@ export default function AdminDashboard() {
 
             {/* Create Room Form */}
             <div style={{ padding: 32, border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(var(--ink-rgb),0.03)', display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#e8472a', margin: 0 }}>NEW PROJECT ROOM</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#c9a153', margin: 0 }}>NEW PROJECT ROOM</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <CinemaInput label="ROOM TITLE" value={newRoom.title} onChange={(v: string) => setNewRoom({ ...newRoom, title: v })} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#e8472a', letterSpacing: 4 }}>LINKED SCRIPT</label>
+                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>LINKED SCRIPT</label>
                   <select 
                     value={(newRoom as any).script_id} onChange={e => setNewRoom({ ...newRoom, script_id: e.target.value } as any)}
                     style={{ background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '12px 16px', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, outline: 'none' }}
@@ -1298,7 +1298,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <CinemaTextarea label="INITIAL NOTES" value={newRoom.brief} onChange={(v: string) => setNewRoom({ ...newRoom, brief: v })} />
-              <button onClick={createRoom} disabled={creatingRoom} style={{ background: '#e8472a', color: '#fffdf7', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: 'pointer', opacity: creatingRoom ? 0.5 : 1 }}>
+              <button onClick={createRoom} disabled={creatingRoom} style={{ background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: 'pointer', opacity: creatingRoom ? 0.5 : 1 }}>
                 {creatingRoom ? 'INITIATING...' : 'CREATE ROOM'}
               </button>
             </div>
@@ -1306,14 +1306,14 @@ export default function AdminDashboard() {
             {/* Room Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', gap: 32 }}>
               {projectRooms.filter(r => roomStatusFilter === 'ALL' || r.status?.toUpperCase() === roomStatusFilter).map(room => (
-                <div key={room.id} style={{ padding: 32, background: 'rgba(30,32,41,0.7)', border: '1px solid rgba(232,71,42,0.1)', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div key={room.id} style={{ padding: 32, background: 'rgba(30,32,41,0.7)', border: '1px solid rgba(201,161,83,0.1)', display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <h3 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20, fontStyle: 'italic', color: 'var(--ink)', margin: '0 0 8px' }}>{room.title}</h3>
-                      {room.scripts?.title && <span style={{ fontSize: 9, background: 'rgba(var(--ink-rgb),0.12)', color: '#e8472a', padding: '2px 8px', letterSpacing: 2 }}>{room.scripts.title.toUpperCase()}</span>}
+                      {room.scripts?.title && <span style={{ fontSize: 9, background: 'rgba(var(--ink-rgb),0.12)', color: '#c9a153', padding: '2px 8px', letterSpacing: 2 }}>{room.scripts.title.toUpperCase()}</span>}
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <span style={{ fontSize: 9, padding: '3px 10px', background: room.status === 'active' ? 'rgba(232,71,42,0.1)' : room.status === 'completed' ? 'rgba(74,222,128,0.1)' : 'rgba(100,100,100,0.1)', color: room.status === 'active' ? '#e8472a' : room.status === 'completed' ? '#4ade80' : '#888', border: '1px solid currentColor', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
+                      <span style={{ fontSize: 9, padding: '3px 10px', background: room.status === 'active' ? 'rgba(201,161,83,0.1)' : room.status === 'completed' ? 'rgba(74,222,128,0.1)' : 'rgba(100,100,100,0.1)', color: room.status === 'active' ? '#c9a153' : room.status === 'completed' ? '#4ade80' : '#888', border: '1px solid currentColor', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
                         {room.status?.toUpperCase()}
                       </span>
                     </div>
@@ -1327,7 +1327,7 @@ export default function AdminDashboard() {
                   />
 
                   <div style={{ borderTop: '1px solid rgba(var(--ink-rgb),0.12)', paddingTop: 20 }}>
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 4, color: '#e8472a', marginBottom: 16 }}>TEAM MEMBERS</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 4, color: '#c9a153', marginBottom: 16 }}>TEAM MEMBERS</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
                       <div style={{ display: 'flex', gap: 4 }}>
                         {room.project_room_members && room.project_room_members.length > 0 ? (
@@ -1346,14 +1346,14 @@ export default function AdminDashboard() {
                                   width: 28, 
                                   height: 28, 
                                   background: '#16181f', 
-                                  border: '1px solid #e8472a', 
+                                  border: '1px solid #c9a153', 
                                   borderRadius: '50%', 
                                   display: 'flex', 
                                   alignItems: 'center', 
                                   justifyContent: 'center', 
                                   fontSize: 10, 
                                   fontWeight: 600,
-                                  color: '#e8472a',
+                                  color: '#c9a153',
                                   marginLeft: idx > 0 ? -10 : 0, 
                                   zIndex: 10 - idx,
                                   overflow: 'hidden',
@@ -1370,27 +1370,27 @@ export default function AdminDashboard() {
                           })
                         ) : (
                           room.member_ids?.map((mId: string, idx: number) => (
-                            <div key={mId} style={{ width: 28, height: 28, background: '#16181f', border: '1px solid #e8472a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: idx > 0 ? -10 : 0, zIndex: 10 - idx }}>👤</div>
+                            <div key={mId} style={{ width: 28, height: 28, background: '#16181f', border: '1px solid #c9a153', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: idx > 0 ? -10 : 0, zIndex: 10 - idx }}>👤</div>
                           ))
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <input 
                           type="text" placeholder="SUPR-12345" value={roomMemberId[room.id] || ''} onChange={e => setRoomMemberId({ ...roomMemberId, [room.id]: e.target.value })}
-                          style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(232,71,42,0.28)', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, outline: 'none', width: 80 }}
+                          style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,161,83,0.28)', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, outline: 'none', width: 80 }}
                         />
-                        <button onClick={() => addMemberToRoom(room.id, roomMemberId[room.id], room.member_ids)} style={{ background: 'none', border: '1px solid #e8472a', color: '#e8472a', padding: '4px 10px', fontSize: 8, cursor: 'pointer' }}>ADD</button>
+                        <button onClick={() => addMemberToRoom(room.id, roomMemberId[room.id], room.member_ids)} style={{ background: 'none', border: '1px solid #c9a153', color: '#c9a153', padding: '4px 10px', fontSize: 8, cursor: 'pointer' }}>ADD</button>
                       </div>
                     </div>
 
                     {room.status === 'completed' && !room.completion_badge_awarded && (
-                      <button onClick={() => awardBadge(room.id)} style={{ width: '100%', background: 'linear-gradient(90deg, #e8472a, #171717)', color: '#fffdf7', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, fontWeight: 800, letterSpacing: 3, cursor: 'pointer', marginBottom: 16 }}>
+                      <button onClick={() => awardBadge(room.id)} style={{ width: '100%', background: 'linear-gradient(90deg, #c9a153, #171717)', color: '#fffdf7', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, fontWeight: 800, letterSpacing: 3, cursor: 'pointer', marginBottom: 16 }}>
                         AWARD COMPLETION BADGE 🎖
                       </button>
                     )}
 
                     <div style={{ display: 'flex', gap: 12 }}>
-                      <button onClick={() => updateRoomStatus(room.id, 'active')} style={{ flex: 1, background: 'none', border: '1px solid rgba(var(--ink-rgb),0.18)', color: '#e8472a', fontSize: 9, padding: '8px', cursor: 'pointer' }}>MARK ACTIVE</button>
+                      <button onClick={() => updateRoomStatus(room.id, 'active')} style={{ flex: 1, background: 'none', border: '1px solid rgba(var(--ink-rgb),0.18)', color: '#c9a153', fontSize: 9, padding: '8px', cursor: 'pointer' }}>MARK ACTIVE</button>
                       <button onClick={() => updateRoomStatus(room.id, 'completed')} style={{ flex: 1, background: 'none', border: '1px solid rgba(74,222,128,0.2)', color: '#4ade80', fontSize: 9, padding: '8px', cursor: 'pointer' }}>MARK COMPLETE</button>
                       <button onClick={() => updateRoomStatus(room.id, 'archived')} style={{ flex: 1, background: 'none', border: '1px solid rgba(255,80,80,0.2)', color: '#ff5050', fontSize: 9, padding: '8px', cursor: 'pointer' }}>ARCHIVE</button>
                     </div>
@@ -1405,7 +1405,7 @@ export default function AdminDashboard() {
           <motion.div key="campaigns" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
             {/* Create/Edit Form */}
             <div style={{ padding: 32, border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(var(--ink-rgb),0.03)', display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#e8472a', margin: 0 }}>{editingCampaign ? 'EDIT CAMPAIGN' : 'NEW CAMPAIGN'}</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#c9a153', margin: 0 }}>{editingCampaign ? 'EDIT CAMPAIGN' : 'NEW CAMPAIGN'}</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <CinemaInput label="CAMPAIGN TITLE" value={editingCampaign ? editingCampaign.title : newCampaign.title} onChange={(v: string) => editingCampaign ? setEditingCampaign({ ...editingCampaign, title: v }) : setNewCampaign({ ...newCampaign, title: v })} />
                 <CinemaInput label="GOAL" value={editingCampaign ? editingCampaign.goal : newCampaign.goal} onChange={(v: string) => editingCampaign ? setEditingCampaign({ ...editingCampaign, goal: v }) : setNewCampaign({ ...newCampaign, goal: v })} />
@@ -1419,7 +1419,7 @@ export default function AdminDashboard() {
               <CinemaInput label="DRIVE LINK" value={editingCampaign ? editingCampaign.kit_drive_link : newCampaign.kit_drive_link} onChange={(v: string) => editingCampaign ? setEditingCampaign({ ...editingCampaign, kit_drive_link: v }) : setNewCampaign({ ...newCampaign, kit_drive_link: v })} />
               
               <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={editingCampaign ? saveCampaignEdit : createCampaign} style={{ flex: 1, background: '#e8472a', color: '#fffdf7', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={editingCampaign ? saveCampaignEdit : createCampaign} style={{ flex: 1, background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: 'pointer' }}>
                   {editingCampaign ? 'SAVE CHANGES' : 'PUBLISH CAMPAIGN'}
                 </button>
                 {editingCampaign && <button onClick={() => setEditingCampaign(null)} style={{ background: 'none', border: '1px solid rgba(255,0,0,0.3)', color: 'rgba(255,0,0,0.5)', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
@@ -1436,16 +1436,16 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
                     <div>
                       <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: 'var(--ink)', margin: '0 0 4px' }}>{c.title}</p>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#e8472a', opacity: 0.6, margin: 0 }}>{c.goal}</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#c9a153', opacity: 0.6, margin: 0 }}>{c.goal}</p>
                     </div>
                     <div style={{ textAlign: 'center', borderLeft: '1px solid rgba(var(--ink-rgb),0.12)', paddingLeft: 24 }}>
-                      <p style={{ fontSize: 18, color: '#e8472a', margin: 0 }}>{c.campaign_assignments?.[0]?.count || 0}</p>
+                      <p style={{ fontSize: 18, color: '#c9a153', margin: 0 }}>{c.campaign_assignments?.[0]?.count || 0}</p>
                       <p style={{ fontSize: 8, letterSpacing: 2, opacity: 0.5 }}>ASSIGNEES</p>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                    <span style={{ fontSize: 9, padding: '2px 8px', border: '1px solid #e8472a', color: '#e8472a', letterSpacing: 2 }}>{c.status?.toUpperCase()}</span>
-                    <button onClick={() => setEditingCampaign(c)} style={{ background: 'none', border: 'none', color: '#e8472a', fontSize: 10, letterSpacing: 3, cursor: 'pointer', textDecoration: 'underline' }}>EDIT</button>
+                    <span style={{ fontSize: 9, padding: '2px 8px', border: '1px solid #c9a153', color: '#c9a153', letterSpacing: 2 }}>{c.status?.toUpperCase()}</span>
+                    <button onClick={() => setEditingCampaign(c)} style={{ background: 'none', border: 'none', color: '#c9a153', fontSize: 10, letterSpacing: 3, cursor: 'pointer', textDecoration: 'underline' }}>EDIT</button>
                   </div>
                 </div>
               ))}
@@ -1459,7 +1459,7 @@ export default function AdminDashboard() {
           <motion.div key="films" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
             {/* Create/Edit Form */}
             <div style={{ padding: 32, border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(var(--ink-rgb),0.03)', display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#e8472a', margin: 0 }}>{editingFilm ? 'EDIT FILM' : 'ADD NEW FILM'}</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#c9a153', margin: 0 }}>{editingFilm ? 'EDIT FILM' : 'ADD NEW FILM'}</p>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <CinemaInput label="TITLE" value={newFilm.title} onChange={(v) => setNewFilm({ ...newFilm, title: v })} />
@@ -1472,11 +1472,11 @@ export default function AdminDashboard() {
 
               <div style={{ marginTop: 12, marginBottom: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: '#e8472a', margin: 0 }}>CREDITS</p>
+                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: '#c9a153', margin: 0 }}>CREDITS</p>
                   <button
                     type="button"
                     onClick={() => setNewFilm({ ...newFilm, credits: [...(newFilm.credits || []), { role: '', value: '' }] })}
-                    style={{ background: 'none', border: '1px solid rgba(232,71,42,0.28)', color: '#e8472a', fontSize: 10, padding: '4px 12px', cursor: 'pointer' }}
+                    style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontSize: 10, padding: '4px 12px', cursor: 'pointer' }}
                   >
                     + ADD CREDIT
                   </button>
@@ -1502,8 +1502,8 @@ export default function AdminDashboard() {
                         gap: 10,
                         alignItems: 'flex-end',
                         padding: '10px 12px',
-                        border: creditDragIndex === idx ? '1px solid #e8472a' : '1px solid rgba(var(--ink-rgb),0.14)',
-                        background: creditDragIndex === idx ? 'rgba(232,71,42,0.08)' : 'rgba(247,245,239,1)',
+                        border: creditDragIndex === idx ? '1px solid #c9a153' : '1px solid rgba(var(--ink-rgb),0.14)',
+                        background: creditDragIndex === idx ? 'rgba(201,161,83,0.08)' : 'rgba(247,245,239,1)',
                         cursor: 'grab',
                       }}
                     >
@@ -1520,7 +1520,7 @@ export default function AdminDashboard() {
                       >
                         ☰
                       </div>
-                      <div style={{ width: 28, paddingBottom: 14, fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'rgba(232,71,42,0.4)' }}>
+                      <div style={{ width: 28, paddingBottom: 14, fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'rgba(201,161,83,0.4)' }}>
                         {idx + 1}
                       </div>
                       <div style={{ flex: 1 }}>
@@ -1564,9 +1564,9 @@ export default function AdminDashboard() {
                       type="button"
                       onClick={() => setNewFilm({ ...newFilm, credits: [{ role: '', value: '' }] })}
                       style={{
-                        background: 'rgba(232,71,42,0.06)',
-                        border: '1px dashed rgba(232,71,42,0.18)',
-                        color: '#e8472a',
+                        background: 'rgba(201,161,83,0.06)',
+                        border: '1px dashed rgba(201,161,83,0.18)',
+                        color: '#c9a153',
                         padding: '20px',
                         fontFamily: 'Space Grotesk, sans-serif',
                         fontSize: 11,
@@ -1584,38 +1584,38 @@ export default function AdminDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#e8472a', letterSpacing: 4 }}>REEL IMAGE (Vertical .webp)</label>
+                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>REEL IMAGE (Vertical .webp)</label>
                   <input type="file" accept="image/webp" onChange={(e) => setReelFile(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                  {newFilm.reel_image && !reelFile && <p style={{ fontSize: 9, color: '#e8472a', opacity: 0.6, margin: 0 }}>Current: {newFilm.reel_image}</p>}
+                  {newFilm.reel_image && !reelFile && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.reel_image}</p>}
                 </div>
                 <CinemaInput label="VIDEO LINK (Trailer/Film URL)" value={newFilm.video_link} onChange={(v) => setNewFilm({ ...newFilm, video_link: v })} />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#e8472a', letterSpacing: 4 }}>STILL IMAGE 1</label>
+                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>STILL IMAGE 1</label>
                   <input type="file" accept="image/*" onChange={(e) => setStill1File(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                  {newFilm.stills?.[0] && !still1File && <p style={{ fontSize: 9, color: '#e8472a', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[0]}</p>}
+                  {newFilm.stills?.[0] && !still1File && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[0]}</p>}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#e8472a', letterSpacing: 4 }}>STILL IMAGE 2</label>
+                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>STILL IMAGE 2</label>
                   <input type="file" accept="image/*" onChange={(e) => setStill2File(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                  {newFilm.stills?.[1] && !still2File && <p style={{ fontSize: 9, color: '#e8472a', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[1]}</p>}
+                  {newFilm.stills?.[1] && !still2File && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[1]}</p>}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#e8472a', letterSpacing: 4 }}>STILL IMAGE 3</label>
+                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>STILL IMAGE 3</label>
                   <input type="file" accept="image/*" onChange={(e) => setStill3File(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                  {newFilm.stills?.[2] && !still3File && <p style={{ fontSize: 9, color: '#e8472a', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[2]}</p>}
+                  {newFilm.stills?.[2] && !still3File && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[2]}</p>}
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
-                 <input type="checkbox" id="coming_soon" checked={newFilm.coming_soon} onChange={(e) => setNewFilm({ ...newFilm, coming_soon: e.target.checked })} style={{ accentColor: '#e8472a' }} />
+                 <input type="checkbox" id="coming_soon" checked={newFilm.coming_soon} onChange={(e) => setNewFilm({ ...newFilm, coming_soon: e.target.checked })} style={{ accentColor: '#c9a153' }} />
                  <label htmlFor="coming_soon" style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', cursor: 'pointer' }}>Mark as "Coming Soon"</label>
               </div>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-                <button disabled={uploadingFilm} onClick={saveFilm} style={{ flex: 1, background: '#e8472a', color: '#fffdf7', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: uploadingFilm ? 'not-allowed' : 'pointer', opacity: uploadingFilm ? 0.7 : 1 }}>
+                <button disabled={uploadingFilm} onClick={saveFilm} style={{ flex: 1, background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: uploadingFilm ? 'not-allowed' : 'pointer', opacity: uploadingFilm ? 0.7 : 1 }}>
                   {uploadingFilm ? 'UPLOADING...' : (editingFilm ? 'UPDATE FILM' : 'PUBLISH FILM')}
                 </button>
                 {editingFilm && <button onClick={() => { setEditingFilm(null); setReelFile(null); setStill1File(null); setStill2File(null); setStill3File(null); setNewFilm(emptyFilm()); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
@@ -1629,9 +1629,9 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <h4 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20, color: 'var(--ink)', margin: '0 0 4px' }}>{f.title}</h4>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.6, margin: 0, letterSpacing: 2 }}>{f.director?.toUpperCase()}</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0, letterSpacing: 2 }}>{f.director?.toUpperCase()}</p>
                     </div>
-                    {f.coming_soon && <span style={{ fontSize: 8, background: 'rgba(var(--ink-rgb),0.12)', color: '#e8472a', padding: '2px 6px', letterSpacing: 2 }}>COMING SOON</span>}
+                    {f.coming_soon && <span style={{ fontSize: 8, background: 'rgba(var(--ink-rgb),0.12)', color: '#c9a153', padding: '2px 6px', letterSpacing: 2 }}>COMING SOON</span>}
                   </div>
                   
                   {f.reel_image && (
@@ -1647,7 +1647,7 @@ export default function AdminDashboard() {
                         credits: hydrateCreditsFromFilm(f),
                       });
                       window.scrollTo(0, 0);
-                    }} style={{ flex: 1, background: 'none', border: '1px solid rgba(var(--ink-rgb),0.18)', color: '#e8472a', fontSize: 9, padding: '8px', cursor: 'pointer' }}>EDIT</button>
+                    }} style={{ flex: 1, background: 'none', border: '1px solid rgba(var(--ink-rgb),0.18)', color: '#c9a153', fontSize: 9, padding: '8px', cursor: 'pointer' }}>EDIT</button>
                     <button onClick={async () => {
                       if(confirm('Delete film?')) {
                         await supabase.from('films').delete().eq('id', f.id);
@@ -1668,8 +1668,8 @@ export default function AdminDashboard() {
                 <button key={s} onClick={() => setScreeningStatusFilter(s as any)}
                   style={{
                     background: screeningStatusFilter === s ? 'rgba(var(--ink-rgb),0.12)' : 'none',
-                    border: '1px solid rgba(232,71,42,0.1)', padding: '6px 14px',
-                    color: screeningStatusFilter === s ? '#e8472a' : 'rgba(232,71,42,0.4)',
+                    border: '1px solid rgba(201,161,83,0.1)', padding: '6px 14px',
+                    color: screeningStatusFilter === s ? '#c9a153' : 'rgba(201,161,83,0.4)',
                     fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer'
                   }}
                 >
@@ -1690,13 +1690,13 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <h4 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20, color: 'var(--ink)', margin: '0 0 4px' }}>{screening.film_title || screening.title}</h4>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', opacity: 0.8, margin: 0 }}>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', opacity: 0.8, margin: 0 }}>
                         {screening.profiles?.full_name} {screening.profiles?.st_id ? (screening.profiles.st_id.startsWith('SUPR-') ? `(${screening.profiles.st_id})` : `(SUPR-${screening.profiles.st_id})`) : ''}
                       </p>
                       <p style={{ fontSize: 11, color: 'var(--ink)', opacity: 0.6, maxWidth: 800, marginTop: 12, lineHeight: 1.6 }}>{screening.synopsis}</p>
                     </div>
                     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 9, padding: '4px 10px', background: screening.status === 'submitted' ? 'rgba(232,71,42,0.1)' : screening.status === 'approved' ? 'rgba(74,222,128,0.1)' : screening.status === 'rejected' ? 'rgba(255,80,80,0.1)' : 'rgba(100,100,100,0.1)', color: screening.status === 'submitted' ? '#e8472a' : screening.status === 'approved' ? '#4ade80' : screening.status === 'rejected' ? '#ff5050' : '#888', border: '1px solid currentColor', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
+                      <span style={{ fontSize: 9, padding: '4px 10px', background: screening.status === 'submitted' ? 'rgba(201,161,83,0.1)' : screening.status === 'approved' ? 'rgba(74,222,128,0.1)' : screening.status === 'rejected' ? 'rgba(255,80,80,0.1)' : 'rgba(100,100,100,0.1)', color: screening.status === 'submitted' ? '#c9a153' : screening.status === 'approved' ? '#4ade80' : screening.status === 'rejected' ? '#ff5050' : '#888', border: '1px solid currentColor', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: 3 }}>
                         {screening.status === 'submitted' ? 'IN REVIEW' : screening.status?.toUpperCase()}
                       </span>
                     </div>
@@ -1705,27 +1705,27 @@ export default function AdminDashboard() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, padding: 16, background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.04)' }}>
                     {screening.link && (
                       <div>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#e8472a', opacity: 0.6, margin: '0 0 6px' }}>SCREENING LINK</p>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#c9a153', opacity: 0.6, margin: '0 0 6px' }}>SCREENING LINK</p>
                         <a href={screening.link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ink)', fontSize: 12, textDecoration: 'underline', wordBreak: 'break-all' }}>{screening.link}</a>
                       </div>
                     )}
                     {screening.contact && (
                       <div>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#e8472a', opacity: 0.6, margin: '0 0 6px' }}>CONTACT DETAILS</p>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#c9a153', opacity: 0.6, margin: '0 0 6px' }}>CONTACT DETAILS</p>
                         <p style={{ color: 'var(--ink)', fontSize: 12, margin: 0, whiteSpace: 'pre-wrap' }}>{screening.contact}</p>
                       </div>
                     )}
                     {screening.screening_date && (
                       <div>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#e8472a', opacity: 0.6, margin: '0 0 6px' }}>DATE (IF ANY)</p>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#c9a153', opacity: 0.6, margin: '0 0 6px' }}>DATE (IF ANY)</p>
                         <p style={{ color: 'var(--ink)', fontSize: 12, margin: 0 }}>{new Date(screening.screening_date).toLocaleString()}</p>
                       </div>
                     )}
                   </div>
                   
                   {screening.note && (
-                    <div style={{ paddingLeft: 16, borderLeft: '2px solid #e8472a', marginTop: 8 }}>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#e8472a', margin: '0 0 6px' }}>PRESENTER NOTES</p>
+                    <div style={{ paddingLeft: 16, borderLeft: '2px solid #c9a153', marginTop: 8 }}>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#c9a153', margin: '0 0 6px' }}>PRESENTER NOTES</p>
                       <p style={{ color: 'var(--ink)', fontSize: 12, fontStyle: 'italic', margin: 0, opacity: 0.8, whiteSpace: 'pre-wrap' }}>"{screening.note}"</p>
                     </div>
                   )}
@@ -1733,7 +1733,7 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', gap: 12, borderTop: '1px solid rgba(var(--ink-rgb),0.12)', paddingTop: 16 }}>
                     <button onClick={() => updateScreeningStatus(screening.id, 'approved')} style={{ background: 'none', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>APPROVE</button>
                     <button onClick={() => updateScreeningStatus(screening.id, 'rejected')} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>REJECT</button>
-                    <button onClick={() => updateScreeningStatus(screening.id, 'screened')} style={{ background: 'none', border: '1px solid rgba(232,71,42,0.28)', color: '#e8472a', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>MARK SCREENED</button>
+                    <button onClick={() => updateScreeningStatus(screening.id, 'screened')} style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>MARK SCREENED</button>
                     <button onClick={() => deleteScreening(screening.id)} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer', marginLeft: 'auto' }}>DELETE</button>
                   </div>
                 </div>

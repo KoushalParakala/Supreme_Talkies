@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Nav from '../components/Nav';
 import ReelSection from '../components/ReelSection';
+import TearSection from '../components/TearSection';
 import JoinSection from '../components/JoinSection';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +33,7 @@ function Opening({ scroll }: { scroll: number }) {
     <section className="opening">
       <div className="opening-backdrop landing-bg" aria-hidden="true">
         <img src="/New_bg.png" alt="" />
+        <div className="opening-shade" />
       </div>
       <div
         className="opening-wordmark"
@@ -114,6 +116,7 @@ export default function Home() {
       <Opening scroll={scroll} />
       <main>
         <ReelSection onFilmClick={handleFilmClick} returnFilmId={targetFilmId} />
+        <TearSection />
         <JoinSection />
         <AboutTeaser />
       </main>

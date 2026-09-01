@@ -4,7 +4,7 @@ export type Theme = 'light' | 'dark';
 
 const STORAGE_KEY = 'st-theme';
 const LIGHT_THEME_COLOR = '#eeece6';
-const DARK_THEME_COLOR = '#121210';
+const DARK_THEME_COLOR = '#04060b';
 
 type ThemeContextType = {
   theme: Theme;

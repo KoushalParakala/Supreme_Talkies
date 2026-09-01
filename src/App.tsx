@@ -103,7 +103,7 @@ function App() {
       <GlobalGrain />
       <Toaster position="bottom-right" toastOptions={{ 
         style: { background: 'var(--card)', color: 'var(--ink)', border: '1px solid var(--border)', fontFamily: '"Space Grotesk", sans-serif', fontSize: '12px' },
-        success: { iconTheme: { primary: '#e8472a', secondary: '#fffdf7' } }
+        success: { iconTheme: { primary: '#c9a153', secondary: '#171717' } }
       }} />
       <FilmBurn key={`burn-${location.pathname}`} />
       <Suspense fallback={
