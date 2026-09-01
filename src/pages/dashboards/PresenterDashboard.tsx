@@ -15,7 +15,7 @@ function CinemaInput({ label, type = 'text', placeholder, value, onChange }: { l
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: ACCENT, letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -27,7 +27,7 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: ACCENT, letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -139,11 +139,11 @@ export default function PresenterDashboard() {
           </div>
         </div>
 
-        <div id="presenter-list" style={{ paddingTop: 32, borderTop: '1px solid rgba(23,23,23,0.12)' }}>
+        <div id="presenter-list" style={{ paddingTop: 32, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
           <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: ACCENT, letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
           {myScreenings.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: '#171717', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0 }}>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0 }}>
                 No presentations yet. Propose a screening to get on the slate.
               </p>
               <CinemaButton
@@ -159,9 +159,9 @@ export default function PresenterDashboard() {
                 const st = STATUS_STYLE[s.status] || { bg: 'rgba(100,100,100,0.1)', color: '#888', label: (s.status || 'UNKNOWN').toUpperCase() };
                 const reactions = reactionCounts[s.id] || 0;
                 return (
-                  <div key={s.id} style={{ padding: 24, border: '1px solid rgba(23,23,23,0.12)', background: 'rgba(247,245,239,1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div key={s.id} style={{ padding: 24, border: '1px solid rgba(var(--ink-rgb),0.12)', background: 'rgba(247,245,239,1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                     <div>
-                      <h4 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#171717', margin: '0 0 8px' }}>{s.title}</h4>
+                      <h4 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: '0 0 8px' }}>{s.title}</h4>
                       <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: ACCENT, opacity: 0.75, margin: 0 }}>
                         SUBMITTED ON: {new Date(s.created_at).toLocaleDateString()}
                         {reactions > 0 ? ` · ${reactions} REACTION${reactions === 1 ? '' : 'S'}` : ''}

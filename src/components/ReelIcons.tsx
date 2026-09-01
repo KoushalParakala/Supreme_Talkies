@@ -32,6 +32,21 @@ export function IconPlus({ size = 18 }: IconProps) {
 export function IconX({ size = 18 }: IconProps) {
   return <Svg size={size}><path d="M18 6L6 18" /><path d="M6 6l12 12" /></Svg>;
 }
+export function IconMoon({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="M21 14.3A8.5 8.5 0 0 1 9.7 3 7 7 0 1 0 21 14.3z" />
+    </Svg>
+  );
+}
+export function IconSun({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 3v1.6M12 19.4V21M4.9 4.9l1.1 1.1M18 18l1.1 1.1M3 12h1.6M19.4 12H21M4.9 19.1l1.1-1.1M18 6l1.1-1.1" />
+    </Svg>
+  );
+}
 export function IconBell({ size = 16 }: IconProps) {
   return (
     <Svg size={size}>

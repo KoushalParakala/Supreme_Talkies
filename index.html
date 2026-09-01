@@ -11,6 +11,20 @@
     <meta name="keywords" content="Supreme Talkies, independent film, short films, Telugu cinema, Tamil cinema, filmmaking collective, screenplay, cinematography" />
     <meta name="author" content="Supreme Talkies" />
     <meta name="theme-color" content="#eeece6" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('st-theme');
+          var theme = stored === 'dark' || stored === 'light'
+            ? stored
+            : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', theme === 'dark' ? '#121210' : '#eeece6');
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Canonical -->
     <link rel="canonical" href="https://supremetalkies.com/" />

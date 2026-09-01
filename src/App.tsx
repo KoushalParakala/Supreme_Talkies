@@ -102,13 +102,17 @@ function App() {
     <>
       <GlobalGrain />
       <Toaster position="bottom-right" toastOptions={{ 
-        style: { background: '#eeece6', color: '#171717', border: '1px solid #cbc8c0', fontFamily: '"Space Grotesk", sans-serif', fontSize: '12px' },
+        style: { background: 'var(--card)', color: 'var(--ink)', border: '1px solid var(--border)', fontFamily: '"Space Grotesk", sans-serif', fontSize: '12px' },
         success: { iconTheme: { primary: '#e8472a', secondary: '#fffdf7' } }
       }} />
       <FilmBurn key={`burn-${location.pathname}`} />
       <Suspense fallback={
-        <div className="dash-loading">
-          <p>Loading</p>
+        <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', display: 'flex', 
+          alignItems: 'center', justifyContent: 'center', zIndex: 99998 }}>
+          <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }}
+            style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', letterSpacing: 8 }}>
+            LOADING
+          </motion.div>
         </div>
       }>
         <AnimatePresence mode="wait">

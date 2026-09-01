@@ -22,7 +22,7 @@ function CinemaInput({ label, type = 'text', placeholder, value, onChange, requi
         type={type} placeholder={placeholder} value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#47D198' : 'rgba(71,209,152,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#47D198' : 'rgba(71,209,152,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -54,7 +54,7 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#47D198', letterSpacing: 5, opacity: focused ? 1 : 0.7 }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#47D198' : 'rgba(71,209,152,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#47D198' : 'rgba(71,209,152,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -358,7 +358,7 @@ export default function TechnicianDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 48, paddingBottom: 80 }}>
       {/* Tab Bar */}
-      <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid rgba(23,23,23,0.12)', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid rgba(var(--ink-rgb),0.12)', paddingBottom: 0 }}>
         {[
           { id: 'portfolio', label: 'MY PORTFOLIO' },
           { id: 'briefs', label: 'OPEN BRIEFS' },
@@ -424,7 +424,7 @@ export default function TechnicianDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#47D198', letterSpacing: 2, marginBottom: 6 }}>YOUR CREW CARD</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: '#171717', opacity: 0.35, letterSpacing: 2, marginBottom: 40 }}>THE CRAFT BEHIND EVERY FRAME</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.35, letterSpacing: 2, marginBottom: 40 }}>THE CRAFT BEHIND EVERY FRAME</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 680 }}>
                 {/* Specialization Toggle Buttons */}
@@ -441,8 +441,8 @@ export default function TechnicianDashboard() {
                           style={{
                             padding: '7px 16px', borderRadius: 2,
                             background: isSelected ? 'rgba(71,209,152,0.14)' : 'transparent',
-                            border: `1px solid ${isSelected ? '#47D198' : 'rgba(23,23,23,0.18)'}`,
-                            color: isSelected ? '#171717' : 'rgba(23,23,23,0.45)',
+                            border: `1px solid ${isSelected ? '#47D198' : 'rgba(var(--ink-rgb),0.18)'}`,
+                            color: isSelected ? 'var(--ink)' : 'rgba(var(--ink-rgb),0.45)',
                             fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
                             cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
                           }}
@@ -504,18 +504,18 @@ export default function TechnicianDashboard() {
           >
             <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 8 }} />
             <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#47D198', letterSpacing: 2, marginBottom: 6 }}>OPEN FILM BRIEFS</p>
-            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: '#171717', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>PROJECTS SEEKING CREW</p>            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>PROJECTS SEEKING CREW</p>            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {openBriefs.length === 0 ? (
-                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: '#171717', opacity: 0.25, fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>No active briefs right now.</p>
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.25, fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>No active briefs right now.</p>
               ) : openBriefs.map(brief => {
                 const hasInterested = userBriefInterests.has(brief.id);
                 const acceptedRequest = sentRequests.find(req => req.project_title === brief.title && req.status === 'accepted');
 
                 return (
-                  <div key={brief.id} style={{ background: '#f7f5ef', border: `1px solid ${acceptedRequest ? 'rgba(74,222,128,0.4)' : hasInterested ? 'rgba(71,209,152,0.4)' : 'rgba(23,23,23,0.14)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
+                  <div key={brief.id} style={{ background: 'var(--lift)', border: `1px solid ${acceptedRequest ? 'rgba(74,222,128,0.4)' : hasInterested ? 'rgba(71,209,152,0.4)' : 'rgba(var(--ink-rgb),0.14)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <h3 style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 20, color: '#171717', margin: '0 0 6px' }}>{brief.title}</h3>
+                        <h3 style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 20, color: 'var(--ink)', margin: '0 0 6px' }}>{brief.title}</h3>
                         <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {brief.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
                       </div>
                       {acceptedRequest ? (
@@ -534,14 +534,14 @@ export default function TechnicianDashboard() {
                       ) : null}
                     </div>
 
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{brief.description}</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{brief.description}</p>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
                       {brief.genre?.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#47D198', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {brief.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: '#171717', background: 'rgba(23,23,23,0.04)', padding: '2px 8px', border: '1px solid rgba(23,23,23,0.12)' }}>{g}</span>)}
+                            {brief.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: 'var(--ink)', background: 'rgba(var(--ink-rgb),0.04)', padding: '2px 8px', border: '1px solid rgba(var(--ink-rgb),0.12)' }}>{g}</span>)}
                           </div>
                         </div>
                       )}
@@ -556,15 +556,15 @@ export default function TechnicianDashboard() {
                       {(brief.budget_range || brief.timeline) && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#47D198', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', margin: 0 }}>{[brief.budget_range, brief.timeline].filter(Boolean).join(' • ')}</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', margin: 0 }}>{[brief.budget_range, brief.timeline].filter(Boolean).join(' • ')}</p>
                         </div>
                       )}
                     </div>
 
-                    <div style={{ paddingTop: 16, borderTop: '1px solid rgba(23,23,23,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ paddingTop: 16, borderTop: '1px solid rgba(var(--ink-rgb),0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#47D198', opacity: 0.5, letterSpacing: 2 }}>PRODUCER</span>
-                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717' }}>{brief.producer?.full_name || 'Unknown'}</span>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)' }}>{brief.producer?.full_name || 'Unknown'}</span>
                       </div>
                       <CinemaButton 
                         onClick={() => handleInterestInBrief(brief)} 
@@ -600,7 +600,7 @@ export default function TechnicianDashboard() {
               <AnimatePresence>
                 {expandingNewCollab && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 32, maxWidth: 680, padding: 32, background: '#f7f5ef', border: '1px solid rgba(23,23,23,0.12)', marginTop: 24 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 32, maxWidth: 680, padding: 32, background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.12)', marginTop: 24 }}>
                       <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, margin: 0 }}>NEW CONNECTION</p>
                       <CinemaInput
                         label="SEARCH BY NAME"
@@ -614,7 +614,7 @@ export default function TechnicianDashboard() {
                             <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#47D198', opacity: 0.5, margin: 0 }}>Searching directory…</p>
                           )}
                           {!searchingName && nameQuery.trim().length >= 2 && nameResults.length === 0 && (
-                            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.35, margin: 0 }}>No members matched that name.</p>
+                            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.35, margin: 0 }}>No members matched that name.</p>
                           )}
                           {nameResults.map((m) => (
                             <button
@@ -627,7 +627,7 @@ export default function TechnicianDashboard() {
                               }}
                               style={{
                                 textAlign: 'left', background: 'rgba(71,209,152,0.08)', border: '1px solid rgba(71,209,152,0.1)',
-                                padding: '10px 14px', cursor: 'pointer', color: '#171717',
+                                padding: '10px 14px', cursor: 'pointer', color: 'var(--ink)',
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
                               }}
                             >
@@ -659,12 +659,12 @@ export default function TechnicianDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>RECEIVED</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>INCOMING CONNECTIONS ({receivedRequests.filter(req => req.status === 'pending').length})</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>INCOMING CONNECTIONS ({receivedRequests.filter(req => req.status === 'pending').length})</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 800 }}>
                 {receivedRequests.filter(req => req.status === 'pending').length === 0 && sentRequests.filter(req => req.status === 'pending').length === 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16, padding: '8px 0' }}>
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', opacity: 0.3, fontStyle: 'italic', margin: 0 }}>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.3, fontStyle: 'italic', margin: 0 }}>
                       No collab activity yet. Search by name or SUPR-ID to send your first request.
                     </p>
                     <CinemaButton
@@ -675,16 +675,16 @@ export default function TechnicianDashboard() {
                     </CinemaButton>
                   </div>
                 ) : receivedRequests.filter(req => req.status === 'pending').length === 0 ? (
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', opacity: 0.2, fontStyle: 'italic' }}>No pending requests.</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.2, fontStyle: 'italic' }}>No pending requests.</p>
                 ) : null}
                 {receivedRequests.filter(req => req.status === 'pending').map(req => (
-                  <div key={req.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(23,23,23,0.12)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div key={req.id} style={{ background: 'rgba(30,32,41,0.6)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <span style={{ fontSize: 24 }}>{req.sender?.avatar_symbol || req.sender?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                         <div>
-                          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: '#171717', margin: '0 0 4px' }}>{req.sender?.full_name}</p>
-                          <span style={{ padding: '2px 8px', background: 'rgba(23,23,23,0.12)', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 2 }}>{req.sender?.role?.toUpperCase()}</span>
+                          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: 'var(--ink)', margin: '0 0 4px' }}>{req.sender?.full_name}</p>
+                          <span style={{ padding: '2px 8px', background: 'rgba(var(--ink-rgb),0.12)', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 2 }}>{req.sender?.role?.toUpperCase()}</span>
                         </div>
                       </div>
                       <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#47D198', opacity: 0.4, margin: 0 }}>{new Date(req.created_at).toLocaleDateString()}</p>
@@ -692,7 +692,7 @@ export default function TechnicianDashboard() {
 
                     <div>
                       <p style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 16, color: '#47D198', margin: '0 0 8px' }}>{req.project_title || 'Untitled Project'}</p>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', opacity: 0.7, lineHeight: 1.6, margin: 0 }}>{req.message}</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.7, lineHeight: 1.6, margin: 0 }}>{req.message}</p>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
@@ -714,26 +714,26 @@ export default function TechnicianDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>SENT</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>YOUR OUTGOING PINGS ({sentRequests.filter(req => req.status === 'pending').length})</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>YOUR OUTGOING PINGS ({sentRequests.filter(req => req.status === 'pending').length})</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 800 }}>
                 {sentRequests.filter(req => req.status === 'pending').length === 0 ? (
                   receivedRequests.filter(req => req.status === 'pending').length === 0 ? null : (
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', opacity: 0.2, fontStyle: 'italic' }}>No pending sent requests.</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.2, fontStyle: 'italic' }}>No pending sent requests.</p>
                   )
                 ) : sentRequests.filter(req => req.status === 'pending').map(req => (
-                  <div key={req.id} style={{ background: '#f7f5ef', border: '1px solid rgba(23,23,23,0.12)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={req.id} style={{ background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                       <span style={{ fontSize: 20 }}>{req.receiver?.avatar_symbol || req.receiver?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                       <div>
-                        <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: '#171717', margin: '0 0 2px' }}>{req.receiver?.full_name}</p>
+                        <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', margin: '0 0 2px' }}>{req.receiver?.full_name}</p>
                         <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{req.receiver?.st_id ? (req.receiver.st_id.startsWith('SUPR-') ? req.receiver.st_id : `SUPR-${req.receiver.st_id}`) : 'Pending'}</p>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                       <span style={{ 
                         fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, padding: '4px 10px',
-                        background: 'rgba(23,23,23,0.12)', color: '#47D198'
+                        background: 'rgba(var(--ink-rgb),0.12)', color: '#47D198'
                       }}>PENDING</span>
                     </div>
                   </div>
@@ -745,7 +745,7 @@ export default function TechnicianDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>MUTUAL CONNECTIONS</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>ACTIVE COLLABORATORS</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>ACTIVE COLLABORATORS</p>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
                 {(() => {
@@ -762,12 +762,12 @@ export default function TechnicianDashboard() {
                     return true;
                   });
                 })().map(collab => (
-                  <div key={collab.id} style={{ border: '1px solid rgba(23,23,23,0.18)', background: 'rgba(23,23,23,0.04)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div key={collab.id} style={{ border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(var(--ink-rgb),0.04)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <span style={{ fontSize: 24 }}>{collab.peer?.avatar_symbol || collab.peer?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                         <div>
-                          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: '#171717', margin: '0 0 2px' }}>{collab.peer?.full_name}</p>
+                          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', margin: '0 0 2px' }}>{collab.peer?.full_name}</p>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{collab.peer?.st_id ? (collab.peer.st_id.startsWith('SUPR-') ? collab.peer.st_id : `SUPR-${collab.peer.st_id}`) : 'Pending'}</p>
                         </div>
                       </div>
@@ -815,18 +815,18 @@ export default function TechnicianDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>DISCOVER CREW</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>AVAILABLE TECHNICIANS</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>AVAILABLE TECHNICIANS</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
                 {otherCrew.map(tech => (
-                  <div key={tech.id} style={{ border: '1px solid rgba(23,23,23,0.12)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div key={tech.id} style={{ border: '1px solid rgba(var(--ink-rgb),0.12)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 16 }}>{tech.avatar_symbol || tech.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                       <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.3, margin: 0 }}>{tech.st_id ? (tech.st_id.startsWith('SUPR-') ? tech.st_id : `SUPR-${tech.st_id}`) : 'Pending'}</p>
                     </div>
-                    <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: '#171717', margin: 0 }}>{tech.full_name}</p>
+                    <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', margin: 0 }}>{tech.full_name}</p>
                     <button 
                       onClick={() => { setNewCollab({ ...newCollab, stId: tech.st_id || '' }); setExpandingNewCollab(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      style={{ background: 'none', border: '1px solid rgba(23,23,23,0.18)', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, padding: '6px', cursor: 'pointer' }}
+                      style={{ background: 'none', border: '1px solid rgba(var(--ink-rgb),0.18)', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, padding: '6px', cursor: 'pointer' }}
                     >CONNECT</button>
                   </div>
                 ))}

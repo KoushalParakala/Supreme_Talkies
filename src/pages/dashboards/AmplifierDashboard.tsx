@@ -132,7 +132,7 @@ export default function AmplifierDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 48, paddingBottom: 100 }}>
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(23,23,23,0.12)', paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 32, borderBottom: '1px solid rgba(var(--ink-rgb),0.12)', paddingBottom: 0 }}>
         {[
           { id: 'impact', label: 'MY IMPACT' },
           { id: 'shoutouts', label: 'SHOUTOUT WALL' }
@@ -167,7 +167,7 @@ export default function AmplifierDashboard() {
                 ) : (
                   <div style={{ opacity: 0.3 }}>
                     <h2 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 42, color: '#E47E44', margin: '0 0 12px' }}>0 DAYS</h2>
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717' }}>Share something today to start your streak!</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)' }}>Share something today to start your streak!</p>
                   </div>
                 )}
 
@@ -179,8 +179,8 @@ export default function AmplifierDashboard() {
                     { days: 100, label: '⚡ 100 Days' }
                   ].map(m => (
                     <span key={m.days} style={{ 
-                      padding: '6px 14px', border: '1px solid', borderColor: streak >= m.days ? '#E47E44' : 'rgba(23,23,23,0.12)',
-                      color: streak >= m.days ? '#171717' : '#E47E44', opacity: streak >= m.days ? 1 : 0.2,
+                      padding: '6px 14px', border: '1px solid', borderColor: streak >= m.days ? '#E47E44' : 'rgba(var(--ink-rgb),0.12)',
+                      color: streak >= m.days ? 'var(--ink)' : '#E47E44', opacity: streak >= m.days ? 1 : 0.2,
                       fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 2
                     }}>
                       {m.label}
@@ -201,23 +201,23 @@ export default function AmplifierDashboard() {
             <div>
               <div style={{ width: 28, height: 1, background: '#E47E44', opacity: 0.4, marginBottom: 20 }} />
               {profile?.is_early_access ? (
-                <div style={{ border: '1px solid #E47E44', background: 'rgba(23,23,23,0.04)', padding: 40 }}>
+                <div style={{ border: '1px solid #E47E44', background: 'rgba(var(--ink-rgb),0.04)', padding: 40 }}>
                   <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 8, color: '#E47E44', marginBottom: 12 }}>⚡ EARLY ACCESS MEMBER</p>
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', opacity: 0.7, marginBottom: 40 }}>You get first look at new films, challenges, and features.</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', opacity: 0.7, marginBottom: 40 }}>You get first look at new films, challenges, and features.</p>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {['Script DNA Marketplace', 'Live Screening Rooms', 'Director Matchmaking'].map(f => (
-                      <div key={f} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(23,23,23,0.12)', paddingBottom: 12 }}>
-                        <span style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: '#171717' }}>{f}</span>
-                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 2, background: 'rgba(23,23,23,0.12)', padding: '2px 8px', color: '#E47E44' }}>COMING SOON</span>
+                      <div key={f} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(var(--ink-rgb),0.12)', paddingBottom: 12 }}>
+                        <span style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: 'var(--ink)' }}>{f}</span>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 2, background: 'rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#E47E44' }}>COMING SOON</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div style={{ border: '1px solid rgba(23,23,23,0.18)', padding: 40, opacity: 0.8 }}>
+                <div style={{ border: '1px solid rgba(var(--ink-rgb),0.18)', padding: 40, opacity: 0.8 }}>
                   <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 8, color: '#E47E44', marginBottom: 12 }}>APPLY FOR EARLY ACCESS</p>
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', opacity: 0.6, marginBottom: 32 }}>Join our inner circle for first access to new features and unreleased films.</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', opacity: 0.6, marginBottom: 32 }}>Join our inner circle for first access to new features and unreleased films.</p>
                   <CinemaButton onClick={() => window.location.href='mailto:early@supremetalkies.com'}>APPLY NOW</CinemaButton>
                 </div>
               )}
@@ -234,14 +234,14 @@ export default function AmplifierDashboard() {
                 <textarea 
                   rows={2} placeholder="Shout out a film, a crew member, or share an update..."
                   value={shoutoutMsg} onChange={e => setShoutoutMsg(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(228,126,68,0.28)', color: '#171717', fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, outline: 'none', resize: 'none' }}
+                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(228,126,68,0.28)', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, outline: 'none', resize: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#E47E44', letterSpacing: 5 }}>LINK (OPTIONAL)</label>
                 <input 
                   type="text" placeholder="Attach a link" value={shoutoutLink} onChange={e => setShoutoutLink(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(228,126,68,0.28)', color: '#171717', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none' }}
+                  style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(228,126,68,0.28)', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none' }}
                 />
               </div>
               <CinemaButton onClick={handleShoutout} loading={postingShoutout} disabled={!shoutoutMsg}>POST SHOUTOUT</CinemaButton>
@@ -255,15 +255,15 @@ export default function AmplifierDashboard() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <span style={{ fontSize: 24 }}>{sh.profiles?.avatar_symbol || '👤'}</span>
                       <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#E47E44', margin: 0, fontWeight: 700 }}>{sh.profiles?.full_name?.toUpperCase()}</p>
-                      <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#E47E44', opacity: 0.4, background: 'rgba(23,23,23,0.12)', padding: '2px 6px' }}>{sh.profiles?.st_id ? (sh.profiles.st_id.startsWith('SUPR-') ? sh.profiles.st_id : 'SUPR-' + sh.profiles.st_id) : 'NO-ID'}</span>
+                      <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#E47E44', opacity: 0.4, background: 'rgba(var(--ink-rgb),0.12)', padding: '2px 6px' }}>{sh.profiles?.st_id ? (sh.profiles.st_id.startsWith('SUPR-') ? sh.profiles.st_id : 'SUPR-' + sh.profiles.st_id) : 'NO-ID'}</span>
                     </div>
                     <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#E47E44', opacity: 0.3, margin: 0 }}>{timeAgo(sh.created_at)}</p>
                   </div>
                   
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', lineHeight: 1.7, margin: 0 }}>{sh.message}</p>
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', lineHeight: 1.7, margin: 0 }}>{sh.message}</p>
                   
                   {sh.link && (
-                    <a href={sh.link} target="_blank" rel="noopener noreferrer" style={{ alignSelf: 'flex-start', background: 'rgba(23,23,23,0.12)', color: '#E47E44', textDecoration: 'none', fontSize: 9, padding: '4px 10px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: 1 }}>{sh.link.substring(0, 30)}...</a>
+                    <a href={sh.link} target="_blank" rel="noopener noreferrer" style={{ alignSelf: 'flex-start', background: 'rgba(var(--ink-rgb),0.12)', color: '#E47E44', textDecoration: 'none', fontSize: 9, padding: '4px 10px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: 1 }}>{sh.link.substring(0, 30)}...</a>
                   )}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>

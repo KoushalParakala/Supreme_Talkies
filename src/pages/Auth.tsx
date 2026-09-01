@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { getUsableRoles } from '../lib/profile';
 import { IconMoveRight } from '../components/ReelIcons';
+import ThemeToggle from '../components/ThemeToggle';
 
 function AuthField({
   label,
@@ -160,6 +161,7 @@ export default function Auth() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle className="nav-bubble auth-theme-toggle" />
       <button type="button" className="auth-back text-link" onClick={() => navigate('/')}>
         ← Home
       </button>

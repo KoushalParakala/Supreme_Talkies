@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 import { IconArrowUpRight, IconPlus, IconX } from './ReelIcons';
 import { useFilms } from '../hooks/useFilms';
 
@@ -159,18 +160,21 @@ export default function Nav({ scrolled }: NavProps) {
           </button>
         </div>
       </header>
-      {user && (
-        <div className="nav-bubbles">
-          <NotificationBell
-            open={tray === 'bell'}
-            onOpenChange={(next) => setTray(next ? 'bell' : null)}
-          />
-          <UserMenu
-            open={tray === 'user'}
-            onOpenChange={(next) => setTray(next ? 'user' : null)}
-          />
-        </div>
-      )}
+      <div className="nav-bubbles">
+        <ThemeToggle />
+        {user && (
+          <>
+            <NotificationBell
+              open={tray === 'bell'}
+              onOpenChange={(next) => setTray(next ? 'bell' : null)}
+            />
+            <UserMenu
+              open={tray === 'user'}
+              onOpenChange={(next) => setTray(next ? 'user' : null)}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }

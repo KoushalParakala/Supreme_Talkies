@@ -26,7 +26,7 @@ function CinemaInput({ label, type = 'text', placeholder, value, onChange }: { l
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#E467A6', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -38,7 +38,7 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#E467A6', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: '#171717', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -239,19 +239,19 @@ export default function MarketingDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
       {loading ? (
-        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#171717', opacity: 0.3, letterSpacing: 3 }}>SYNCHRONIZING MISSIONS...</p>
+        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3 }}>SYNCHRONIZING MISSIONS...</p>
       ) : (
         <>
           {/* CAMPAIGNS SECTION */}
           <div id="marketing-campaigns">
             <div style={{ marginBottom: 32 }}>
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#E467A6', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.4, letterSpacing: 3 }}>JOIN ACTIVE MISSIONS AND TRACK PROGRESS</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.4, letterSpacing: 3 }}>JOIN ACTIVE MISSIONS AND TRACK PROGRESS</p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {campaigns.length === 0 ? (
-                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#171717', opacity: 0.25 }}>No active missions detected.</p>
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.25 }}>No active missions detected.</p>
               ) : (
                 campaigns.map((c) => {
                   const target = parseInt(c.reach_target) || 1;
@@ -259,7 +259,7 @@ export default function MarketingDashboard() {
                   const progress = Math.min((actual / target) * 100, 100);
 
                   return (
-                    <div key={c.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(23,23,23,0.12)', padding: 32 }}>
+                    <div key={c.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: 32 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
@@ -268,7 +268,7 @@ export default function MarketingDashboard() {
                               boxShadow: c.status === 'active' ? '0 0 10px #E467A6' : 'none',
                               animation: c.status === 'active' ? 'pulse 2s infinite' : 'none'
                             }} />
-                            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#171717', margin: 0 }}>{c.title}</p>
+                            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: 0 }}>{c.title}</p>
                           </div>
                           <div style={{ display: 'flex', gap: 8 }}>
                             {c.platform?.map((p: string) => (
@@ -283,15 +283,15 @@ export default function MarketingDashboard() {
 
                       <div style={{ marginBottom: 24 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#171717', opacity: 0.4 }}>ACTUAL REACH: {actual.toLocaleString()} / {target.toLocaleString()}</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: 'var(--ink)', opacity: 0.4 }}>ACTUAL REACH: {actual.toLocaleString()} / {target.toLocaleString()}</p>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#E467A6' }}>{Math.round(progress)}%</p>
                         </div>
-                        <div style={{ height: 2, background: 'rgba(23,23,23,0.12)', overflow: 'hidden' }}>
+                        <div style={{ height: 2, background: 'rgba(var(--ink-rgb),0.12)', overflow: 'hidden' }}>
                           <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} style={{ height: '100%', background: '#E467A6' }} />
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(23,23,23,0.04)', gap: 16, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(var(--ink-rgb),0.04)', gap: 16, flexWrap: 'wrap' }}>
                         {myAssignments[c.id] ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
@@ -322,13 +322,13 @@ export default function MarketingDashboard() {
           </div>
 
           {/* IDEA BOARD SECTION */}
-          <div id="marketing-ideas" style={{ paddingTop: 32, borderTop: '1px solid rgba(23,23,23,0.12)' }}>
+          <div id="marketing-ideas" style={{ paddingTop: 32, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
             <div style={{ marginBottom: 32 }}>
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#E467A6', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN IDEA BOARD</p>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.4, letterSpacing: 3 }}>PIN YOUR IDEAS FOR THE TEAM</p>
+              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.4, letterSpacing: 3 }}>PIN YOUR IDEAS FOR THE TEAM</p>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(23,23,23,0.18)', padding: 32, marginBottom: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(var(--ink-rgb),0.18)', padding: 32, marginBottom: 40, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <CinemaTextarea label="NEW IDEA" placeholder="What's your campaign idea?" value={newIdeaText} onChange={setNewIdeaText} rows={3} />
               <CinemaButton onClick={handlePostIdea} loading={postingIdea} disabled={postingIdea || !newIdeaText.trim()} style={{ fontSize: 12, padding: '10px 24px' }}>
                 PIN IDEA 📌
@@ -340,7 +340,7 @@ export default function MarketingDashboard() {
                 const marketingIdeas = ideas;
 
                 if (marketingIdeas.length === 0) {
-                  return <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#171717', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>;
+                  return <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.25, gridColumn: '1 / -1' }}>No ideas pinned yet.</p>;
                 }
 
                 return marketingIdeas.map((idea) => {
@@ -369,7 +369,7 @@ export default function MarketingDashboard() {
                             right: 8,
                             background: 'none',
                             border: 'none',
-                            color: 'rgba(23,23,23,0.35)',
+                            color: 'rgba(var(--ink-rgb),0.35)',
                             cursor: 'pointer',
                             fontSize: 14,
                             fontWeight: 'bold',
@@ -387,7 +387,7 @@ export default function MarketingDashboard() {
                             e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.08)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.color = 'rgba(23,23,23,0.08)';
+                            e.currentTarget.style.color = 'rgba(var(--ink-rgb),0.08)';
                             e.currentTarget.style.backgroundColor = 'transparent';
                           }}
                         >
@@ -436,10 +436,10 @@ export default function MarketingDashboard() {
           </div>
 
           {/* THE COLLAB BRIEF SECTION */}
-          <div style={{ paddingTop: 64, borderTop: '1px solid rgba(23,23,23,0.12)' }}>
+          <div style={{ paddingTop: 64, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
             <div style={{ width: 28, height: 1, background: '#E467A6', opacity: 0.4, marginBottom: 20 }} />
             <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#E467A6', letterSpacing: 2, marginBottom: 6 }}>THE COLLAB BRIEF</p>
-            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: '#171717', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>AMPLIFY THE SIGNAL. MOVE THE CROWD.</p>
+            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>AMPLIFY THE SIGNAL. MOVE THE CROWD.</p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
