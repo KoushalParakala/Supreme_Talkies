@@ -2,17 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-
-const SESSION_KEY = 'st_call_sheet_session_at';
-
-function sessionStartedAt(): string {
-  if (typeof sessionStorage === 'undefined') return new Date().toISOString();
-  const existing = sessionStorage.getItem(SESSION_KEY);
-  if (existing) return existing;
-  const stamp = new Date().toISOString();
-  sessionStorage.setItem(SESSION_KEY, stamp);
-  return stamp;
-}
+import { startOfLocalDay } from '../lib/time';
 
 export interface AppNotification {
   id: string;
@@ -30,26 +20,30 @@ export function useNotifications() {
   const { user } = useAuth();
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const unreadCount = items.filter((n) => !n.read_at).length;
 
   const fetchNotifications = useCallback(async () => {
     if (!user) {
       setItems([]);
+      setError('');
       return;
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(40);
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       setItems((data as AppNotification[]) || []);
+      setError('');
     } catch (err) {
       console.warn('[useNotifications] fetch failed:', err);
+      setError(err instanceof Error ? err.message : 'Could not pull the sheet');
     } finally {
       setLoading(false);
     }
@@ -98,10 +92,10 @@ export function useNotifications() {
     async (ids?: string[]) => {
       if (!user) return;
       try {
-        const { error } = await supabase.rpc('mark_notifications_read', {
+        const { error: rpcError } = await supabase.rpc('mark_notifications_read', {
           p_ids: ids ?? null,
         });
-        if (error) throw error;
+        if (rpcError) throw rpcError;
         setItems((prev) =>
           prev.map((n) =>
             !ids || ids.includes(n.id) ? { ...n, read_at: n.read_at || new Date().toISOString() } : n
@@ -114,10 +108,8 @@ export function useNotifications() {
     [user?.id]
   );
 
-  const sessionStart = useMemo(() => sessionStartedAt(), [user?.id]);
-
   const { offlineItems, liveItems } = useMemo(() => {
-    const start = new Date(sessionStart).getTime();
+    const start = startOfLocalDay().getTime();
     const offline: AppNotification[] = [];
     const live: AppNotification[] = [];
     for (const item of items) {
@@ -125,11 +117,12 @@ export function useNotifications() {
       else live.push(item);
     }
     return { offlineItems: offline, liveItems: live };
-  }, [items, sessionStart]);
+  }, [items]);
 
   return {
     items,
     loading,
+    error,
     unreadCount,
     fetchNotifications,
     markRead,

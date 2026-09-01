@@ -54,7 +54,7 @@ function SheetList({
 
 export default function CallSheet() {
   const navigate = useNavigate();
-  const { loading, offlineItems, liveItems, markRead } = useNotifications();
+  const { loading, error, offlineItems, liveItems, markRead, fetchNotifications } = useNotifications();
 
   const openItem = (item: AppNotification) => {
     void markRead([item.id]);
@@ -80,6 +80,16 @@ export default function CallSheet() {
           <p className="dash-meta">What happened on the lot. Then back to the floor.</p>
         </div>
 
+        {error && (
+          <div className="crew-empty call-sheet-error">
+            <h3>Could not pull the sheet</h3>
+            <p>{error}</p>
+            <button type="button" className="dash-ghost-btn" onClick={() => void fetchNotifications()}>
+              Try again
+            </button>
+          </div>
+        )}
+
         <section className="call-sheet-section">
           <div className="section-line">
             <span className="call-sheet-kicker">While You Were Out</span>
@@ -102,7 +112,7 @@ export default function CallSheet() {
           <SheetList
             items={liveItems}
             emptyTitle="Quiet on set"
-            emptyBody="No new moves since you walked in."
+            emptyBody="Nothing dated today. Older notes sit above."
             loading={loading}
             onOpen={openItem}
           />

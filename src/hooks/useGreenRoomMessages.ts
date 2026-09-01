@@ -41,6 +41,7 @@ export interface GreenRoomMessage {
   external_link_image: string | null;
   reply_to_id: string | null;
   created_at: string;
+  edited_at: string | null;
   author?: GreenRoomAuthor | null;
   film?: GreenRoomFilm | null;
   reply_to?: GreenRoomReply | null;
@@ -54,7 +55,7 @@ export interface ReactionBucket {
 export type ReactionMap = Record<string, Record<ReactionKind, ReactionBucket>>;
 
 const MESSAGE_SELECT = `
-  id, author_id, body, reel_film_id, external_link, external_link_title, external_link_image, reply_to_id, created_at,
+  id, author_id, body, reel_film_id, external_link, external_link_title, external_link_image, reply_to_id, created_at, edited_at,
   author:profiles!author_id (id, full_name, avatar_url, role, roles),
   film:films!reel_film_id (id, title, poster_image, reel_image, stills, duration, director, rating, coming_soon),
   reply_to:green_room_messages!reply_to_id (id, body, author_id, external_link_title)
@@ -92,6 +93,7 @@ function normalizeMessage(raw: Record<string, unknown>): GreenRoomMessage {
     external_link_image: (raw.external_link_image as string | null) ?? null,
     reply_to_id: (raw.reply_to_id as string | null) ?? null,
     created_at: String(raw.created_at),
+    edited_at: (raw.edited_at as string | null) ?? null,
     author: unwrap<GreenRoomAuthor>(raw.author),
     film: unwrap<GreenRoomFilm>(raw.film),
     reply_to: unwrap<GreenRoomReply>(raw.reply_to),
@@ -142,12 +144,27 @@ export function useGreenRoomMessages() {
   const [reactions, setReactions] = useState<ReactionMap>({});
   const [loading, setLoading] = useState(false);
 
-  const mergeMessage = useCallback((incoming: GreenRoomMessage) => {
+  const upsertMessage = useCallback((incoming: GreenRoomMessage) => {
     setMessages((prev) => {
-      if (prev.some((m) => m.id === incoming.id)) return prev;
-      return [...prev, incoming].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      );
+      const idx = prev.findIndex((m) => m.id === incoming.id);
+      if (idx === -1) {
+        return [...prev, incoming].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        );
+      }
+      const next = [...prev];
+      next[idx] = { ...next[idx], ...incoming };
+      return next;
+    });
+  }, []);
+
+  const removeMessage = useCallback((id: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+    setReactions((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
     });
   }, []);
 
@@ -229,7 +246,23 @@ export function useGreenRoomMessages() {
         { event: 'INSERT', schema: 'public', table: 'green_room_messages' },
         (payload) => {
           const raw = payload.new as Record<string, unknown>;
-          void hydrateMessage(normalizeMessage(raw)).then(mergeMessage);
+          void hydrateMessage(normalizeMessage(raw)).then(upsertMessage);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'green_room_messages' },
+        (payload) => {
+          const raw = payload.new as Record<string, unknown>;
+          void hydrateMessage(normalizeMessage(raw)).then(upsertMessage);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'green_room_messages' },
+        (payload) => {
+          const id = (payload.old as { id?: string } | null)?.id;
+          if (id) removeMessage(id);
         },
       )
       .on(
@@ -267,7 +300,7 @@ export function useGreenRoomMessages() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [user?.id, mergeMessage]);
+  }, [user?.id, upsertMessage, removeMessage]);
 
   const sendMessage = useCallback(
     async (input: SendGreenRoomInput) => {
@@ -291,10 +324,47 @@ export function useGreenRoomMessages() {
         .select(MESSAGE_SELECT)
         .single();
       if (error) return { error: error.message };
-      if (data) mergeMessage(normalizeMessage(data as Record<string, unknown>));
+      if (data) upsertMessage(normalizeMessage(data as Record<string, unknown>));
       return { error: null };
     },
-    [user?.id, mergeMessage],
+    [user?.id, upsertMessage],
+  );
+
+  const editMessage = useCallback(
+    async (id: string, body: string) => {
+      if (!user) return { error: 'Not signed in' };
+      const nextBody = body.trim();
+      const current = messages.find((m) => m.id === id);
+      if (!nextBody && !current?.reel_film_id && !current?.external_link) {
+        return { error: 'Write a line or pin a reel' };
+      }
+      const { data, error } = await supabase
+        .from('green_room_messages')
+        .update({ body: nextBody || null })
+        .eq('id', id)
+        .eq('author_id', user.id)
+        .select(MESSAGE_SELECT)
+        .single();
+      if (error) return { error: error.message };
+      if (data) upsertMessage(normalizeMessage(data as Record<string, unknown>));
+      return { error: null };
+    },
+    [user?.id, messages, upsertMessage],
+  );
+
+  const deleteMessage = useCallback(
+    async (id: string) => {
+      if (!user) return { error: 'Not signed in' };
+      const { error } = await supabase
+        .from('green_room_messages')
+        .delete()
+        .eq('id', id)
+        .eq('author_id', user.id);
+      if (error) return { error: error.message };
+      removeMessage(id);
+      return { error: null };
+    },
+    [user?.id, removeMessage],
   );
 
   const toggleReaction = useCallback(
@@ -362,6 +432,8 @@ export function useGreenRoomMessages() {
     reactions,
     loading,
     sendMessage,
+    editMessage,
+    deleteMessage,
     toggleReaction,
     byId,
     emptyBuckets: EMPTY_BUCKET,

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { timeAgo } from '../lib/time';
 import { filmStill } from '../data/films';
@@ -38,19 +39,29 @@ export default function MessageBubble({
   message,
   reactions,
   flash,
+  mine,
   onCallback,
   onReact,
   onScrollTo,
   onOpenExternal,
+  onEdit,
+  onDelete,
 }: {
   message: GreenRoomMessage;
   reactions: Record<ReactionKind, ReactionBucket>;
   flash: boolean;
+  mine: boolean;
   onCallback: (message: GreenRoomMessage) => void;
   onReact: (kind: ReactionKind) => void;
   onScrollTo: (id: string) => void;
   onOpenExternal: (url: string) => void;
+  onEdit: (id: string, body: string) => Promise<{ error: string | null }>;
+  onDelete: (message: GreenRoomMessage) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(message.body || '');
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
   const role = authorRole(message);
   const accent = role ? ROLE_COLORS[role] : undefined;
   const name = message.author?.full_name?.trim() || 'Member';
@@ -76,6 +87,22 @@ export default function MessageBubble({
       ? message.external_link
       : null;
   const externalHref = !internalHref && message.external_link ? message.external_link : null;
+
+  useEffect(() => {
+    if (!editing) setDraft(message.body || '');
+  }, [message.body, editing]);
+
+  const saveEdit = async () => {
+    setSaving(true);
+    setEditError('');
+    const result = await onEdit(message.id, draft);
+    setSaving(false);
+    if (result.error) {
+      setEditError(result.error);
+      return;
+    }
+    setEditing(false);
+  };
 
   const poster = (filmTitle || filmImage) && (
     internalHref ? (
@@ -108,7 +135,7 @@ export default function MessageBubble({
   return (
     <article
       id={`green-room-msg-${message.id}`}
-      className={`green-room-msg${flash ? ' is-flash' : ''}`}
+      className={`green-room-msg${flash ? ' is-flash' : ''}${mine ? ' is-mine' : ''}`}
       style={accent ? { ['--role-accent' as string]: accent } : undefined}
     >
       <div className="crew-avatar">
@@ -122,7 +149,10 @@ export default function MessageBubble({
         <div className="green-room-msg-top">
           <strong>{name}</strong>
           {role && <i className="green-room-role-dot" aria-hidden="true" />}
-          <small className="green-room-time">{timeAgo(message.created_at)}</small>
+          <small className="green-room-time">
+            {timeAgo(message.created_at)}
+            {message.edited_at ? ' · EDITED' : ''}
+          </small>
         </div>
         {message.reply_to_id && (
           <button
@@ -134,7 +164,36 @@ export default function MessageBubble({
             <em>{quoteText(message)}</em>
           </button>
         )}
-        {message.body && <p>{message.body}</p>}
+        {editing ? (
+          <div className="green-room-edit">
+            <textarea
+              value={draft}
+              rows={3}
+              onChange={(e) => setDraft(e.target.value)}
+              autoFocus
+            />
+            {editError && <p className="green-room-picker-error">{editError}</p>}
+            <div className="green-room-edit-actions">
+              <button type="button" className="primary-button" disabled={saving} onClick={() => void saveEdit()}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                className="dash-ghost-btn"
+                disabled={saving}
+                onClick={() => {
+                  setEditing(false);
+                  setEditError('');
+                  setDraft(message.body || '');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          message.body && <p>{message.body}</p>
+        )}
         {poster}
         <div className="green-room-msg-actions">
           {REACTIONS.map(({ kind, label }) => (
@@ -151,6 +210,16 @@ export default function MessageBubble({
           <button type="button" className="green-room-callback-btn" onClick={() => onCallback(message)}>
             Callback
           </button>
+          {mine && !editing && (
+            <>
+              <button type="button" className="green-room-own-btn" onClick={() => setEditing(true)}>
+                Edit
+              </button>
+              <button type="button" className="green-room-own-btn is-danger" onClick={() => onDelete(message)}>
+                Delete
+              </button>
+            </>
+          )}
         </div>
       </div>
     </article>
