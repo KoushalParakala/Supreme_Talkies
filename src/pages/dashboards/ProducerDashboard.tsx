@@ -10,9 +10,9 @@ function CinemaInput({ label, placeholder, value, onChange, type = 'text' }: { l
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#e8472a', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#e8472a' : 'rgba(232,71,42,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#9E5FDD' : 'rgba(158,95,221,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -22,9 +22,9 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#e8472a', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#e8472a' : 'rgba(232,71,42,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#9E5FDD' : 'rgba(158,95,221,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: '#171717', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -35,9 +35,9 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
   return (
     <motion.button type="button" onClick={onClick} disabled={loading || disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: (hov && !loading && !disabled) ? '#e8472a' : 'transparent', color: (hov && !loading && !disabled) ? '#fffdf7' : '#e8472a', opacity: (loading || disabled) ? 0.5 : 1 }}
+      animate={{ background: (hov && !loading && !disabled) ? '#9E5FDD' : 'transparent', color: (hov && !loading && !disabled) ? '#fffdf7' : '#9E5FDD', opacity: (loading || disabled) ? 0.5 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #e8472a', padding: '10px 28px', fontFamily: 'DM Serif Display, serif', fontSize: 12, letterSpacing: 4, display: 'flex', alignItems: 'center', gap: 8, cursor: (loading || disabled) ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: '1px solid #9E5FDD', padding: '10px 28px', fontFamily: 'DM Serif Display, serif', fontSize: 12, letterSpacing: 4, display: 'flex', alignItems: 'center', gap: 8, cursor: (loading || disabled) ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 10, height: 10, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -96,7 +96,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', letterSpacing: 5, textTransform: 'uppercase' }}>
+      <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#9E5FDD', letterSpacing: 5, textTransform: 'uppercase' }}>
         {label} {max && !single && <span style={{ opacity: 0.4, fontSize: 8 }}> (MAX {max})</span>}
       </label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -116,7 +116,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
                   onBlur={() => setCustomTagMode(false)}
                   style={{
                     padding: '6px 14px', borderRadius: 2, background: 'transparent',
-                    border: '1px dashed #e8472a', color: '#171717',
+                    border: '1px dashed #9E5FDD', color: '#171717',
                     fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
                     outline: 'none', width: 120, textTransform: 'uppercase'
                   }}
@@ -131,7 +131,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
               style={{
                 padding: '6px 14px', borderRadius: 2,
                 background: isSelected ? 'rgba(23,23,23,0.14)' : 'transparent',
-                border: `1px solid ${isSelected ? '#e8472a' : 'rgba(23,23,23,0.18)'}`,
+                border: `1px solid ${isSelected ? '#9E5FDD' : 'rgba(23,23,23,0.18)'}`,
                 color: isSelected ? '#171717' : 'rgba(23,23,23,0.45)',
                 fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
                 cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
@@ -495,7 +495,7 @@ export default function ProducerDashboard() {
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(23,23,23,0.14)' }}>
         {TABS.map((t) => (
           <button key={t.id} type="button" onClick={() => setView(t.id as any)}
-            style={{ background: 'none', border: 'none', borderBottom: view === t.id ? '2px solid #e8472a' : '2px solid transparent', padding: '12px 28px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 4, color: view === t.id ? '#e8472a' : 'rgba(23,23,23,0.35)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1 }}
+            style={{ background: 'none', border: 'none', borderBottom: view === t.id ? '2px solid #9E5FDD' : '2px solid transparent', padding: '12px 28px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 4, color: view === t.id ? '#9E5FDD' : 'rgba(23,23,23,0.35)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1 }}
           >{t.label}</button>
         ))}
       </div>
@@ -516,10 +516,10 @@ export default function ProducerDashboard() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
             {scripts.map((s) => (
-              <div key={s.id} style={{ padding: '24px 0', borderBottom: '1px solid rgba(232,71,42,0.08)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div key={s.id} style={{ padding: '24px 0', borderBottom: '1px solid rgba(158,95,221,0.08)', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#e8472a', letterSpacing: 1 }}>{s.title}</p>
-                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(23,23,23,0.12)', border: '1px solid rgba(23,23,23,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#e8472a', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>
+                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#9E5FDD', letterSpacing: 1 }}>{s.title}</p>
+                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(23,23,23,0.12)', border: '1px solid rgba(23,23,23,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>
                     {s.user?.full_name?.substring(0,1).toUpperCase() || '👤'}
                   </span>
                 </div>
@@ -527,19 +527,19 @@ export default function ProducerDashboard() {
                 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                   {s.dna_mood?.map((m: string) => (
-                    <span key={m} style={{ fontSize: 8, background: 'rgba(23,23,23,0.04)', border: '1px solid rgba(23,23,23,0.12)', padding: '2px 8px', color: '#e8472a', letterSpacing: 2, borderRadius: 10 }}>{m.toUpperCase()}</span>
+                    <span key={m} style={{ fontSize: 8, background: 'rgba(23,23,23,0.04)', border: '1px solid rgba(23,23,23,0.12)', padding: '2px 8px', color: '#9E5FDD', letterSpacing: 2, borderRadius: 10 }}>{m.toUpperCase()}</span>
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid rgba(232,71,42,0.08)' }}>
-                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.5, letterSpacing: 3 }}>{s.dna_format?.toUpperCase()}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid rgba(158,95,221,0.08)' }}>
+                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.5, letterSpacing: 3 }}>{s.dna_format?.toUpperCase()}</span>
                   
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       <button onClick={() => handleFire(s.id)}
                         style={{ 
-                          padding: '6px 12px', border: '1px solid rgba(232,71,42,0.1)', background: userFires.has(s.id) ? 'rgba(23,23,23,0.12)' : 'transparent',
-                          borderColor: userFires.has(s.id) ? '#e8472a' : 'rgba(232,71,42,0.1)', color: '#e8472a', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, cursor: userFires.has(s.id) ? 'default' : 'pointer', transition: 'all 0.2s'
+                          padding: '6px 12px', border: '1px solid rgba(158,95,221,0.1)', background: userFires.has(s.id) ? 'rgba(23,23,23,0.12)' : 'transparent',
+                          borderColor: userFires.has(s.id) ? '#9E5FDD' : 'rgba(158,95,221,0.1)', color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, cursor: userFires.has(s.id) ? 'default' : 'pointer', transition: 'all 0.2s'
                         }}
                       >
                         🔥 {fireCounts[s.id] || 0}
@@ -563,7 +563,7 @@ export default function ProducerDashboard() {
           <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(23,23,23,0.14)' }}>
             {(['discover', 'mine'] as const).map(sv => (
               <button key={sv} type="button" onClick={() => setBriefSubView(sv)}
-                style={{ background: 'none', border: 'none', borderBottom: briefSubView === sv ? '2px solid #e8472a' : '2px solid transparent', padding: '10px 24px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 4, color: briefSubView === sv ? '#e8472a' : 'rgba(23,23,23,0.35)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1, textTransform: 'uppercase' }}>
+                style={{ background: 'none', border: 'none', borderBottom: briefSubView === sv ? '2px solid #9E5FDD' : '2px solid transparent', padding: '10px 24px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 4, color: briefSubView === sv ? '#9E5FDD' : 'rgba(23,23,23,0.35)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1, textTransform: 'uppercase' }}>
                 {sv === 'discover' ? 'DISCOVER BRIEFS' : 'MY BRIEFS'}
               </button>
             ))}
@@ -586,13 +586,13 @@ export default function ProducerDashboard() {
                   const interestCount = b.brief_interests?.[0]?.count || 0;
                   const hasInterested = userBriefInterests.has(b.id);
                   return (
-                    <div key={b.id} style={{ background: '#f7f5ef', border: `1px solid ${hasInterested ? 'rgba(232,71,42,0.4)' : 'rgba(23,23,23,0.14)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
+                    <div key={b.id} style={{ background: '#f7f5ef', border: `1px solid ${hasInterested ? 'rgba(158,95,221,0.4)' : 'rgba(23,23,23,0.14)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                           <h3 style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 20, color: '#171717', margin: '0 0 6px' }}>{b.title}</h3>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {b.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {b.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
                         </div>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#e8472a', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
                           {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'BE FIRST'}
                         </p>
                       </div>
@@ -602,7 +602,7 @@ export default function ProducerDashboard() {
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
                         {b.genre?.length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                               {b.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: '#171717', background: 'rgba(23,23,23,0.04)', padding: '2px 8px', border: '1px solid rgba(23,23,23,0.12)' }}>{g}</span>)}
                             </div>
@@ -610,14 +610,14 @@ export default function ProducerDashboard() {
                         )}
                         {b.looking_for?.length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                              {b.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: '#e8472a', border: '1px solid #e8472a', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
+                              {b.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: '#9E5FDD', border: '1px solid #9E5FDD', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
                             </div>
                           </div>
                         )}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
                         </div>
                       </div>
@@ -626,7 +626,7 @@ export default function ProducerDashboard() {
                         <CinemaButton
                           onClick={() => handleBriefInterest(b.id)}
                           loading={togglingInterest === b.id}
-                          style={hasInterested ? { borderColor: '#e8472a', color: '#e8472a', background: 'rgba(232,71,42,0.08)' } : {}}
+                          style={hasInterested ? { borderColor: '#9E5FDD', color: '#9E5FDD', background: 'rgba(158,95,221,0.08)' } : {}}
                         >
                           {togglingInterest === b.id ? '...' : hasInterested ? '✦ INTERESTED — WITHDRAW' : '+ EXPRESS INTEREST'}
                         </CinemaButton>
@@ -641,7 +641,7 @@ export default function ProducerDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#e8472a', letterSpacing: 2, marginBottom: 6 }}>MY BRIEFS</p>
+                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#9E5FDD', letterSpacing: 2, marginBottom: 6 }}>MY BRIEFS</p>
                   <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#171717', opacity: 0.4, letterSpacing: 3 }}>MANAGE YOUR OPEN CALLS</p>
                 </div>
                 <CinemaButton onClick={() => setShowNewBriefForm(!showNewBriefForm)}>
@@ -709,13 +709,13 @@ export default function ProducerDashboard() {
                             {isTrending && (
                               <motion.span 
                                 animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                                style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, fontWeight: 800, color: '#e8472a', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 4 }}
+                                style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, fontWeight: 800, color: '#9E5FDD', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 4 }}
                               >
                                 🔥 TRENDING
                               </motion.span>
                             )}
                           </div>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#e8472a', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
                             {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'NO INTERESTS YET'}
                           </p>
                         </div>
@@ -724,7 +724,7 @@ export default function ProducerDashboard() {
 
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
                             <div style={{ display: 'flex', gap: 8 }}>
                               {b.genre?.map((g: string) => (
                                 <span key={g} style={{ fontSize: 9, color: '#171717', background: 'rgba(23,23,23,0.04)', padding: '2px 8px', border: '1px solid rgba(23,23,23,0.12)' }}>{g}</span>
@@ -732,15 +732,15 @@ export default function ProducerDashboard() {
                             </div>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
                             <div style={{ display: 'flex', gap: 8 }}>
                               {b.looking_for?.map((l: string) => (
-                                <span key={l} style={{ fontSize: 9, color: '#e8472a', border: '1px solid #e8472a', padding: '2px 8px' }}>{l.toUpperCase()}</span>
+                                <span key={l} style={{ fontSize: 9, color: '#9E5FDD', border: '1px solid #9E5FDD', padding: '2px 8px' }}>{l.toUpperCase()}</span>
                               ))}
                             </div>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
                             <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
                           </div>
                         </div>
@@ -755,7 +755,7 @@ export default function ProducerDashboard() {
                             </CinemaButton>
                             <button 
                               onClick={() => handleToggleBriefStatus(b.id, b.is_open)}
-                              style={{ background: 'none', border: '1px solid rgba(232,71,42,0.28)', color: '#e8472a', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3, padding: '10px 20px', cursor: 'pointer' }}
+                              style={{ background: 'none', border: '1px solid rgba(158,95,221,0.28)', color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3, padding: '10px 20px', cursor: 'pointer' }}
                             >
                               {b.is_open ? 'CLOSE BRIEF' : 'REOPEN BRIEF'}
                             </button>
@@ -775,23 +775,23 @@ export default function ProducerDashboard() {
                               style={{ overflow: 'hidden', marginTop: 12, borderTop: '1px solid rgba(23,23,23,0.04)', paddingTop: 20 }}
                             >
                               {loadingInterests === b.id ? (
-                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', opacity: 0.4 }}>SCANNING SIGNALS...</p>
+                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#9E5FDD', opacity: 0.4 }}>SCANNING SIGNALS...</p>
                               ) : !interests[b.id] || interests[b.id].length === 0 ? (
                                 <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#171717', opacity: 0.3 }}>No interests recorded yet.</p>
                               ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                                   {interests[b.id].map((interest) => (
-                                    <div key={interest.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f7f5ef', padding: '12px 20px', borderLeft: '2px solid #e8472a' }}>
+                                    <div key={interest.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f7f5ef', padding: '12px 20px', borderLeft: '2px solid #9E5FDD' }}>
                                       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                                        <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(23,23,23,0.12)', border: '1px solid rgba(23,23,23,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#e8472a', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, flexShrink: 0 }}>
+                                        <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(23,23,23,0.12)', border: '1px solid rgba(23,23,23,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, flexShrink: 0 }}>
                                           {interest.user?.full_name?.substring(0,1).toUpperCase() || '?'}
                                         </span>
                                         <div>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                             <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: '#171717', margin: 0 }}>{interest.user?.full_name || 'Unknown'}</p>
-                                            {interest.user?.st_verified && <span style={{ color: '#e8472a', fontSize: 10 }}>✦</span>}
+                                            {interest.user?.st_verified && <span style={{ color: '#9E5FDD', fontSize: 10 }}>✦</span>}
                                           </div>
-                                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
+                                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
                                             {interest.user?.role?.toUpperCase()} • {interest.user?.st_id ? (interest.user.st_id.startsWith('SUPR-') ? interest.user.st_id : `SUPR-${interest.user.st_id}`) : 'N/A'}
                                           </p>
                                           {interest.note && (
@@ -802,7 +802,7 @@ export default function ProducerDashboard() {
                                         </div>
                                       </div>
                                       <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
-                                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#e8472a', opacity: 0.3, margin: 0 }}>
+                                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', opacity: 0.3, margin: 0 }}>
                                           {new Date(interest.created_at).toLocaleDateString()}
                                         </p>
                                         <CinemaButton 
@@ -836,13 +836,13 @@ export default function ProducerDashboard() {
             {technicians.map((t) => (
               <div key={t.id} style={{ border: '1px solid rgba(23,23,23,0.14)', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 36, height: 36, border: '1px solid rgba(232,71,42,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{t.avatar_symbol || '👤'}</div>
+                  <div style={{ width: 36, height: 36, border: '1px solid rgba(158,95,221,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{t.avatar_symbol || '👤'}</div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: '#171717', letterSpacing: 1, margin: 0 }}>{t.full_name}</p>
-                      {t.st_verified && <span style={{ color: '#e8472a', fontSize: 10 }}>✦</span>}
+                      {t.st_verified && <span style={{ color: '#9E5FDD', fontSize: 10 }}>✦</span>}
                     </div>
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.6, letterSpacing: 3 }}>{t.niche?.toUpperCase() || t.role?.toUpperCase() || 'CREW'}</p>
+                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.6, letterSpacing: 3 }}>{t.niche?.toUpperCase() || t.role?.toUpperCase() || 'CREW'}</p>
                   </div>
                 </div>
                 {t.note_to_team && (
@@ -853,14 +853,14 @@ export default function ProducerDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                   {t.portfolio_url ? (
                     <a href={t.portfolio_url} target="_blank" rel="noopener noreferrer"
-                      style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#e8472a', opacity: 0.8, letterSpacing: 2, textDecoration: 'underline' }}>
+                      style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#9E5FDD', opacity: 0.8, letterSpacing: 2, textDecoration: 'underline' }}>
                       VIEW SHOWREEL →
                     </a>
                   ) : (
-                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.4 }}>NO PORTFOLIO</span>
+                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.4 }}>NO PORTFOLIO</span>
                   )}
                   {t.contact && (
-                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#e8472a', opacity: 0.7 }}>
+                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.7 }}>
                       {t.contact}
                     </span>
                   )}

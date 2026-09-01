@@ -786,25 +786,43 @@ footer .brand-lockup { color:var(--background); }
   border-color: var(--vermilion);
   color: #fffdf7;
 }
-.dash-presenter {
-  --vermilion: #86dcc9;
-  --primary: #86dcc9;
-  --ring: #86dcc9;
+.dash-role-writer { --vermilion: #4994DF; --primary: #4994DF; --role-on-accent: #fffdf7; }
+.dash-role-technician { --vermilion: #47D198; --primary: #47D198; --role-on-accent: #171717; }
+.dash-role-producer { --vermilion: #9E5FDD; --primary: #9E5FDD; --role-on-accent: #fffdf7; }
+.dash-role-presenter { --vermilion: #86dcc9; --primary: #86dcc9; --role-on-accent: #171717; }
+.dash-role-marketing { --vermilion: #E467A6; --primary: #E467A6; --role-on-accent: #fffdf7; }
+.dash-role-amplifier { --vermilion: #E47E44; --primary: #E47E44; --role-on-accent: #fffdf7; }
+.dash-role .dash-role-switch button.is-active {
+  color: var(--role-on-accent);
 }
-.dash-presenter .dash-role-switch button.is-active {
-  color: #171717;
+.dash-role .primary-button {
+  background: var(--vermilion);
+  color: var(--role-on-accent);
 }
-.dash-presenter .primary-button {
-  background: #86dcc9;
-  color: #171717;
+.dash-role .dash-ghost-btn:hover {
+  background: var(--vermilion);
+  border-color: var(--vermilion);
+  color: var(--role-on-accent);
 }
-.dash-presenter .dash-ghost-btn:hover {
-  background: #86dcc9;
-  border-color: #86dcc9;
-  color: #171717;
+.dash-role .dash-loading p {
+  color: var(--vermilion);
 }
-.dash-presenter .dash-loading p {
-  color: #86dcc9;
+.member-grid.roles-six .member-tile {
+  background: color-mix(in srgb, var(--tile-accent) 14%, var(--background));
+}
+.member-grid.roles-six .member-tile .tile-index,
+.member-grid.roles-six .member-tile svg {
+  color: var(--tile-accent);
+}
+.member-grid.roles-six .member-tile:hover {
+  background: var(--tile-accent);
+  color: var(--tile-on);
+}
+.member-grid.roles-six .member-tile:hover h3,
+.member-grid.roles-six .member-tile:hover p,
+.member-grid.roles-six .member-tile:hover .tile-index,
+.member-grid.roles-six .member-tile:hover svg {
+  color: var(--tile-on);
 }
 .dash-footer-actions {
   margin-top: 4.5rem;
