@@ -911,6 +911,107 @@ footer .brand-lockup { color:var(--background); }
   --primary: #4994DF;
   --primary-foreground: #fffdf7;
   --role-on-accent: #fffdf7;
+  --background: color-mix(in srgb, #4994DF 8%, #eeece6);
+  --foreground: #171717;
+  --ink: #171717;
+  --card: color-mix(in srgb, #4994DF 6%, #e7e4dd);
+  --muted: color-mix(in srgb, #4994DF 7%, #d9d6ce);
+  --muted-foreground: #72716d;
+  --border: color-mix(in srgb, #4994DF 16%, #cbc8c0);
+  --ink-rgb: 23, 23, 23;
+  --lift: color-mix(in srgb, #4994DF 5%, #f7f5ef);
+}
+.dash-role-technician {
+  --vermilion: #47D198;
+  --primary: #47D198;
+  --primary-foreground: #171717;
+  --role-on-accent: #171717;
+  --background: color-mix(in srgb, #47D198 8%, #eeece6);
+  --foreground: #171717;
+  --ink: #171717;
+  --card: color-mix(in srgb, #47D198 6%, #e7e4dd);
+  --muted: color-mix(in srgb, #47D198 7%, #d9d6ce);
+  --muted-foreground: #72716d;
+  --border: color-mix(in srgb, #47D198 16%, #cbc8c0);
+  --ink-rgb: 23, 23, 23;
+  --lift: color-mix(in srgb, #47D198 5%, #f7f5ef);
+}
+.dash-role-producer {
+  --vermilion: #9E5FDD;
+  --primary: #9E5FDD;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
+  --background: color-mix(in srgb, #9E5FDD 8%, #eeece6);
+  --foreground: #171717;
+  --ink: #171717;
+  --card: color-mix(in srgb, #9E5FDD 6%, #e7e4dd);
+  --muted: color-mix(in srgb, #9E5FDD 7%, #d9d6ce);
+  --muted-foreground: #72716d;
+  --border: color-mix(in srgb, #9E5FDD 16%, #cbc8c0);
+  --ink-rgb: 23, 23, 23;
+  --lift: color-mix(in srgb, #9E5FDD 5%, #f7f5ef);
+}
+.dash-role-presenter {
+  --vermilion: #86dcc9;
+  --primary: #86dcc9;
+  --primary-foreground: #171717;
+  --role-on-accent: #171717;
+  --background: color-mix(in srgb, #86dcc9 9%, #eeece6);
+  --foreground: #171717;
+  --ink: #171717;
+  --card: color-mix(in srgb, #86dcc9 6%, #e7e4dd);
+  --muted: color-mix(in srgb, #86dcc9 7%, #d9d6ce);
+  --muted-foreground: #72716d;
+  --border: color-mix(in srgb, #86dcc9 16%, #cbc8c0);
+  --ink-rgb: 23, 23, 23;
+  --lift: color-mix(in srgb, #86dcc9 5%, #f7f5ef);
+}
+.dash-role-marketing {
+  --vermilion: #E467A6;
+  --primary: #E467A6;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
+  --background: color-mix(in srgb, #E467A6 8%, #eeece6);
+  --foreground: #171717;
+  --ink: #171717;
+  --card: color-mix(in srgb, #E467A6 6%, #e7e4dd);
+  --muted: color-mix(in srgb, #E467A6 7%, #d9d6ce);
+  --muted-foreground: #72716d;
+  --border: color-mix(in srgb, #E467A6 16%, #cbc8c0);
+  --ink-rgb: 23, 23, 23;
+  --lift: color-mix(in srgb, #E467A6 5%, #f7f5ef);
+}
+.dash-role-amplifier {
+  --vermilion: #E47E44;
+  --primary: #E47E44;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
+  --background: color-mix(in srgb, #E47E44 8%, #eeece6);
+  --foreground: #171717;
+  --ink: #171717;
+  --card: color-mix(in srgb, #E47E44 6%, #e7e4dd);
+  --muted: color-mix(in srgb, #E47E44 7%, #d9d6ce);
+  --muted-foreground: #72716d;
+  --border: color-mix(in srgb, #E47E44 16%, #cbc8c0);
+  --ink-rgb: 23, 23, 23;
+  --lift: color-mix(in srgb, #E47E44 5%, #f7f5ef);
+}
+.dash-role-admin {
+  --vermilion: #c9a153;
+  --primary: #c9a153;
+  --primary-foreground: #171717;
+  --role-on-accent: #171717;
+  --background: color-mix(in srgb, #c9a153 8%, #eeece6);
+  --foreground: #171717;
+  --ink: #171717;
+  --card: color-mix(in srgb, #c9a153 6%, #e7e4dd);
+  --muted: color-mix(in srgb, #c9a153 7%, #d9d6ce);
+  --muted-foreground: #72716d;
+  --border: color-mix(in srgb, #c9a153 16%, #cbc8c0);
+  --ink-rgb: 23, 23, 23;
+  --lift: color-mix(in srgb, #c9a153 5%, #f7f5ef);
+}
+html[data-theme="dark"] .dash-role-writer {
   --background: #04060c;
   --foreground: #b8c6d6;
   --ink: #b8c6d6;
@@ -918,14 +1019,10 @@ footer .brand-lockup { color:var(--background); }
   --muted: #0c1420;
   --muted-foreground: #6a7e94;
   --border: #1a2838;
-  --ink-rgb: 184,198,214;
+  --ink-rgb: 184, 198, 214;
   --lift: #0a1018;
 }
-.dash-role-technician {
-  --vermilion: #47D198;
-  --primary: #47D198;
-  --primary-foreground: #171717;
-  --role-on-accent: #171717;
+html[data-theme="dark"] .dash-role-technician {
   --background: #040806;
   --foreground: #b4cfc4;
   --ink: #b4cfc4;
@@ -933,14 +1030,10 @@ footer .brand-lockup { color:var(--background); }
   --muted: #0c1a14;
   --muted-foreground: #6a8a7c;
   --border: #1a3028;
-  --ink-rgb: 180,207,196;
+  --ink-rgb: 180, 207, 196;
   --lift: #0a1612;
 }
-.dash-role-producer {
-  --vermilion: #9E5FDD;
-  --primary: #9E5FDD;
-  --primary-foreground: #fffdf7;
-  --role-on-accent: #fffdf7;
+html[data-theme="dark"] .dash-role-producer {
   --background: #07040c;
   --foreground: #c8bcd6;
   --ink: #c8bcd6;
@@ -948,14 +1041,10 @@ footer .brand-lockup { color:var(--background); }
   --muted: #160c20;
   --muted-foreground: #8a7a9c;
   --border: #2a1c38;
-  --ink-rgb: 200,188,214;
+  --ink-rgb: 200, 188, 214;
   --lift: #120a1a;
 }
-.dash-role-presenter {
-  --vermilion: #86dcc9;
-  --primary: #86dcc9;
-  --primary-foreground: #171717;
-  --role-on-accent: #171717;
+html[data-theme="dark"] .dash-role-presenter {
   --background: #040807;
   --foreground: #b4cfc8;
   --ink: #b4cfc8;
@@ -963,14 +1052,10 @@ footer .brand-lockup { color:var(--background); }
   --muted: #0c1a16;
   --muted-foreground: #6a8a84;
   --border: #1a302c;
-  --ink-rgb: 180,207,200;
+  --ink-rgb: 180, 207, 200;
   --lift: #0a1614;
 }
-.dash-role-marketing {
-  --vermilion: #E467A6;
-  --primary: #E467A6;
-  --primary-foreground: #fffdf7;
-  --role-on-accent: #fffdf7;
+html[data-theme="dark"] .dash-role-marketing {
   --background: #0a0408;
   --foreground: #d4bcc8;
   --ink: #d4bcc8;
@@ -978,14 +1063,10 @@ footer .brand-lockup { color:var(--background); }
   --muted: #1c0c16;
   --muted-foreground: #9a7a88;
   --border: #301820;
-  --ink-rgb: 212,188,200;
+  --ink-rgb: 212, 188, 200;
   --lift: #160a12;
 }
-.dash-role-amplifier {
-  --vermilion: #E47E44;
-  --primary: #E47E44;
-  --primary-foreground: #fffdf7;
-  --role-on-accent: #fffdf7;
+html[data-theme="dark"] .dash-role-amplifier {
   --background: #0a0604;
   --foreground: #d4c4b4;
   --ink: #d4c4b4;
@@ -993,14 +1074,10 @@ footer .brand-lockup { color:var(--background); }
   --muted: #1c1410;
   --muted-foreground: #9a8474;
   --border: #302018;
-  --ink-rgb: 212,196,180;
+  --ink-rgb: 212, 196, 180;
   --lift: #160e0a;
 }
-.dash-role-admin {
-  --vermilion: #c9a153;
-  --primary: #c9a153;
-  --primary-foreground: #171717;
-  --role-on-accent: #171717;
+html[data-theme="dark"] .dash-role-admin {
   --background: #06050a;
   --foreground: #d4ccb8;
   --ink: #d4ccb8;
@@ -1008,7 +1085,7 @@ footer .brand-lockup { color:var(--background); }
   --muted: #18160c;
   --muted-foreground: #9a9078;
   --border: #2a2418;
-  --ink-rgb: 212,204,184;
+  --ink-rgb: 212, 204, 184;
   --lift: #14120a;
 }
 .dash-role .dash-role-switch button.is-active {
