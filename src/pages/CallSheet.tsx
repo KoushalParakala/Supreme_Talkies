@@ -1,122 +1,165 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Nav from '../components/Nav';
-import { useNotifications, type AppNotification } from '../hooks/useNotifications';
-import { timeAgo } from '../lib/time';
+import { useAuth } from '../context/AuthContext';
+import { ROLE_COLORS } from '../lib/roleColors';
+import {
+  CALL_SHEET_ROLE_LABELS,
+  useCallSheet,
+  type CallSheetRole,
+  type CallSheetUnit,
+} from '../hooks/useCallSheet';
 
-function SheetList({
-  items,
-  emptyTitle,
-  emptyBody,
-  loading,
+const UNIT_ACCENT: Record<CallSheetRole, string> = {
+  writer: ROLE_COLORS.writer,
+  technician: ROLE_COLORS.technician,
+  producer: ROLE_COLORS.producer,
+  presenter: ROLE_COLORS.presenter,
+  marketing: ROLE_COLORS.marketing,
+  amplifier: ROLE_COLORS.amplifier,
+  admin: '#c9a153',
+};
+
+function pad(n: number): string {
+  return String(Math.max(0, n)).padStart(2, '0');
+}
+
+function UnitCard({
+  unit,
   onOpen,
 }: {
-  items: AppNotification[];
-  emptyTitle: string;
-  emptyBody: string;
-  loading: boolean;
-  onOpen: (item: AppNotification) => void;
+  unit: CallSheetUnit;
+  onOpen: (role: CallSheetRole) => void;
 }) {
-  if (loading && items.length === 0) {
-    return (
-      <div className="dash-loading dash-loading-inline">
-        <p>Pulling the sheet…</p>
-      </div>
-    );
-  }
-  if (items.length === 0) {
-    return (
-      <div className="crew-empty">
-        <h3>{emptyTitle}</h3>
-        <p>{emptyBody}</p>
-      </div>
-    );
-  }
+  const accent = UNIT_ACCENT[unit.role];
   return (
-    <div className="crew-list">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          className={`crew-row call-sheet-row${item.read_at ? '' : ' is-unread'}`}
-          onClick={() => onOpen(item)}
-        >
-          <div>
-            <h2>{item.title}</h2>
-            {item.body && <p className="call-sheet-body">{item.body}</p>}
-            <p className="call-sheet-time">{timeAgo(item.created_at)}</p>
+    <article
+      className="call-sheet-unit"
+      style={{ ['--role-accent' as string]: accent }}
+    >
+      <div className="call-sheet-unit-head">
+        <span>{unit.kicker}</span>
+        <span>{pad(unit.rows.length)} LINES</span>
+      </div>
+      <div className={`call-sheet-tiles call-sheet-tiles-${unit.tiles.length}`}>
+        {unit.tiles.map((tile) => (
+          <div key={tile.id} className="call-sheet-tile">
+            <b>{pad(tile.count)}</b>
+            <span>{tile.label}</span>
           </div>
+        ))}
+      </div>
+      <div className="call-sheet-on">
+        <span className="call-sheet-on-kicker">On the sheet</span>
+        {unit.rows.length === 0 ? (
+          <p className="call-sheet-on-empty">{unit.empty}</p>
+        ) : (
+          unit.rows.map((row) => (
+            <button
+              key={row.id}
+              type="button"
+              className="call-sheet-line"
+              onClick={() => onOpen(unit.role)}
+            >
+              <strong>{row.title}</strong>
+              <small>{row.meta}</small>
+            </button>
+          ))
+        )}
+      </div>
+      <div className="call-sheet-unit-foot">
+        <button type="button" className="dash-ghost-btn" onClick={() => onOpen(unit.role)}>
+          Open the {unit.label} room
         </button>
-      ))}
-    </div>
+      </div>
+    </article>
   );
 }
 
 export default function CallSheet() {
   const navigate = useNavigate();
-  const { loading, error, offlineItems, liveItems, markRead, fetchNotifications } = useNotifications();
+  const { profile, displayName, isAdmin } = useAuth();
+  const { roles, units, loading, error, fetchSheet } = useCallSheet();
 
-  const openItem = (item: AppNotification) => {
-    void markRead([item.id]);
-    if (item.link) navigate(item.link);
+  const openRole = (role: CallSheetRole) => {
+    navigate('/dashboard', { state: { activeRole: role } });
   };
+
+  const crafts = roles.map((role) => CALL_SHEET_ROLE_LABELS[role]).join(' · ');
+  const stId = profile?.st_id
+    ? profile.st_id.startsWith('SUPR-')
+      ? profile.st_id
+      : `SUPR-${profile.st_id}`
+    : null;
+  const soloRole = roles.length === 1 ? roles[0] : null;
+  const shellRole = soloRole && soloRole !== 'admin' ? soloRole : null;
 
   return (
     <motion.div
-      className="dash-shell site-page sub-page"
+      className={`dash-shell site-page sub-page${shellRole ? ` dash-role dash-role-${shellRole}` : ''}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
       <Nav scrolled={true} />
-      <div className="dash-body">
+      <div className={`dash-body${shellRole ? ` dash-role dash-role-${shellRole}` : ''}`}>
         <div className="dash-masthead">
           <div className="section-line dash-section-line">
             <span>08 / THE CALL SHEET</span>
-            <span>WHAT HAPPENED ON THE LOT <i /></span>
+            <span>WHAT HAS BEEN DONE <i /></span>
           </div>
           <h1>The Call <em>Sheet</em></h1>
-          <p className="dash-meta">What happened on the lot. Then back to the floor.</p>
+          <p className="dash-meta">
+            <span>{displayName || 'Member'}</span>
+            {stId && (
+              <>
+                <span className="dash-meta-sep">/</span>
+                <span className="dash-id">{stId}</span>
+              </>
+            )}
+            {crafts && (
+              <>
+                <span className="dash-meta-sep">/</span>
+                <span>{crafts}</span>
+              </>
+            )}
+          </p>
         </div>
 
         {error && (
           <div className="crew-empty call-sheet-error">
             <h3>Could not pull the sheet</h3>
             <p>{error}</p>
-            <button type="button" className="dash-ghost-btn" onClick={() => void fetchNotifications()}>
+            <button type="button" className="dash-ghost-btn" onClick={() => void fetchSheet()}>
               Try again
             </button>
           </div>
         )}
 
-        <section className="call-sheet-section">
-          <div className="section-line">
-            <span className="call-sheet-kicker">While You Were Out</span>
-            <span>{String(offlineItems.length).padStart(2, '0')} NOTES</span>
+        {loading && units.length === 0 && (
+          <div className="dash-loading dash-loading-inline">
+            <p>Pulling the sheet…</p>
           </div>
-          <SheetList
-            items={offlineItems}
-            emptyTitle="Quiet on set"
-            emptyBody="Nothing stacked up while you were away."
-            loading={loading}
-            onOpen={openItem}
-          />
-        </section>
+        )}
 
-        <section className="call-sheet-section">
-          <div className="section-line">
-            <span className="call-sheet-kicker">Today’s Sheet</span>
-            <span>{String(liveItems.length).padStart(2, '0')} LIVE</span>
+        {!loading && roles.length === 0 && !isAdmin && (
+          <div className="crew-empty">
+            <h3>No craft on the sheet</h3>
+            <p>Pick a role and the numbers will land here.</p>
+            <button type="button" className="dash-ghost-btn" onClick={() => navigate('/role-select')}>
+              Choose a role
+            </button>
           </div>
-          <SheetList
-            items={liveItems}
-            emptyTitle="Quiet on set"
-            emptyBody="Nothing dated today. Older notes sit above."
-            loading={loading}
-            onOpen={openItem}
-          />
-        </section>
+        )}
+
+        {units.length > 0 && (
+          <div className={`call-sheet-units${units.length === 1 ? ' is-solo' : ''}`}>
+            {units.map((unit) => (
+              <UnitCard key={unit.role} unit={unit} onOpen={openRole} />
+            ))}
+          </div>
+        )}
 
         <div className="dash-footer-actions">
           <button type="button" className="primary-button" onClick={() => navigate('/green-room')}>

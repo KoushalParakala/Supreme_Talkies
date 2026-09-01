@@ -2675,26 +2675,149 @@ html[data-theme="dark"] .casting-logo {
 .nav-tray-foot:hover {
   color: var(--vermilion);
 }
-.call-sheet-section {
-  margin-bottom: 3.2rem;
+.call-sheet-units {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.6rem;
+  align-items: stretch;
 }
-.call-sheet-kicker {
+.call-sheet-units.is-solo {
+  grid-template-columns: 1fr;
+  max-width: 860px;
+}
+.call-sheet-unit {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--background);
+  border: 1px solid var(--ink);
+  border-left: 3px solid var(--role-accent, var(--ink));
+  box-shadow: 14px 14px 0 rgba(23, 23, 23, 0.09);
+  padding: 22px 22px 18px;
+}
+.call-sheet-unit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.3rem;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.call-sheet-unit-head span:last-child {
   color: var(--gold);
 }
-.call-sheet-row.is-unread {
-  box-shadow: inset 3px 0 0 var(--vermilion);
+.call-sheet-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 1.2rem;
 }
-.call-sheet-body {
-  margin: 6px 0 8px !important;
-  font-size: 13px !important;
-  letter-spacing: 0 !important;
-  text-transform: none !important;
-  color: var(--muted-foreground) !important;
+.call-sheet-units.is-solo .call-sheet-tiles-5,
+.call-sheet-units.is-solo .call-sheet-tiles-6 {
+  grid-template-columns: repeat(6, 1fr);
 }
-.call-sheet-time {
-  color: var(--gold) !important;
-  font-size: 9px !important;
-  letter-spacing: 0.14em !important;
+.call-sheet-tile {
+  border: 1px solid var(--border);
+  background: var(--lift);
+  padding: 12px 10px 10px;
+  min-width: 0;
+}
+.call-sheet-tile b {
+  display: block;
+  font: 400 2rem / 0.9 "DM Serif Display", serif;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.call-sheet-tile span {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  line-height: 1.35;
+}
+.call-sheet-on {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.call-sheet-on-kicker {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+.call-sheet-on-empty {
+  margin: 8px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.call-sheet-line {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  padding: 10px 0;
+  color: var(--ink);
+  cursor: pointer;
+}
+.call-sheet-line:last-of-type {
+  border-bottom: 0;
+}
+.call-sheet-line:hover strong {
+  color: var(--role-accent, var(--vermilion));
+}
+.call-sheet-line strong {
+  display: block;
+  font: 400 1.2rem / 1.1 "DM Serif Display", serif;
+  margin-bottom: 4px;
+}
+.call-sheet-line small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.call-sheet-unit-foot {
+  margin-top: 16px;
+}
+.call-sheet-unit-foot .dash-ghost-btn {
+  padding: 10px 14px;
+}
+.call-sheet-error {
+  margin-bottom: 2rem;
+}
+.call-sheet-error .dash-ghost-btn,
+.crew-empty .dash-ghost-btn {
+  margin-top: 16px;
+}
+html[data-theme="dark"] .call-sheet-unit {
+  box-shadow: 14px 14px 0 rgba(0, 0, 0, 0.28);
+}
+@media (max-width: 800px) {
+  .call-sheet-units,
+  .call-sheet-units.is-solo {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+  .call-sheet-units.is-solo .call-sheet-tiles-5,
+  .call-sheet-units.is-solo .call-sheet-tiles-6,
+  .call-sheet-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .call-sheet-unit {
+    padding: 18px 16px 16px;
+  }
 }
 .green-room-page .dash-body {
   padding-bottom: 2.4rem;
@@ -2944,12 +3067,6 @@ html[data-theme="dark"] .casting-logo {
   display: flex;
   gap: 10px;
   margin-bottom: 12px;
-}
-.call-sheet-error {
-  margin-bottom: 2rem;
-}
-.call-sheet-error .dash-ghost-btn {
-  margin-top: 16px;
 }
 .green-room-callback-btn:hover,
 .green-room-rxn:hover {
