@@ -4,18 +4,14 @@ import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 
-const ACCENT = '#86dcc9';
-const ACCENT_DIM = 'rgba(134, 220, 201, 0.32)';
-const ACCENT_FAINT = 'rgba(134, 220, 201, 0.14)';
-
 /* ── Shared UI Components ── */
 function CinemaInput({ label, type = 'text', placeholder, value, onChange }: { label: string; type?: string; placeholder?: string; value: string; onChange: (v: string) => void; }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: ACCENT, letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#BCA88E' : 'rgba(188,168,142,0.3)'}`, paddingBottom: 10, fontFamily: 'Inter, monospace', fontSize: 14, color: '#F0EBE0', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -25,9 +21,9 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: ACCENT, letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? ACCENT : ACCENT_DIM}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#BCA88E' : 'rgba(188,168,142,0.3)'}`, paddingBottom: 10, fontFamily: 'Inter, monospace', fontSize: 14, color: '#F0EBE0', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -38,9 +34,9 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
   return (
     <motion.button type="button" onClick={onClick} disabled={loading || disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !loading && !disabled ? ACCENT : 'transparent', color: hov && !loading && !disabled ? '#171717' : ACCENT, opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !loading && !disabled ? '#BCA88E' : 'transparent', color: hov && !loading && !disabled ? '#1e2029' : '#BCA88E', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: `1px solid ${ACCENT}`, padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: '1px solid #BCA88E', padding: '13px 44px', fontFamily: 'Playfair Display, sans-serif', fontSize: 15, letterSpacing: 5, display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -49,7 +45,7 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  submitted: { bg: ACCENT_FAINT, color: ACCENT, label: 'IN REVIEW' },
+  submitted: { bg: 'rgba(188,168,142,0.15)', color: '#BCA88E', label: 'IN REVIEW' },
   approved:  { bg: 'rgba(74,222,128,0.1)', color: '#4ade80', label: 'APPROVED' },
   rejected:  { bg: 'rgba(255,80,80,0.1)', color: '#ff5050', label: 'REJECTED' },
   archived:  { bg: 'rgba(100,100,100,0.1)', color: '#888', label: 'ARCHIVED' },
@@ -123,7 +119,7 @@ export default function PresenterDashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 64 }}>
         <div id="presenter-form" ref={formRef}>
-          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: ACCENT, letterSpacing: 2, marginBottom: 28 }}>NEW SCREENING SUBMISSION</p>
+          <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 28 }}>NEW SCREENING SUBMISSION</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
             <CinemaInput label="FILM TITLE" placeholder="e.g. The Midnight Echo" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
             <CinemaInput label="SCREENING LINK (OPTIONAL)" placeholder="e.g. https://youtube.com/watch?v=..." value={form.link} onChange={(v) => setForm({ ...form, link: v })} />
@@ -139,11 +135,11 @@ export default function PresenterDashboard() {
           </div>
         </div>
 
-        <div id="presenter-list" style={{ paddingTop: 32, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
-          <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: ACCENT, letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
+        <div id="presenter-list" style={{ paddingTop: 32, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
+          <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 2, marginBottom: 28 }}>MY SUBMISSIONS</p>
           {myScreenings.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}>
-              <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0 }}>
+              <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0 }}>
                 No presentations yet. Propose a screening to get on the slate.
               </p>
               <CinemaButton
@@ -159,17 +155,17 @@ export default function PresenterDashboard() {
                 const st = STATUS_STYLE[s.status] || { bg: 'rgba(100,100,100,0.1)', color: '#888', label: (s.status || 'UNKNOWN').toUpperCase() };
                 const reactions = reactionCounts[s.id] || 0;
                 return (
-                  <div key={s.id} style={{ padding: 24, border: '1px solid rgba(var(--ink-rgb),0.12)', background: 'rgba(247,245,239,1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div key={s.id} style={{ padding: 24, border: '1px solid rgba(188,168,142,0.1)', background: 'rgba(0,0,0,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                     <div>
-                      <h4 style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: '0 0 8px' }}>{s.title}</h4>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: ACCENT, opacity: 0.75, margin: 0 }}>
+                      <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#F0EBE0', margin: '0 0 8px' }}>{s.title}</h4>
+                      <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#BCA88E', opacity: 0.6, margin: 0 }}>
                         SUBMITTED ON: {new Date(s.created_at).toLocaleDateString()}
                         {reactions > 0 ? ` · ${reactions} REACTION${reactions === 1 ? '' : 'S'}` : ''}
                       </p>
                     </div>
                     <span style={{
                       fontSize: 10, padding: '6px 14px', background: st.bg, color: st.color,
-                      border: '1px solid currentColor', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, letterSpacing: 3,
+                      border: '1px solid currentColor', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: 3,
                     }}>
                       {st.label}
                     </span>

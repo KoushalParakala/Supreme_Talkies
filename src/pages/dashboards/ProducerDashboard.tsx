@@ -10,9 +10,9 @@ function CinemaInput({ label, placeholder, value, onChange, type = 'text' }: { l
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#9E5FDD' : 'rgba(158,95,221,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#BCA88E' : 'rgba(188,168,142,0.3)'}`, paddingBottom: 10, fontFamily: 'Inter, monospace', fontSize: 13, color: '#F0EBE0', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -22,9 +22,9 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#9E5FDD' : 'rgba(158,95,221,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#BCA88E' : 'rgba(188,168,142,0.3)'}`, paddingBottom: 10, fontFamily: 'Inter, monospace', fontSize: 13, color: '#F0EBE0', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -35,9 +35,9 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
   return (
     <motion.button type="button" onClick={onClick} disabled={loading || disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: (hov && !loading && !disabled) ? '#9E5FDD' : 'transparent', color: (hov && !loading && !disabled) ? '#fffdf7' : '#9E5FDD', opacity: (loading || disabled) ? 0.5 : 1 }}
+      animate={{ background: (hov && !loading && !disabled) ? '#BCA88E' : 'transparent', color: (hov && !loading && !disabled) ? '#1e2029' : '#BCA88E', opacity: (loading || disabled) ? 0.5 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #9E5FDD', padding: '10px 28px', fontFamily: 'DM Serif Display, serif', fontSize: 12, letterSpacing: 4, display: 'flex', alignItems: 'center', gap: 8, cursor: (loading || disabled) ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: '1px solid #BCA88E', padding: '10px 28px', fontFamily: 'Playfair Display, sans-serif', fontSize: 12, letterSpacing: 4, display: 'flex', alignItems: 'center', gap: 8, cursor: (loading || disabled) ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 10, height: 10, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -96,7 +96,7 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#9E5FDD', letterSpacing: 5, textTransform: 'uppercase' }}>
+      <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#BCA88E', letterSpacing: 5, textTransform: 'uppercase' }}>
         {label} {max && !single && <span style={{ opacity: 0.4, fontSize: 8 }}> (MAX {max})</span>}
       </label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -116,8 +116,8 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
                   onBlur={() => setCustomTagMode(false)}
                   style={{
                     padding: '6px 14px', borderRadius: 2, background: 'transparent',
-                    border: '1px dashed #9E5FDD', color: 'var(--ink)',
-                    fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
+                    border: '1px dashed #BCA88E', color: '#F0EBE0',
+                    fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
                     outline: 'none', width: 120, textTransform: 'uppercase'
                   }}
                 />
@@ -130,10 +130,10 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
               onClick={() => toggleTag(tag)}
               style={{
                 padding: '6px 14px', borderRadius: 2,
-                background: isSelected ? 'rgba(var(--ink-rgb),0.14)' : 'transparent',
-                border: `1px solid ${isSelected ? '#9E5FDD' : 'rgba(var(--ink-rgb),0.18)'}`,
-                color: isSelected ? 'var(--ink)' : 'rgba(var(--ink-rgb),0.45)',
-                fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
+                background: isSelected ? 'rgba(188,168,142,0.12)' : 'transparent',
+                border: `1px solid ${isSelected ? '#BCA88E' : 'rgba(188,168,142,0.2)'}`,
+                color: isSelected ? '#F0EBE0' : 'rgba(188,168,142,0.5)',
+                fontFamily: '"Montserrat", sans-serif', fontSize: 10, letterSpacing: 3,
                 cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
               }}
             >
@@ -492,21 +492,21 @@ export default function ProducerDashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(var(--ink-rgb),0.14)' }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(188,168,142,0.12)' }}>
         {TABS.map((t) => (
           <button key={t.id} type="button" onClick={() => setView(t.id as any)}
-            style={{ background: 'none', border: 'none', borderBottom: view === t.id ? '2px solid #9E5FDD' : '2px solid transparent', padding: '12px 28px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 4, color: view === t.id ? '#9E5FDD' : 'rgba(var(--ink-rgb),0.35)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1 }}
+            style={{ background: 'none', border: 'none', borderBottom: view === t.id ? '2px solid #BCA88E' : '2px solid transparent', padding: '12px 28px', fontFamily: 'Inter, monospace', fontSize: 10, letterSpacing: 4, color: view === t.id ? '#BCA88E' : 'rgba(240,235,224,0.3)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1 }}
           >{t.label}</button>
         ))}
       </div>
 
       {loading ? (
-        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3 }}>FILTERING THE VAULT...</p>
+        <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 3 }}>FILTERING THE VAULT...</p>
       ) : view === 'scripts' ? (
         <div id="producer-scripts">
         {scripts.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16, padding: '16px 0' }}>
-            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.3, letterSpacing: 2, margin: 0 }}>
+            <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, margin: 0 }}>
               The vault is locked. No scripts available for production yet.
             </p>
             <CinemaButton onClick={() => setView('briefs')} style={{ padding: '10px 28px', fontSize: 12, letterSpacing: 3 }}>
@@ -516,30 +516,30 @@ export default function ProducerDashboard() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
             {scripts.map((s) => (
-              <div key={s.id} style={{ padding: '24px 0', borderBottom: '1px solid rgba(158,95,221,0.08)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div key={s.id} style={{ padding: '24px 0', borderBottom: '1px solid rgba(188,168,142,0.08)', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#9E5FDD', letterSpacing: 1 }}>{s.title}</p>
-                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(var(--ink-rgb),0.12)', border: '1px solid rgba(var(--ink-rgb),0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>
+                  <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 18, color: '#BCA88E', letterSpacing: 1 }}>{s.title}</p>
+                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
                     {s.user?.full_name?.substring(0,1).toUpperCase() || '👤'}
                   </span>
                 </div>
-                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.4, fontStyle: 'italic', lineHeight: 1.6, minHeight: 60 }}>"{s.logline}"</p>
+                <p style={{ fontFamily: 'Inter, monospace', fontSize: 12, color: '#F0EBE0', opacity: 0.4, fontStyle: 'italic', lineHeight: 1.6, minHeight: 60 }}>"{s.logline}"</p>
                 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                   {s.dna_mood?.map((m: string) => (
-                    <span key={m} style={{ fontSize: 8, background: 'rgba(var(--ink-rgb),0.04)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '2px 8px', color: '#9E5FDD', letterSpacing: 2, borderRadius: 10 }}>{m.toUpperCase()}</span>
+                    <span key={m} style={{ fontSize: 8, background: 'rgba(188,168,142,0.05)', border: '1px solid rgba(188,168,142,0.1)', padding: '2px 8px', color: '#BCA88E', letterSpacing: 2, borderRadius: 10 }}>{m.toUpperCase()}</span>
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid rgba(158,95,221,0.08)' }}>
-                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.5, letterSpacing: 3 }}>{s.dna_format?.toUpperCase()}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.06)' }}>
+                  <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3 }}>{s.dna_format?.toUpperCase()}</span>
                   
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       <button onClick={() => handleFire(s.id)}
                         style={{ 
-                          padding: '6px 12px', border: '1px solid rgba(158,95,221,0.1)', background: userFires.has(s.id) ? 'rgba(var(--ink-rgb),0.12)' : 'transparent',
-                          borderColor: userFires.has(s.id) ? '#9E5FDD' : 'rgba(158,95,221,0.1)', color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, cursor: userFires.has(s.id) ? 'default' : 'pointer', transition: 'all 0.2s'
+                          padding: '6px 12px', border: '1px solid rgba(188,168,142,0.15)', background: userFires.has(s.id) ? 'rgba(188,168,142,0.1)' : 'transparent',
+                          borderColor: userFires.has(s.id) ? '#BCA88E' : 'rgba(188,168,142,0.15)', color: '#BCA88E', fontFamily: 'Inter, monospace', fontSize: 11, cursor: userFires.has(s.id) ? 'default' : 'pointer', transition: 'all 0.2s'
                         }}
                       >
                         🔥 {fireCounts[s.id] || 0}
@@ -560,10 +560,10 @@ export default function ProducerDashboard() {
         /* FILM BRIEFS TAB */
         <div id="producer-briefs" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           {/* Sub-nav */}
-          <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(var(--ink-rgb),0.14)' }}>
+          <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(188,168,142,0.12)' }}>
             {(['discover', 'mine'] as const).map(sv => (
               <button key={sv} type="button" onClick={() => setBriefSubView(sv)}
-                style={{ background: 'none', border: 'none', borderBottom: briefSubView === sv ? '2px solid #9E5FDD' : '2px solid transparent', padding: '10px 24px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 4, color: briefSubView === sv ? '#9E5FDD' : 'rgba(var(--ink-rgb),0.35)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1, textTransform: 'uppercase' }}>
+                style={{ background: 'none', border: 'none', borderBottom: briefSubView === sv ? '2px solid #BCA88E' : '2px solid transparent', padding: '10px 24px', fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 4, color: briefSubView === sv ? '#BCA88E' : 'rgba(240,235,224,0.3)', cursor: 'pointer', transition: 'color 0.2s', marginBottom: -1, textTransform: 'uppercase' }}>
                 {sv === 'discover' ? 'DISCOVER BRIEFS' : 'MY BRIEFS'}
               </button>
             ))}
@@ -574,7 +574,7 @@ export default function ProducerDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {allBriefs.length === 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
                     "The stage is yours to claim." — No open briefs from other producers yet.
                   </p>
                   <CinemaButton onClick={() => { setBriefSubView('mine'); setShowNewBriefForm(true); }} style={{ padding: '10px 28px', fontSize: 12, letterSpacing: 3 }}>
@@ -586,47 +586,47 @@ export default function ProducerDashboard() {
                   const interestCount = b.brief_interests?.[0]?.count || 0;
                   const hasInterested = userBriefInterests.has(b.id);
                   return (
-                    <div key={b.id} style={{ background: 'var(--lift)', border: `1px solid ${hasInterested ? 'rgba(158,95,221,0.4)' : 'rgba(var(--ink-rgb),0.14)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
+                    <div key={b.id} style={{ background: 'rgba(30,32,41,0.4)', border: `1px solid ${hasInterested ? 'rgba(188,168,142,0.4)' : 'rgba(188,168,142,0.12)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                          <h3 style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 20, color: 'var(--ink)', margin: '0 0 6px' }}>{b.title}</h3>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {b.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
+                          <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: '0 0 6px' }}>{b.title}</h3>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {b.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
                         </div>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
                           {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'BE FIRST'}
                         </p>
                       </div>
 
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{b.description}</p>
+                      <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{b.description}</p>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
                         {b.genre?.length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                              {b.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: 'var(--ink)', background: 'rgba(var(--ink-rgb),0.04)', padding: '2px 8px', border: '1px solid rgba(var(--ink-rgb),0.12)' }}>{g}</span>)}
+                              {b.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: '#F0EBE0', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', border: '1px solid rgba(188,168,142,0.1)' }}>{g}</span>)}
                             </div>
                           </div>
                         )}
                         {b.looking_for?.length > 0 && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                              {b.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: '#9E5FDD', border: '1px solid #9E5FDD', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
+                              {b.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
                             </div>
                           </div>
                         )}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
                         </div>
                       </div>
 
-                      <div style={{ paddingTop: 16, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
+                      <div style={{ paddingTop: 16, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
                         <CinemaButton
                           onClick={() => handleBriefInterest(b.id)}
                           loading={togglingInterest === b.id}
-                          style={hasInterested ? { borderColor: '#9E5FDD', color: '#9E5FDD', background: 'rgba(158,95,221,0.08)' } : {}}
+                          style={hasInterested ? { borderColor: '#BCA88E', color: '#BCA88E', background: 'rgba(188,168,142,0.08)' } : {}}
                         >
                           {togglingInterest === b.id ? '...' : hasInterested ? '✦ INTERESTED — WITHDRAW' : '+ EXPRESS INTEREST'}
                         </CinemaButton>
@@ -641,8 +641,8 @@ export default function ProducerDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#9E5FDD', letterSpacing: 2, marginBottom: 6 }}>MY BRIEFS</p>
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.4, letterSpacing: 3 }}>MANAGE YOUR OPEN CALLS</p>
+                  <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 22, color: '#BCA88E', letterSpacing: 2, marginBottom: 6 }}>MY BRIEFS</p>
+                  <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.4, letterSpacing: 3 }}>MANAGE YOUR OPEN CALLS</p>
                 </div>
                 <CinemaButton onClick={() => setShowNewBriefForm(!showNewBriefForm)}>
                   {showNewBriefForm ? 'CANCEL' : '+ NEW BRIEF'}
@@ -653,7 +653,7 @@ export default function ProducerDashboard() {
                 {showNewBriefForm && (
                   <motion.div 
                     initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                    style={{ overflow: 'hidden', background: 'rgba(var(--ink-rgb),0.03)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: 32 }}
+                    style={{ overflow: 'hidden', background: 'rgba(188,168,142,0.03)', border: '1px solid rgba(188,168,142,0.1)', padding: 32 }}
                   >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>
                       <CinemaInput label="PROJECT TITLE" placeholder="e.g. The Midnight Heist" value={newBrief.title} onChange={(v) => setNewBrief({ ...newBrief, title: v })} />
@@ -681,7 +681,7 @@ export default function ProducerDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 {briefs.length === 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
+                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.3, letterSpacing: 2, fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
                       "Every great film starts with a clear vision." — No briefs published yet.
                     </p>
                     <CinemaButton onClick={() => setShowNewBriefForm(true)} style={{ padding: '10px 28px', fontSize: 12, letterSpacing: 3 }}>
@@ -695,12 +695,12 @@ export default function ProducerDashboard() {
                     const isTrending = interestCount > 0 && interestCount === maxInterests;
 
                     return (
-                      <div key={b.id} style={{ background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.14)', padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                      <div key={b.id} style={{ background: 'rgba(30,32,41,0.4)', border: '1px solid rgba(188,168,142,0.12)', padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                            <h3 style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 20, color: 'var(--ink)', margin: 0 }}>{b.title}</h3>
+                            <h3 style={{ fontFamily: 'Playfair Display, sans-serif', fontStyle: 'italic', fontSize: 20, color: '#F0EBE0', margin: 0 }}>{b.title}</h3>
                             <span style={{ 
-                              fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, padding: '3px 10px', 
+                              fontFamily: 'Inter, monospace', fontSize: 9, letterSpacing: 2, padding: '3px 10px', 
                               background: b.is_open ? 'rgba(100,200,120,0.15)' : 'rgba(255,100,100,0.15)', 
                               color: b.is_open ? '#64c878' : '#ff6464', border: `1px solid ${b.is_open ? '#64c878' : '#ff6464'}` 
                             }}>
@@ -709,43 +709,43 @@ export default function ProducerDashboard() {
                             {isTrending && (
                               <motion.span 
                                 animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                                style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, fontWeight: 800, color: '#9E5FDD', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 4 }}
+                                style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 9, fontWeight: 800, color: '#BCA88E', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 4 }}
                               >
                                 🔥 TRENDING
                               </motion.span>
                             )}
                           </div>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#9E5FDD', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#BCA88E', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
                             {interestCount > 0 ? `🔥 ${interestCount} INTERESTED` : 'NO INTERESTS YET'}
                           </p>
                         </div>
 
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{b.description}</p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#F0EBE0', opacity: 0.7, lineHeight: 1.7, margin: 0 }}>{b.description}</p>
 
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
                             <div style={{ display: 'flex', gap: 8 }}>
                               {b.genre?.map((g: string) => (
-                                <span key={g} style={{ fontSize: 9, color: 'var(--ink)', background: 'rgba(var(--ink-rgb),0.04)', padding: '2px 8px', border: '1px solid rgba(var(--ink-rgb),0.12)' }}>{g}</span>
+                                <span key={g} style={{ fontSize: 9, color: '#F0EBE0', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', border: '1px solid rgba(188,168,142,0.1)' }}>{g}</span>
                               ))}
                             </div>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
                             <div style={{ display: 'flex', gap: 8 }}>
                               {b.looking_for?.map((l: string) => (
-                                <span key={l} style={{ fontSize: 9, color: '#9E5FDD', border: '1px solid #9E5FDD', padding: '2px 8px' }}>{l.toUpperCase()}</span>
+                                <span key={l} style={{ fontSize: 9, color: '#BCA88E', border: '1px solid #BCA88E', padding: '2px 8px' }}>{l.toUpperCase()}</span>
                               ))}
                             </div>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
-                            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 8, color: '#BCA88E', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                            <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', margin: 0 }}>{b.budget_range} • {b.timeline}</p>
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 20, borderTop: '1px solid rgba(188,168,142,0.1)' }}>
                           <div style={{ display: 'flex', gap: 16 }}>
                             <CinemaButton onClick={() => {
                               if (expandingBriefId === b.id) setExpandingBriefId(null);
@@ -755,7 +755,7 @@ export default function ProducerDashboard() {
                             </CinemaButton>
                             <button 
                               onClick={() => handleToggleBriefStatus(b.id, b.is_open)}
-                              style={{ background: 'none', border: '1px solid rgba(158,95,221,0.28)', color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3, padding: '10px 20px', cursor: 'pointer' }}
+                              style={{ background: 'none', border: '1px solid rgba(188,168,142,0.3)', color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontSize: 10, letterSpacing: 3, padding: '10px 20px', cursor: 'pointer' }}
                             >
                               {b.is_open ? 'CLOSE BRIEF' : 'REOPEN BRIEF'}
                             </button>
@@ -772,37 +772,37 @@ export default function ProducerDashboard() {
                           {expandingBriefId === b.id && (
                             <motion.div 
                               initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                              style={{ overflow: 'hidden', marginTop: 12, borderTop: '1px solid rgba(var(--ink-rgb),0.04)', paddingTop: 20 }}
+                              style={{ overflow: 'hidden', marginTop: 12, borderTop: '1px solid rgba(188,168,142,0.05)', paddingTop: 20 }}
                             >
                               {loadingInterests === b.id ? (
-                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#9E5FDD', opacity: 0.4 }}>SCANNING SIGNALS...</p>
+                                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.4 }}>SCANNING SIGNALS...</p>
                               ) : !interests[b.id] || interests[b.id].length === 0 ? (
-                                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3 }}>No interests recorded yet.</p>
+                                <p style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#F0EBE0', opacity: 0.3 }}>No interests recorded yet.</p>
                               ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                                   {interests[b.id].map((interest) => (
-                                    <div key={interest.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--lift)', padding: '12px 20px', borderLeft: '2px solid #9E5FDD' }}>
+                                    <div key={interest.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '12px 20px', borderLeft: '2px solid #BCA88E' }}>
                                       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                                        <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(var(--ink-rgb),0.12)', border: '1px solid rgba(var(--ink-rgb),0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, flexShrink: 0 }}>
+                                        <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(188,168,142,0.1)', border: '1px solid rgba(188,168,142,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#BCA88E', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, flexShrink: 0 }}>
                                           {interest.user?.full_name?.substring(0,1).toUpperCase() || '?'}
                                         </span>
                                         <div>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', margin: 0 }}>{interest.user?.full_name || 'Unknown'}</p>
-                                            {interest.user?.st_verified && <span style={{ color: '#9E5FDD', fontSize: 10 }}>✦</span>}
+                                            <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', margin: 0 }}>{interest.user?.full_name || 'Unknown'}</p>
+                                            {interest.user?.st_verified && <span style={{ color: '#BCA88E', fontSize: 10 }}>✦</span>}
                                           </div>
-                                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
+                                          <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, margin: 0, letterSpacing: 2 }}>
                                             {interest.user?.role?.toUpperCase()} • {interest.user?.st_id ? (interest.user.st_id.startsWith('SUPR-') ? interest.user.st_id : `SUPR-${interest.user.st_id}`) : 'N/A'}
                                           </p>
                                           {interest.note && (
-                                            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.5, fontStyle: 'italic', margin: '4px 0 0' }}>
+                                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#F0EBE0', opacity: 0.5, fontStyle: 'italic', margin: '4px 0 0' }}>
                                               "{interest.note}"
                                             </p>
                                           )}
                                         </div>
                                       </div>
                                       <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
-                                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#9E5FDD', opacity: 0.3, margin: 0 }}>
+                                        <p style={{ fontFamily: 'Inter, monospace', fontSize: 8, color: '#BCA88E', opacity: 0.3, margin: 0 }}>
                                           {new Date(interest.created_at).toLocaleDateString()}
                                         </p>
                                         <CinemaButton 
@@ -830,37 +830,37 @@ export default function ProducerDashboard() {
       ) : (
         /* THE ROSTER TAB */
         technicians.length === 0 ? (
-          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.25, letterSpacing: 2 }}>No interested crew members yet.</p>
+          <p style={{ fontFamily: 'Inter, monospace', fontSize: 11, color: '#F0EBE0', opacity: 0.25, letterSpacing: 2 }}>No interested crew members yet.</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
             {technicians.map((t) => (
-              <div key={t.id} style={{ border: '1px solid rgba(var(--ink-rgb),0.14)', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div key={t.id} style={{ border: '1px solid rgba(188,168,142,0.12)', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 36, height: 36, border: '1px solid rgba(158,95,221,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{t.avatar_symbol || '👤'}</div>
+                  <div style={{ width: 36, height: 36, border: '1px solid rgba(188,168,142,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{t.avatar_symbol || '👤'}</div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', letterSpacing: 1, margin: 0 }}>{t.full_name}</p>
-                      {t.st_verified && <span style={{ color: '#9E5FDD', fontSize: 10 }}>✦</span>}
+                      <p style={{ fontFamily: 'Playfair Display, sans-serif', fontSize: 14, color: '#F0EBE0', letterSpacing: 1, margin: 0 }}>{t.full_name}</p>
+                      {t.st_verified && <span style={{ color: '#BCA88E', fontSize: 10 }}>✦</span>}
                     </div>
-                    <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.6, letterSpacing: 3 }}>{t.niche?.toUpperCase() || t.role?.toUpperCase() || 'CREW'}</p>
+                    <p style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.6, letterSpacing: 3 }}>{t.niche?.toUpperCase() || t.role?.toUpperCase() || 'CREW'}</p>
                   </div>
                 </div>
                 {t.note_to_team && (
-                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.6, fontStyle: 'italic', margin: '4px 0 0', lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#F0EBE0', opacity: 0.6, fontStyle: 'italic', margin: '4px 0 0', lineHeight: 1.5 }}>
                     "{t.note_to_team}"
                   </p>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                   {t.portfolio_url ? (
                     <a href={t.portfolio_url} target="_blank" rel="noopener noreferrer"
-                      style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#9E5FDD', opacity: 0.8, letterSpacing: 2, textDecoration: 'underline' }}>
+                      style={{ fontFamily: 'Inter, monospace', fontSize: 10, color: '#BCA88E', opacity: 0.8, letterSpacing: 2, textDecoration: 'underline' }}>
                       VIEW SHOWREEL →
                     </a>
                   ) : (
-                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.4 }}>NO PORTFOLIO</span>
+                    <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.4 }}>NO PORTFOLIO</span>
                   )}
                   {t.contact && (
-                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#9E5FDD', opacity: 0.7 }}>
+                    <span style={{ fontFamily: 'Inter, monospace', fontSize: 9, color: '#BCA88E', opacity: 0.7 }}>
                       {t.contact}
                     </span>
                   )}
