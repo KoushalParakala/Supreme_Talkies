@@ -6,13 +6,19 @@ import MessageBubble from '../components/MessageBubble';
 import ReelAttachPicker, { type ReelDraft } from '../components/ReelAttachPicker';
 import OutboundConfirm from '../components/OutboundConfirm';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { IconClapper, IconX } from '../components/ReelIcons';
+import { IconClapper, IconSmile, IconX } from '../components/ReelIcons';
 import {
   useGreenRoomMessages,
   type GreenRoomMessage,
 } from '../hooks/useGreenRoomMessages';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+
+const FLOOR_EMOJIS = [
+  '😂', '❤️', '🔥', '👏', '😍', '😢', '😮', '🙌', '👍', '🙏',
+  '🎬', '🍿', '🎥', '✨', '💯', '😭', '🤩', '💪', '🤝', '😎',
+  '🍾', '🏆', '🎭', '📸', '🌙', '☀️', '💥', '⚡', '🖤', '🤍',
+];
 
 export default function GreenRoom() {
   const { user, isAdmin } = useAuth();
@@ -30,6 +36,7 @@ export default function GreenRoom() {
   const [body, setBody] = useState('');
   const [reel, setReel] = useState<ReelDraft | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<GreenRoomMessage | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -113,7 +120,23 @@ export default function GreenRoom() {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
+  };
+
+  const insertEmoji = (emoji: string) => {
+    const el = textareaRef.current;
+    const start = el?.selectionStart ?? body.length;
+    const end = el?.selectionEnd ?? body.length;
+    const next = `${body.slice(0, start)}${emoji}${body.slice(end)}`;
+    setBody(next);
+    requestAnimationFrame(() => {
+      if (!el) return;
+      const pos = start + emoji.length;
+      el.focus();
+      el.setSelectionRange(pos, pos);
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
+    });
   };
 
   const submit = async (e?: FormEvent) => {
@@ -137,6 +160,7 @@ export default function GreenRoom() {
     setBody('');
     setReel(null);
     setReplyTo(null);
+    setEmojiOpen(false);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     stickRef.current = true;
     requestAnimationFrame(() => scrollToBottom(true));
@@ -296,15 +320,43 @@ export default function GreenRoom() {
                   <button
                     type="button"
                     className="dash-ghost-btn"
-                    onClick={() => setPickerOpen((v) => !v)}
+                    onClick={() => {
+                      setEmojiOpen(false);
+                      setPickerOpen((v) => !v);
+                    }}
                   >
                     <IconClapper size={14} /> Pin a Reel
+                  </button>
+                  <button
+                    type="button"
+                    className={`green-room-icon-btn green-room-emoji-toggle${emojiOpen ? ' is-on' : ''}`}
+                    aria-label="Add emoji"
+                    onClick={() => {
+                      setPickerOpen(false);
+                      setEmojiOpen((v) => !v);
+                    }}
+                  >
+                    <IconSmile size={16} />
                   </button>
                   <ReelAttachPicker
                     open={pickerOpen}
                     onClose={() => setPickerOpen(false)}
                     onAttach={setReel}
                   />
+                  {emojiOpen && (
+                    <div className="green-room-emoji-pane" data-lenis-prevent>
+                      {FLOOR_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className="green-room-emoji-btn"
+                          onClick={() => insertEmoji(emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button type="submit" className="primary-button" disabled={sending}>
                   {sending ? 'Sending…' : 'Send'}

@@ -64,6 +64,8 @@ const MESSAGE_SELECT = `
   reply_to:green_room_messages!reply_to_id (id, body, author_id, external_link_title)
 `;
 
+const REACTION_KINDS: ReactionKind[] = ['hype', 'loved', 'clap'];
+
 const EMPTY_BUCKET: Record<ReactionKind, ReactionBucket> = {
   hype: { count: 0, mine: false },
   loved: { count: 0, mine: false },
@@ -404,19 +406,35 @@ export function useGreenRoomMessages() {
   const toggleReaction = useCallback(
     async (messageId: string, kind: ReactionKind) => {
       if (!user) return { error: 'Not signed in' };
-      const mine = reactions[messageId]?.[kind]?.mine;
+      const current = reactions[messageId] ? {
+        hype: { ...reactions[messageId].hype },
+        loved: { ...reactions[messageId].loved },
+        clap: { ...reactions[messageId].clap },
+      } : emptyBuckets();
+      const mine = current[kind].mine;
       setReactions((prev) => {
-        const current = prev[messageId] ? { ...prev[messageId] } : emptyBuckets();
-        const bucket = { ...current[kind] };
-        if (mine) {
-          bucket.mine = false;
-          bucket.count = Math.max(0, bucket.count - 1);
-        } else {
-          bucket.mine = true;
-          bucket.count += 1;
+        const next = emptyBuckets();
+        const src = prev[messageId] || current;
+        for (const k of REACTION_KINDS) {
+          next[k] = { ...src[k] };
+          if (k === kind) continue;
+          if (next[k].mine) {
+            next[k].mine = false;
+            next[k].count = Math.max(0, next[k].count - 1);
+          }
         }
-        return { ...prev, [messageId]: { ...current, [kind]: bucket } };
+        if (mine) {
+          next[kind].mine = false;
+          next[kind].count = Math.max(0, next[kind].count - 1);
+        } else {
+          next[kind].mine = true;
+          next[kind].count += 1;
+        }
+        return { ...prev, [messageId]: next };
       });
+      const revert = () => {
+        setReactions((prev) => ({ ...prev, [messageId]: current }));
+      };
       if (mine) {
         const { error } = await supabase
           .from('green_room_reactions')
@@ -425,30 +443,27 @@ export function useGreenRoomMessages() {
           .eq('user_id', user.id)
           .eq('kind', kind);
         if (error) {
-          setReactions((prev) => {
-            const current = prev[messageId] ? { ...prev[messageId] } : emptyBuckets();
-            const bucket = { ...current[kind] };
-            bucket.mine = true;
-            bucket.count += 1;
-            return { ...prev, [messageId]: { ...current, [kind]: bucket } };
-          });
-          return { error: floorGuardMessage(error.message) };
+          revert();
+          return { error: floorGuardMessage(errorMessage(error)) };
         }
       } else {
+        const { error: clearError } = await supabase
+          .from('green_room_reactions')
+          .delete()
+          .eq('message_id', messageId)
+          .eq('user_id', user.id);
+        if (clearError) {
+          revert();
+          return { error: floorGuardMessage(errorMessage(clearError)) };
+        }
         const { error } = await supabase.from('green_room_reactions').insert({
           message_id: messageId,
           user_id: user.id,
           kind,
         });
         if (error) {
-          setReactions((prev) => {
-            const current = prev[messageId] ? { ...prev[messageId] } : emptyBuckets();
-            const bucket = { ...current[kind] };
-            bucket.mine = false;
-            bucket.count = Math.max(0, bucket.count - 1);
-            return { ...prev, [messageId]: { ...current, [kind]: bucket } };
-          });
-          return { error: floorGuardMessage(error.message) };
+          revert();
+          return { error: floorGuardMessage(errorMessage(error)) };
         }
       }
       return { error: null };

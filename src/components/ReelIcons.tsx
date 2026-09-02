@@ -92,6 +92,16 @@ export function IconTrash({ size = 15 }: IconProps) {
     </Svg>
   );
 }
+export function IconSmile({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 9.5h.01" />
+      <path d="M16 9.5h.01" />
+      <path d="M8.5 14.5s1.5 2 3.5 2 3.5-2 3.5-2" />
+    </Svg>
+  );
+}
 export function IconPencil({ size = 15 }: IconProps) {
   return (
     <Svg size={size}>

@@ -3289,12 +3289,43 @@ html[data-theme="dark"] .call-sheet-request {
 }
 .green-room-composer-tools {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .green-room-composer-tools .dash-ghost-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
+}
+.green-room-emoji-toggle.is-on {
+  color: var(--vermilion);
+}
+.green-room-emoji-pane {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: min(280px, 70vw);
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--ink);
+  background: var(--background);
+  box-shadow: 10px 10px 0 rgba(23, 23, 23, 0.08);
+  z-index: 6;
+}
+.green-room-emoji-btn {
+  border: 0;
+  background: transparent;
+  padding: 6px 0;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.green-room-emoji-btn:hover {
+  background: var(--lift);
 }
 .green-room-icon-btn {
   border: 0;
@@ -3430,6 +3461,7 @@ html[data-theme="dark"] .call-sheet-request {
 }
 html[data-theme="dark"] .green-room-reel,
 html[data-theme="dark"] .green-room-picker,
+html[data-theme="dark"] .green-room-emoji-pane,
 html[data-theme="dark"] .green-room-window {
   box-shadow: 14px 14px 0 rgba(0, 0, 0, 0.28);
 }
