@@ -5,7 +5,6 @@ import {useNavigate,useLocation} from 'react-router-dom';
 import Nav from '../components/Nav';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {getUsableRoles} from '../lib/profile';
-import FirstActions from '../components/FirstActions';
 
 const roleStorageKey=(userId:string)=>`st_active_role_${userId}`;
 
@@ -212,7 +211,6 @@ export default function Dashboard(){
             </motion.div>
           </AnimatePresence>
         </div>
-        {activeRole && <FirstActions role={activeRole}/>}
         <AnimatePresence mode="wait">
           <motion.div key={activeRole} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.35}}>
             <ErrorBoundary fallback={<DashboardErrorFallback/>}>

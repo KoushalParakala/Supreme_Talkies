@@ -7,14 +7,14 @@ export const ROLE_COLORS = {
   amplifier: '#E47E44',
 } as const;
 
-/** Same hues, lower lightness — for dark surfaces only. */
+/** Same hues, much lower chroma — for dark surfaces only. */
 export const ROLE_COLORS_DARK = {
-  writer: '#3A76B8',
-  technician: '#2C9A6E',
-  producer: '#7A44C2',
-  presenter: '#359A86',
-  marketing: '#C04882',
-  amplifier: '#C05628',
+  writer: '#436682',
+  technician: '#3A6B56',
+  producer: '#5E4A78',
+  presenter: '#3A6B60',
+  marketing: '#7A4E62',
+  amplifier: '#7A523C',
 } as const;
 
 export const ROLE_ON_COLORS = {
