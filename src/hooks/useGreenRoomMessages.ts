@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { displayReelTitle, reelPreviewFromUrl } from '../lib/reelLinks';
 
 export type ReactionKind = 'hype' | 'loved' | 'clap';
 
@@ -318,13 +319,20 @@ export function useGreenRoomMessages() {
     async (input: SendGreenRoomInput) => {
       if (!user) return { error: 'Not signed in' };
       const body = input.body?.trim() || null;
+      const link = input.externalLink || null;
+      const absolute = !!link && /^https?:\/\//i.test(link);
+      const derived = !input.reelFilmId && absolute && link ? reelPreviewFromUrl(link) : null;
       const payload = {
         author_id: user.id,
         body,
         reel_film_id: input.reelFilmId || null,
-        external_link: input.externalLink || null,
-        external_link_title: input.externalLinkTitle || null,
-        external_link_image: input.externalLinkImage || null,
+        external_link: link,
+        external_link_title: input.reelFilmId
+          ? null
+          : absolute
+            ? displayReelTitle(input.externalLinkTitle, link) || derived?.title || null
+            : input.externalLinkTitle || null,
+        external_link_image: input.reelFilmId ? null : (input.externalLinkImage || derived?.image || null),
         reply_to_id: input.replyToId || null,
       };
       if (!payload.body && !payload.reel_film_id && !payload.external_link) {

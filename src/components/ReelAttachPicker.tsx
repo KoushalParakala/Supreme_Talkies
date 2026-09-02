@@ -4,6 +4,7 @@ import { useFilms } from '../hooks/useFilms';
 import { filmStill } from '../data/films';
 import { IconX } from './ReelIcons';
 import { errorMessage } from '../lib/errors';
+import { normalizeHttpUrl, reelPreviewFromUrl } from '../lib/reelLinks';
 
 export interface ReelDraft {
   reelFilmId?: string | null;
@@ -69,30 +70,35 @@ export default function ReelAttachPicker({
   const fetchPreview = async (source?: string) => {
     const raw = (source ?? url).trim();
     if (!raw) return;
-    const trimmed = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    const trimmed = normalizeHttpUrl(raw);
+    const local = reelPreviewFromUrl(trimmed);
+    const fallback: ReelDraft = { externalLink: local.url, title: local.title, image: local.image };
     setUrl(trimmed);
     setBusy(true);
     setError('');
-    setPreview(null);
-    const fallback: ReelDraft = { externalLink: trimmed, title: trimmed, image: null };
+    setPreview(fallback);
     try {
       const { data, error: fnError } = await supabase.functions.invoke('link-preview', {
         body: { url: trimmed },
       });
+      const remoteTitle = typeof data?.title === 'string' ? data.title.trim() : '';
+      const titleLooksLikeUrl = /^https?:\/\//i.test(remoteTitle);
       if (data?.url || data?.title || data?.image) {
         setPreview({
           externalLink: data.url || trimmed,
-          title: data.title || trimmed,
-          image: data.image || null,
+          title: remoteTitle && !titleLooksLikeUrl ? remoteTitle : local.title,
+          image: data.image || local.image,
         });
         return;
       }
       setPreview(fallback);
-      const fromFn = typeof data?.error === 'string' ? data.error : null;
-      setError(fromFn || (fnError ? errorMessage(fnError) : 'Could not fetch a preview — pin the link anyway'));
+      if (!local.image) {
+        const fromFn = typeof data?.error === 'string' ? data.error : null;
+        setError(fromFn || (fnError ? errorMessage(fnError) : 'Could not fetch a preview — pin the link anyway'));
+      }
     } catch (err) {
       setPreview(fallback);
-      setError(errorMessage(err));
+      if (!local.image) setError(errorMessage(err));
     } finally {
       setBusy(false);
     }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { timeAgo } from '../lib/time';
 import { filmStill } from '../data/films';
 import { ROLE_COLORS, type RoleColorId } from '../lib/roleColors';
+import { displayReelTitle, reelPreviewFromUrl } from '../lib/reelLinks';
 import type { GreenRoomMessage, ReactionKind, ReactionBucket } from '../hooks/useGreenRoomMessages';
 
 const REACTIONS: { kind: ReactionKind; label: string }[] = [
@@ -75,14 +76,18 @@ export default function MessageBubble({
   const accent = role ? ROLE_COLORS[role] : undefined;
   const name = message.author?.full_name?.trim() || 'Member';
   const initial = name.charAt(0).toUpperCase();
+  const derivedReel =
+    !message.film && message.external_link && /^https?:\/\//i.test(message.external_link)
+      ? reelPreviewFromUrl(message.external_link)
+      : null;
   const filmImage = message.film
     ? filmStill({
         reel_image: message.film.reel_image,
         poster_image: message.film.poster_image,
         stills: message.film.stills,
       })
-    : message.external_link_image;
-  const filmTitle = message.film?.title || message.external_link_title;
+    : message.external_link_image || derivedReel?.image || null;
+  const filmTitle = message.film?.title || displayReelTitle(message.external_link_title, message.external_link);
   const filmMeta = message.film
     ? [message.film.coming_soon ? 'Coming soon' : 'Short', message.film.duration, message.film.director]
         .filter(Boolean)
