@@ -21,6 +21,25 @@ function weekAgoIso() {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 }
 
+function unwrapProfile(value: unknown): FloorRestriction['profile'] {
+  const row = Array.isArray(value) ? value[0] : value;
+  if (!row || typeof row !== 'object') return null;
+  const rec = row as { full_name?: string | null; st_id?: string | null };
+  return { full_name: rec.full_name ?? null, st_id: rec.st_id ?? null };
+}
+
+function normalizeRestriction(row: Record<string, unknown>): FloorRestriction {
+  const kind = row.kind === 'blocked' ? 'blocked' : 'restricted';
+  return {
+    user_id: String(row.user_id),
+    kind,
+    reason: (row.reason as string | null) ?? null,
+    set_by: (row.set_by as string | null) ?? null,
+    created_at: String(row.created_at),
+    profile: unwrapProfile(row.profile),
+  };
+}
+
 function normalize(raw: Record<string, unknown>): GreenRoomMessage {
   const authorRaw = raw.author;
   const author = (Array.isArray(authorRaw) ? authorRaw[0] : authorRaw) as GreenRoomMessage['author'] | null;
@@ -35,7 +54,7 @@ function normalize(raw: Record<string, unknown>): GreenRoomMessage {
     reply_to_id: (raw.reply_to_id as string) || null,
     created_at: String(raw.created_at),
     edited_at: (raw.edited_at as string) || null,
-    author: (Array.isArray(raw.author) ? raw.author[0] : raw.author) as GreenRoomMessage['author'] || null,
+    author: author || null,
     film: null,
     reply_to: null,
   };
@@ -76,10 +95,7 @@ export function useGreenRoomDesk() {
       if (fallback.error) throw fallback.error;
       data = fallback.data as typeof data;
     }
-    setRestrictions(((data || []) as FloorRestriction[]).map((row) => ({
-      ...row,
-      profile: Array.isArray(row.profile) ? row.profile[0] : row.profile,
-    })));
+    setRestrictions(((data || []) as unknown as Record<string, unknown>[]).map(normalizeRestriction));
   }, []);
 
   useEffect(() => {
