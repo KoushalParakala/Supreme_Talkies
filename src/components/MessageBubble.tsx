@@ -15,9 +15,9 @@ const REACTIONS: { kind: ReactionKind; mark: string; word: string }[] = [
 ];
 
 function authorRoles(message: GreenRoomMessage): string[] {
-  const raw = message.author?.roles;
+  const raw: unknown = message.author?.roles;
   const listed = Array.isArray(raw)
-    ? raw
+    ? raw.filter((r): r is string => typeof r === 'string')
     : typeof raw === 'string' && raw.trim()
       ? [raw]
       : [];
