@@ -73,3 +73,30 @@ export function IconSeat({ size = 24 }: IconProps) {
 export function IconLens({ size = 24 }: IconProps) {
   return <Svg size={size}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4" /><path d="M12 3v2" /><path d="M12 19v2" /></Svg>;
 }
+export function IconReply({ size = 15 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="M9 14L4 9l5-5" />
+      <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+    </Svg>
+  );
+}
+export function IconTrash({ size = 15 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="M4 7h16" />
+      <path d="M9 7V4h6v3" />
+      <path d="M7 7l1 13h8l1-13" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </Svg>
+  );
+}
+export function IconPencil({ size = 15 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="M4 20h4l10.5-10.5-4-4L4 16z" />
+      <path d="M13 6.5l4 4" />
+    </Svg>
+  );
+}

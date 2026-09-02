@@ -5,12 +5,13 @@ import { filmStill } from '../data/films';
 import { ROLE_COLORS, type RoleColorId } from '../lib/roleColors';
 import { displayReelTitle, reelPreviewFromUrl } from '../lib/reelLinks';
 import { displayText } from '../lib/errors';
+import { IconPencil, IconReply, IconTrash } from './ReelIcons';
 import type { GreenRoomMessage, ReactionKind, ReactionBucket } from '../hooks/useGreenRoomMessages';
 
-const REACTIONS: { kind: ReactionKind; label: string }[] = [
-  { kind: 'hype', label: 'Hype 🔥' },
-  { kind: 'loved', label: 'Loved ❤️' },
-  { kind: 'clap', label: 'Clap 👍' },
+const REACTIONS: { kind: ReactionKind; mark: string; word: string }[] = [
+  { kind: 'hype', mark: '🔥', word: 'Hype' },
+  { kind: 'loved', mark: '❤️', word: 'Loved' },
+  { kind: 'clap', mark: '👏', word: 'Clap' },
 ];
 
 function authorRoles(message: GreenRoomMessage): string[] {
@@ -128,11 +129,11 @@ export default function MessageBubble({
     internalHref ? (
       <Link to={internalHref} className="green-room-reel">
         {filmImage && (
-          <span className="float-card-image green-room-reel-still">
+          <span className="green-room-reel-still">
             <img src={filmImage} alt="" />
           </span>
         )}
-        <span>
+        <span className="green-room-reel-copy">
           <strong>{displayText(filmTitle)}</strong>
           {filmMeta && <small>{displayText(filmMeta)}</small>}
         </span>
@@ -144,11 +145,11 @@ export default function MessageBubble({
         onClick={() => externalHref && onOpenExternal(externalHref)}
       >
         {filmImage && (
-          <span className="float-card-image green-room-reel-still">
+          <span className="green-room-reel-screen">
             <img src={filmImage} alt="" />
           </span>
         )}
-        <span>
+        <span className="green-room-reel-copy">
           <strong>{displayText(filmTitle)}</strong>
           {filmMeta && <small>{displayText(filmMeta)}</small>}
         </span>
@@ -221,30 +222,36 @@ export default function MessageBubble({
         )}
         {poster}
         <div className="green-room-msg-actions">
-          {REACTIONS.map(({ kind, label }) => (
-            <button
-              key={kind}
-              type="button"
-              className={`green-room-rxn${reactions[kind]?.mine ? ' is-on' : ''}`}
-              onClick={() => onReact(kind)}
-            >
-              {label}
-              {reactions[kind]?.count ? <b>{reactions[kind].count}</b> : null}
+          <div className="green-room-rxn-row">
+            {REACTIONS.map(({ kind, mark, word }) => (
+              <button
+                key={kind}
+                type="button"
+                className={`green-room-rxn${reactions[kind]?.mine ? ' is-on' : ''}`}
+                onClick={() => onReact(kind)}
+                aria-label={word}
+              >
+                <span className="green-room-rxn-mark" aria-hidden="true">{mark}</span>
+                <span className="green-room-rxn-word">{word}</span>
+                {reactions[kind]?.count ? <b>{reactions[kind].count}</b> : null}
+              </button>
+            ))}
+          </div>
+          <div className="green-room-msg-tools">
+            <button type="button" className="green-room-tool-btn" onClick={() => onCallback(message)} aria-label="Reply">
+              <IconReply size={15} />
             </button>
-          ))}
-          <button type="button" className="green-room-callback-btn" onClick={() => onCallback(message)}>
-            Callback
-          </button>
-          {mine && !editing && (
-            <button type="button" className="green-room-own-btn" onClick={() => setEditing(true)}>
-              Edit
-            </button>
-          )}
-          {(mine || isAdmin) && !editing && (
-            <button type="button" className="green-room-own-btn is-danger" onClick={() => onDelete(message)}>
-              Delete
-            </button>
-          )}
+            {mine && !editing && (
+              <button type="button" className="green-room-tool-btn" onClick={() => setEditing(true)} aria-label="Edit">
+                <IconPencil size={15} />
+              </button>
+            )}
+            {(mine || isAdmin) && !editing && (
+              <button type="button" className="green-room-tool-btn is-danger" onClick={() => onDelete(message)} aria-label="Delete">
+                <IconTrash size={15} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </article>
