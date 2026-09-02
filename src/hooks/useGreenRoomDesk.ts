@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { PAGE_SIZE, isFullPage, mergeById, patchRealtimeList } from '../lib/paging';
+import { errorMessage } from '../lib/errors';
 import type { GreenRoomMessage } from './useGreenRoomMessages';
 
 export interface FloorRestriction {
@@ -16,6 +17,10 @@ const MESSAGE_SELECT = `
   id, author_id, body, reel_film_id, external_link, external_link_title, external_link_image, reply_to_id, created_at, edited_at,
   author:profiles!author_id (id, full_name, avatar_url, role, roles, st_id)
 `;
+
+function rpcMissing(error: { message?: string } | null) {
+  return !!error?.message && /could not find the function|schema cache/i.test(error.message);
+}
 
 function weekAgoIso() {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -66,6 +71,7 @@ export function useGreenRoomDesk() {
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [query, setQuery] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   const fetchMessages = useCallback(async (append = false) => {
     const from = append ? messages.length : 0;
@@ -102,9 +108,16 @@ export function useGreenRoomDesk() {
     let alive = true;
     (async () => {
       try {
-        await Promise.all([fetchMessages(false), fetchRestrictions()]);
+        await fetchMessages(false);
+        if (alive) setLoadError('');
       } catch (err) {
-        console.error('Floor desk fetch', err);
+        console.error('Floor desk messages', err);
+        if (alive) setLoadError(errorMessage(err));
+      }
+      try {
+        await fetchRestrictions();
+      } catch (err) {
+        console.warn('Floor desk restrictions', err);
       } finally {
         if (alive) setLoading(false);
       }
@@ -138,30 +151,55 @@ export function useGreenRoomDesk() {
   }, [fetchRestrictions]);
 
   const deleteMessage = async (id: string) => {
-    const { error } = await supabase.from('green_room_messages').delete().eq('id', id);
-    if (error) throw error;
+    const { data, error } = await supabase.rpc('admin_delete_green_room_message', { target: id });
+    if (error && !rpcMissing(error)) throw new Error(errorMessage(error));
+    const removed = typeof data === 'number' ? data : 0;
+    if (!error && removed > 0) {
+      setMessages(prev => prev.filter(m => m.id !== id));
+      return;
+    }
+    const fallback = await supabase.from('green_room_messages').delete().eq('id', id).select('id');
+    if (fallback.error) throw new Error(errorMessage(fallback.error));
+    if (!fallback.data?.length) throw new Error('That line is still on the floor. Run the Floor Desk SQL, then try again.');
     setMessages(prev => prev.filter(m => m.id !== id));
   };
 
   const strikeAuthor = async (authorId: string) => {
-    const { error } = await supabase.from('green_room_messages').delete().eq('author_id', authorId);
-    if (error) throw error;
-    setMessages(prev => prev.filter(m => m.author_id !== authorId));
+    const { data, error } = await supabase.rpc('admin_strike_green_room_author', { target: authorId });
+    if (error && !rpcMissing(error)) throw new Error(errorMessage(error));
+    const removed = typeof data === 'number' ? data : 0;
+    if (!error && removed > 0) {
+      setMessages(prev => prev.filter(m => m.author_id !== authorId));
+      return;
+    }
+    const fallback = await supabase.from('green_room_messages').delete().eq('author_id', authorId).select('id');
+    if (fallback.error) throw new Error(errorMessage(fallback.error));
+    if (!fallback.data?.length) throw new Error('Those lines are still on the floor. Run the Floor Desk SQL, then try again.');
+    const gone = new Set(fallback.data.map((row) => String(row.id)));
+    setMessages(prev => prev.filter(m => !gone.has(m.id)));
   };
 
   const setRestriction = async (userId: string, kind: 'restricted' | 'blocked', setBy: string) => {
-    const { error } = await supabase.from('green_room_restrictions').upsert({
-      user_id: userId,
-      kind,
-      set_by: setBy,
-    });
-    if (error) throw error;
+    const { error } = await supabase.rpc('admin_set_floor_restriction', { target: userId, next_kind: kind });
+    if (error && !rpcMissing(error)) throw new Error(errorMessage(error));
+    if (error) {
+      const fallback = await supabase.from('green_room_restrictions').upsert({
+        user_id: userId,
+        kind,
+        set_by: setBy,
+      });
+      if (fallback.error) throw new Error(errorMessage(fallback.error));
+    }
     await fetchRestrictions();
   };
 
   const liftRestriction = async (userId: string) => {
-    const { error } = await supabase.from('green_room_restrictions').delete().eq('user_id', userId);
-    if (error) throw error;
+    const { error } = await supabase.rpc('admin_lift_floor_restriction', { target: userId });
+    if (error && !rpcMissing(error)) throw new Error(errorMessage(error));
+    if (error) {
+      const fallback = await supabase.from('green_room_restrictions').delete().eq('user_id', userId);
+      if (fallback.error) throw new Error(errorMessage(fallback.error));
+    }
     setRestrictions(prev => prev.filter(r => r.user_id !== userId));
   };
 
@@ -178,6 +216,7 @@ export function useGreenRoomDesk() {
     messages: filtered,
     restrictions,
     loading,
+    loadError,
     hasMore,
     query,
     setQuery,

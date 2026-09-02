@@ -10,6 +10,11 @@ interface State {
   error: Error | null;
 }
 
+function isChunkError(error: Error | null) {
+  const msg = error?.message || '';
+  return /Failed to fetch dynamically imported module|Loading chunk|Importing a module script failed/i.test(msg);
+}
+
 export default class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -21,21 +26,30 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Dashboard ErrorBoundary caught:', error, info);
+    console.error('ErrorBoundary caught:', error, info);
   }
+
+  private retry = () => {
+    if (isChunkError(this.state.error)) {
+      window.location.reload();
+      return;
+    }
+    this.setState({ hasError: false, error: null });
+  };
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div style={{ padding: 40, border: '1px solid rgba(255,77,77,0.2)', background: 'rgba(10,10,10,0.4)', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, color: '#ff4d4d' }}>
-            Something went wrong in this panel.
+      if (this.props.fallback) return this.props.fallback;
+      return (
+        <div className="crew-empty" style={{ margin: 48 }}>
+          <h3>This panel hit an error</h3>
+          <p>
+            {isChunkError(this.state.error)
+              ? 'A new build is live. Refresh to load the floor again.'
+              : this.state.error?.message || 'Hard-refresh the page, then try again.'}
           </p>
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            style={{ marginTop: 16, background: 'none', border: '1px solid rgba(188,168,142,0.4)', color: '#BCA88E', padding: '8px 20px', fontFamily: 'Montserrat, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}
-          >
-            RETRY
+          <button type="button" className="dash-ghost-btn" onClick={this.retry} style={{ marginTop: 16 }}>
+            {isChunkError(this.state.error) ? 'Refresh' : 'Retry'}
           </button>
         </div>
       );

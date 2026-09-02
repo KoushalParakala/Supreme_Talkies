@@ -498,17 +498,25 @@ ALTER TABLE public.admin_templates       ENABLE ROW LEVEL SECURITY;
 
 -- Helper: is admin
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER STABLE AS $$
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public AS $$
+DECLARE
+  jwt_email text;
 BEGIN
-  -- Fast-path JWT check: avoids database queries for predefined admin emails
-  IF auth.jwt() ->> 'email' IN ('admin@supremetalkies.com', 'koushal.sub@gmail.com') THEN
+  jwt_email := lower(coalesce(auth.jwt() ->> 'email', ''));
+  IF jwt_email IN ('admin@supremetalkies.com', 'koushal.sub@gmail.com') THEN
     RETURN TRUE;
   END IF;
 
   RETURN EXISTS (
     SELECT 1 FROM public.profiles
     WHERE id = auth.uid()
-      AND ('admin' = ANY(roles) OR role = 'admin')
+      AND (
+        lower(coalesce(role, '')) = 'admin'
+        OR EXISTS (
+          SELECT 1 FROM unnest(coalesce(roles, ARRAY[]::text[])) r
+          WHERE lower(r) = 'admin'
+        )
+      )
   );
 END;
 $$;

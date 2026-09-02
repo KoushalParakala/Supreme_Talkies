@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { displayReelTitle, reelPreviewFromUrl } from '../lib/reelLinks';
+import { errorMessage } from '../lib/errors';
 
 export type ReactionKind = 'hype' | 'loved' | 'clap';
 
@@ -259,7 +260,9 @@ export function useGreenRoomMessages() {
         (payload) => {
           const raw = payload.new as Record<string, unknown>;
           if (raw?.created_at && String(raw.created_at) < weekAgoIso()) return;
-          void hydrateMessage(normalizeMessage(raw)).then(upsertMessage);
+          void hydrateMessage(normalizeMessage(raw)).then(upsertMessage).catch((err) => {
+            console.warn('[useGreenRoomMessages] insert hydrate failed:', err);
+          });
         },
       )
       .on(
@@ -267,7 +270,9 @@ export function useGreenRoomMessages() {
         { event: 'UPDATE', schema: 'public', table: 'green_room_messages' },
         (payload) => {
           const raw = payload.new as Record<string, unknown>;
-          void hydrateMessage(normalizeMessage(raw)).then(upsertMessage);
+          void hydrateMessage(normalizeMessage(raw)).then(upsertMessage).catch((err) => {
+            console.warn('[useGreenRoomMessages] update hydrate failed:', err);
+          });
         },
       )
       .on(
@@ -375,10 +380,21 @@ export function useGreenRoomMessages() {
   const deleteMessage = useCallback(
     async (id: string) => {
       if (!user) return { error: 'Not signed in' };
-      let q = supabase.from('green_room_messages').delete().eq('id', id);
+      if (isAdmin) {
+        const { data, error } = await supabase.rpc('admin_delete_green_room_message', { target: id });
+        if (!error && typeof data === 'number' && data > 0) {
+          removeMessage(id);
+          return { error: null };
+        }
+        if (error && !/could not find the function|schema cache/i.test(error.message)) {
+          return { error: floorGuardMessage(errorMessage(error)) };
+        }
+      }
+      let q = supabase.from('green_room_messages').delete().eq('id', id).select('id');
       if (!isAdmin) q = q.eq('author_id', user.id);
-      const { error } = await q;
-      if (error) return { error: floorGuardMessage(error.message) };
+      const { data, error } = await q;
+      if (error) return { error: floorGuardMessage(errorMessage(error)) };
+      if (!data?.length) return { error: 'That line is still on the floor.' };
       removeMessage(id);
       return { error: null };
     },

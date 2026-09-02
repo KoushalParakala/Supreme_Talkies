@@ -3054,8 +3054,8 @@ html[data-theme="dark"] .call-sheet-request {
   transform: translateY(-2px);
 }
 .green-room-reel-still {
-  width: 52px;
-  height: 72px;
+  width: 72px;
+  height: 100px;
   flex-shrink: 0;
   border-radius: 0;
   overflow: hidden;
@@ -3077,6 +3077,25 @@ html[data-theme="dark"] .call-sheet-request {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted-foreground);
+}
+.green-room-reel.is-screen {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+.green-room-reel.is-screen .green-room-reel-still {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #171717;
+}
+.green-room-reel.is-screen .green-room-reel-still img {
+  object-fit: cover;
+  object-position: center;
+}
+.green-room-reel.is-screen > span:last-child {
+  display: block;
+  padding: 12px 14px 14px;
 }
 .green-room-msg-actions {
   display: flex;

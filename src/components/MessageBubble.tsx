@@ -4,6 +4,7 @@ import { timeAgo } from '../lib/time';
 import { filmStill } from '../data/films';
 import { ROLE_COLORS, type RoleColorId } from '../lib/roleColors';
 import { displayReelTitle, reelPreviewFromUrl } from '../lib/reelLinks';
+import { displayText } from '../lib/errors';
 import type { GreenRoomMessage, ReactionKind, ReactionBucket } from '../hooks/useGreenRoomMessages';
 
 const REACTIONS: { kind: ReactionKind; label: string }[] = [
@@ -13,10 +14,13 @@ const REACTIONS: { kind: ReactionKind; label: string }[] = [
 ];
 
 function authorRoles(message: GreenRoomMessage): string[] {
-  return [
-    ...(Array.isArray(message.author?.roles) ? message.author!.roles : []),
-    message.author?.role,
-  ]
+  const raw = message.author?.roles;
+  const listed = Array.isArray(raw)
+    ? raw
+    : typeof raw === 'string' && raw.trim()
+      ? [raw]
+      : [];
+  return [...listed, message.author?.role]
     .filter((r): r is string => typeof r === 'string' && r.length > 0)
     .map((r) => r.toLowerCase());
 }
@@ -34,8 +38,10 @@ function authorRole(message: GreenRoomMessage): RoleColorId | null {
 }
 
 function quoteText(message: GreenRoomMessage): string {
-  if (message.reply_to?.body) return message.reply_to.body;
-  if (message.reply_to?.external_link_title) return message.reply_to.external_link_title;
+  const body = displayText(message.reply_to?.body);
+  if (body) return body;
+  const title = displayText(message.reply_to?.external_link_title);
+  if (title) return title;
   return 'Earlier on the floor';
 }
 
@@ -74,7 +80,7 @@ export default function MessageBubble({
   const [editError, setEditError] = useState('');
   const role = authorRole(message);
   const accent = role ? ROLE_COLORS[role] : undefined;
-  const name = message.author?.full_name?.trim() || 'Member';
+  const name = displayText(message.author?.full_name, 'Member').trim() || 'Member';
   const initial = name.charAt(0).toUpperCase();
   const derivedReel =
     !message.film && message.external_link && /^https?:\/\//i.test(message.external_link)
@@ -127,20 +133,24 @@ export default function MessageBubble({
           </span>
         )}
         <span>
-          <strong>{filmTitle}</strong>
-          {filmMeta && <small>{filmMeta}</small>}
+          <strong>{displayText(filmTitle)}</strong>
+          {filmMeta && <small>{displayText(filmMeta)}</small>}
         </span>
       </Link>
     ) : (
-      <button type="button" className="green-room-reel" onClick={() => externalHref && onOpenExternal(externalHref)}>
+      <button
+        type="button"
+        className={`green-room-reel${filmImage ? ' is-screen' : ''}`}
+        onClick={() => externalHref && onOpenExternal(externalHref)}
+      >
         {filmImage && (
           <span className="float-card-image green-room-reel-still">
             <img src={filmImage} alt="" />
           </span>
         )}
         <span>
-          <strong>{filmTitle}</strong>
-          {filmMeta && <small>{filmMeta}</small>}
+          <strong>{displayText(filmTitle)}</strong>
+          {filmMeta && <small>{displayText(filmMeta)}</small>}
         </span>
       </button>
     )
@@ -207,7 +217,7 @@ export default function MessageBubble({
             </div>
           </div>
         ) : (
-          message.body && <p>{message.body}</p>
+          message.body && <p>{displayText(message.body)}</p>
         )}
         {poster}
         <div className="green-room-msg-actions">

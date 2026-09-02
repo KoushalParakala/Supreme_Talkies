@@ -5,6 +5,7 @@ import Nav from '../components/Nav';
 import MessageBubble from '../components/MessageBubble';
 import ReelAttachPicker, { type ReelDraft } from '../components/ReelAttachPicker';
 import OutboundConfirm from '../components/OutboundConfirm';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { IconClapper, IconX } from '../components/ReelIcons';
 import {
   useGreenRoomMessages,
@@ -46,11 +47,15 @@ export default function GreenRoom() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('green_room_restrictions')
         .select('kind')
         .eq('user_id', user.id)
         .maybeSingle();
+      if (error) {
+        console.warn('[GreenRoom] restriction lookup failed:', error);
+        return;
+      }
       const kind = data?.kind;
       setRestriction(kind === 'restricted' || kind === 'blocked' ? kind : null);
     };
@@ -201,8 +206,17 @@ export default function GreenRoom() {
                     </div>
                   )}
                   {messages.map((message) => (
-                    <MessageBubble
+                    <ErrorBoundary
                       key={message.id}
+                      fallback={
+                        <article className="green-room-msg">
+                          <div className="green-room-msg-body">
+                            <p className="green-room-picker-error">This line could not render. Retry or delete it from Floor Desk.</p>
+                          </div>
+                        </article>
+                      }
+                    >
+                    <MessageBubble
                       message={message}
                       reactions={reactions[message.id] || emptyBuckets}
                       flash={flashId === message.id}
@@ -223,6 +237,7 @@ export default function GreenRoom() {
                       onEdit={editMessage}
                       onDelete={setPendingDelete}
                     />
+                    </ErrorBoundary>
                   ))}
                 </>
               )}
@@ -244,7 +259,7 @@ export default function GreenRoom() {
                 <div className="green-room-reply-chip">
                   <span>
                     Callback to <b>{replyTo.author?.full_name || 'Member'}</b>
-                    {replyTo.body ? ` — ${replyTo.body.slice(0, 72)}` : ''}
+                    {typeof replyTo.body === 'string' && replyTo.body ? ` — ${replyTo.body.slice(0, 72)}` : ''}
                   </span>
                   <button type="button" className="green-room-icon-btn" onClick={() => setReplyTo(null)} aria-label="Cancel callback">
                     <IconX size={12} />
@@ -307,7 +322,7 @@ export default function GreenRoom() {
             <p className="eyebrow" style={{ color: 'var(--vermilion)' }}>Strike the line</p>
             <h2>Delete this <em>line?</em></h2>
             <p>
-              {pendingDelete.body
+              {typeof pendingDelete.body === 'string' && pendingDelete.body
                 ? `“${pendingDelete.body.slice(0, 140)}${pendingDelete.body.length > 140 ? '…' : ''}” comes off the floor for everyone.`
                 : 'This pinned reel comes off the floor for everyone.'}
             </p>
