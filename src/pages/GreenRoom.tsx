@@ -6,7 +6,7 @@ import MessageBubble from '../components/MessageBubble';
 import ReelAttachPicker, { type ReelDraft } from '../components/ReelAttachPicker';
 import OutboundConfirm from '../components/OutboundConfirm';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { IconClapper, IconSmile, IconX } from '../components/ReelIcons';
+import { IconSmile, IconX } from '../components/ReelIcons';
 import {
   useGreenRoomMessages,
   type GreenRoomMessage,
@@ -325,7 +325,7 @@ export default function GreenRoom() {
                       setPickerOpen((v) => !v);
                     }}
                   >
-                    <IconClapper size={14} /> Pin a Reel
+                    Pin a Reel
                   </button>
                   <button
                     type="button"

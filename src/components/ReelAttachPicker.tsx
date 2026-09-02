@@ -27,7 +27,7 @@ export default function ReelAttachPicker({
   onAttach: (draft: ReelDraft) => void;
 }) {
   const { films } = useFilms();
-  const [tab, setTab] = useState<'house' | 'link'>('house');
+  const [tab, setTab] = useState<'house' | 'link'>('link');
   const [query, setQuery] = useState('');
   const [url, setUrl] = useState('');
   const [preview, setPreview] = useState<ReelDraft | null>(null);
@@ -40,7 +40,7 @@ export default function ReelAttachPicker({
       setUrl('');
       setPreview(null);
       setError('');
-      setTab('house');
+      setTab('link');
     }
   }, [open]);
 
@@ -110,11 +110,11 @@ export default function ReelAttachPicker({
     <div className="green-room-picker" data-lenis-prevent>
       <div className="green-room-picker-head">
         <div className="green-room-picker-tabs">
-          <button type="button" className={tab === 'house' ? 'is-on' : ''} onClick={() => setTab('house')}>
-            From Supreme Talkies
-          </button>
           <button type="button" className={tab === 'link' ? 'is-on' : ''} onClick={() => setTab('link')}>
             Paste a link
+          </button>
+          <button type="button" className={tab === 'house' ? 'is-on' : ''} onClick={() => setTab('house')}>
+            From Supreme Talkies
           </button>
         </div>
         <button type="button" className="green-room-icon-btn" onClick={onClose} aria-label="Close picker">
