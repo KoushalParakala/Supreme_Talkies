@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { PAGE_SIZE, isFullPage, mergeById, patchRealtimeList } from '../../lib/paging';
 
 interface CinemaInputProps {
   label: string;
@@ -173,6 +174,31 @@ function TagPicker({ label, tags, selected, onChange, max, single }: {
   );
 }
 
+function LoadMoreChip({ show, loading, onClick }: { show: boolean; loading?: boolean; onClick: () => void }) {
+  if (!show) return null;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      style={{
+        alignSelf: 'center',
+        background: 'none',
+        border: '1px solid rgba(201,161,83,0.1)',
+        padding: '6px 14px',
+        color: '#c9a153',
+        fontFamily: 'Space Grotesk, sans-serif',
+        fontSize: 8,
+        letterSpacing: 3,
+        cursor: loading ? 'not-allowed' : 'pointer',
+        opacity: loading ? 0.5 : 1,
+      }}
+    >
+      {loading ? 'LOADING' : 'LOAD MORE'}
+    </button>
+  );
+}
+
 const GENRE_OPTIONS = ['Drama', 'Thriller', 'Comedy', 'Romance', 'Documentary', 'Experimental', 'Horror', 'Action', 'Sci-Fi', 'Period', '+'];
 const BUDGET_OPTIONS = ['Under ₹100T', '₹100T–500T', '₹500T–2000T', '₹2000T+', 'Not Disclosed'];
 const TIMELINE_OPTIONS = ['< 1 Month', '1–3 Months', '3–6 Months', '6+ Months'];
@@ -224,6 +250,13 @@ export default function AdminDashboard() {
   // FILMS state
   const [films, setFilms] = useState<any[]>([]);
   const [editingFilm, setEditingFilm] = useState<any>(null);
+  const [filmsTab, setFilmsTab] = useState<'EXISTING FILMS' | 'NOW SHOWING' | 'REQUESTS'>('EXISTING FILMS');
+  const [nowShowing, setNowShowing] = useState<any[]>([]);
+  const [nsRequests, setNsRequests] = useState<any[]>([]);
+  const [nsReqHasMore, setNsReqHasMore] = useState(false);
+  const emptyNsSlot = () => ({ id: undefined as string | undefined, title: '', image_url: '', link_url: '', file: null as File | null });
+  const [nsSlots, setNsSlots] = useState(() => [emptyNsSlot(), emptyNsSlot(), emptyNsSlot()]);
+  const [savingNowShowing, setSavingNowShowing] = useState(false);
   const INITIAL_CREDITS = [
     { role: 'Direction', value: '' },
     { role: 'Writing', value: '' },
@@ -236,17 +269,19 @@ export default function AdminDashboard() {
   const emptyFilm = () => ({
     title: '', production_note: '', rating: 'UA', duration: '', color: '#0a0a0a',
     synopsis: '', special_note: '',
-    video_link: '', reel_image: '', coming_soon: false, stills: [] as string[],
+    video_link: '', reel_image: '', poster_image: '', coming_soon: false, stills: [] as string[],
     director: '', producer: '',
     credits: INITIAL_CREDITS.map((c) => ({ ...c })),
   });
   const [newFilm, setNewFilm] = useState<any>(emptyFilm());
   const [reelFile, setReelFile] = useState<File | null>(null);
-  const [still1File, setStill1File] = useState<File | null>(null);
-  const [still2File, setStill2File] = useState<File | null>(null);
-  const [still3File, setStill3File] = useState<File | null>(null);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [bgFile, setBgFile] = useState<File | null>(null);
   const [uploadingFilm, setUploadingFilm] = useState(false);
   const [creditDragIndex, setCreditDragIndex] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const pageLens = useRef({ submissions: 0, scripts: 0, briefs: 0, rooms: 0, campaigns: 0, films: 0, screenings: 0 });
 
   // NEEDS YOUR EYES inbox (cross-tab summary)
   const [inboxScripts, setInboxScripts] = useState<any[]>([]);
@@ -262,6 +297,14 @@ export default function AdminDashboard() {
   const [creatingRoom, setCreatingRoom] = useState(false);
 
   const fetchIdRef = useRef(0);
+
+  useEffect(() => { pageLens.current.submissions = submissions.length; }, [submissions]);
+  useEffect(() => { pageLens.current.scripts = scripts.length; }, [scripts]);
+  useEffect(() => { pageLens.current.briefs = briefs.length; }, [briefs]);
+  useEffect(() => { pageLens.current.rooms = projectRooms.length; }, [projectRooms]);
+  useEffect(() => { pageLens.current.campaigns = campaigns.length; }, [campaigns]);
+  useEffect(() => { pageLens.current.films = films.length; }, [films]);
+  useEffect(() => { pageLens.current.screenings = screenings.length; }, [screenings]);
 
   const fetchInbox = async () => {
     try {
@@ -293,65 +336,101 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = async (append = false) => {
     const fetchId = ++fetchIdRef.current;
     try {
-      setDebugStep('Started fetchData');
-      setLoading(true);
-      setError(null);
+      if (append) setLoadingMore(true);
+      else {
+        setDebugStep('Started fetchData');
+        setLoading(true);
+        setError(null);
+      }
+
+      const fromFor = (key: keyof typeof pageLens.current) => (append ? pageLens.current[key] : 0);
+      const toFor = (from: number) => from + PAGE_SIZE - 1;
 
       if (section === 'MARKETING') {
         setDebugStep('Fetching MARKETING submissions...');
-        const { data, error: err } = await supabase.from('submissions').select('*, profiles(full_name, avatar_symbol, st_id)').in('type', ['marketing_idea', 'collab']).order('created_at', { ascending: false });
+        const from = fromFor('submissions');
+        const { data, error: err } = await supabase.from('submissions').select('*, profiles(full_name, avatar_symbol, st_id)').in('type', ['marketing_idea', 'collab']).order('created_at', { ascending: false }).range(from, toFor(from));
         if (fetchId !== fetchIdRef.current) return;
         setDebugStep('MARKETING fetch complete');
         if (err) throw err;
-        setSubmissions(data || []);
+        setSubmissions(prev => append ? mergeById(prev, data || []) : (data || []));
+        setHasMore(isFullPage(data));
       } else if (section === 'WRITERS') {
-        const { data: scriptsData, error: scriptsErr } = await supabase.from('scripts').select('*, user:profiles(full_name, avatar_symbol, st_id, role)').order('created_at', { ascending: false });
+        const from = fromFor('scripts');
+        const { data: scriptsData, error: scriptsErr } = await supabase.from('scripts').select('*, user:profiles(full_name, avatar_symbol, st_id, role)').order('created_at', { ascending: false }).range(from, toFor(from));
         if (fetchId !== fetchIdRef.current) return;
         if (scriptsErr) throw scriptsErr;
-        setScripts(scriptsData || []);
-        
-        const { data: chalData } = await supabase.from('writing_challenges').select('*').order('created_at', { ascending: false });
-        if (fetchId === fetchIdRef.current) {
-          setAdminChallenges(chalData || []);
+        setScripts(prev => append ? mergeById(prev, scriptsData || []) : (scriptsData || []));
+        setHasMore(isFullPage(scriptsData));
+
+        if (!append) {
+          const { data: chalData } = await supabase.from('writing_challenges').select('*').order('created_at', { ascending: false });
+          if (fetchId === fetchIdRef.current) {
+            setAdminChallenges(chalData || []);
+          }
         }
       } else if (section === 'PROJECTS') {
-        const { data, error: err } = await supabase.from('film_briefs').select('*, producer:profiles(full_name, avatar_symbol), brief_interests(*, user:profiles(full_name, st_id, role, avatar_symbol))').order('created_at', { ascending: false });
+        const from = fromFor('briefs');
+        const { data, error: err } = await supabase.from('film_briefs').select('*, producer:profiles(full_name, avatar_symbol), brief_interests(*, user:profiles(full_name, st_id, role, avatar_symbol))').order('created_at', { ascending: false }).range(from, toFor(from));
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
-        setBriefs(data || []);
+        setBriefs(prev => append ? mergeById(prev, data || []) : (data || []));
+        setHasMore(isFullPage(data));
       } else if (section === 'PROJECT ROOMS') {
-        const { data, error: err } = await supabase.from('project_rooms').select('*, project_room_members(*, profiles(id, full_name, avatar_symbol, avatar_url, st_id))').order('created_at', { ascending: false });
+        const from = fromFor('rooms');
+        const { data, error: err } = await supabase.from('project_rooms').select('*, project_room_members(*, profiles(id, full_name, avatar_symbol, avatar_url, st_id))').order('created_at', { ascending: false }).range(from, toFor(from));
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
-        setProjectRooms(data || []);
+        setProjectRooms(prev => append ? mergeById(prev, data || []) : (data || []));
+        setHasMore(isFullPage(data));
       } else if (section === 'CAMPAIGNS') {
-        const { data, error: err } = await supabase.from('campaigns').select('*, campaign_assignments(count)').order('created_at', { ascending: false });
+        const from = fromFor('campaigns');
+        const { data, error: err } = await supabase.from('campaigns').select('*, campaign_assignments(count)').order('created_at', { ascending: false }).range(from, toFor(from));
         if (fetchId !== fetchIdRef.current) return;
         if (err) {
-          const { data: fallbackData } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false });
+          const { data: fallbackData } = await supabase.from('campaigns').select('*').order('created_at', { ascending: false }).range(from, toFor(from));
           if (fetchId !== fetchIdRef.current) return;
-          setCampaigns(fallbackData || []);
+          setCampaigns(prev => append ? mergeById(prev, fallbackData || []) : (fallbackData || []));
+          setHasMore(isFullPage(fallbackData));
         } else {
-          setCampaigns(data || []);
+          setCampaigns(prev => append ? mergeById(prev, data || []) : (data || []));
+          setHasMore(isFullPage(data));
         }
 
       } else if (section === 'FILMS') {
-        const { data, error: err } = await supabase.from('films').select('*').order('created_at', { ascending: false });
+        const from = fromFor('films');
+        const { data, error: err } = await supabase.from('films').select('*').order('created_at', { ascending: false }).range(from, toFor(from));
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
-        setFilms(data || []);
+        setFilms(prev => append ? mergeById(prev, data || []) : (data || []));
+        setHasMore(isFullPage(data));
+        if (!append) {
+          const { data: ns } = await supabase.from('now_showing').select('*').order('position', { ascending: true });
+          if (fetchId !== fetchIdRef.current) return;
+          const rows = ns || [];
+          setNowShowing(rows);
+          const slots = rows.map((r: any) => ({ id: r.id, title: r.title, image_url: r.image_url, link_url: r.link_url, file: null as File | null }));
+          while (slots.length < 3) slots.push(emptyNsSlot());
+          setNsSlots(slots);
+          const { data: nsr } = await supabase.from('now_showing_requests').select('*, profiles(full_name, st_id)').order('created_at', { ascending: false }).range(0, PAGE_SIZE - 1);
+          if (fetchId !== fetchIdRef.current) return;
+          setNsRequests(nsr || []);
+          setNsReqHasMore(isFullPage(nsr));
+        }
       } else if (section === 'SCREENINGS') {
-        const { data, error: err } = await supabase.from('presentations').select('*, profiles(full_name, avatar_symbol, st_id)').order('created_at', { ascending: false });
+        const from = fromFor('screenings');
+        const { data, error: err } = await supabase.from('presentations').select('*, profiles(full_name, avatar_symbol, st_id)').order('created_at', { ascending: false }).range(from, toFor(from));
         if (fetchId !== fetchIdRef.current) return;
         if (err) throw err;
-        setScreenings(data || []);
+        setScreenings(prev => append ? mergeById(prev, data || []) : (data || []));
+        setHasMore(isFullPage(data));
       }
 
       setDebugStep('Checking PROJECT ROOMS secondary fetch');
-      if (section === 'PROJECT ROOMS') {
+      if (section === 'PROJECT ROOMS' && !append) {
         const { data: scripts } = await supabase.from('scripts').select('id, title').eq('kanban_stage', 'accepted');
         if (fetchId !== fetchIdRef.current) return;
         setAcceptedScripts(scripts || []);
@@ -367,6 +446,7 @@ export default function AdminDashboard() {
       if (fetchId === fetchIdRef.current) {
         setDebugStep(prev => prev + ' -> Finally block');
         setLoading(false);
+        setLoadingMore(false);
       }
     }
   };
@@ -396,30 +476,95 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // Maps each admin tab to the table(s) whose changes should actually trigger a refetch
-    // of that tab. Keeps unrelated tables (e.g. a submissions edit while on FILMS) from
-    // causing a pointless loading-flicker refetch, and gives PROJECT ROOMS/CAMPAIGNS/FILMS
-    // live updates they previously never got.
     const SECTION_TABLES: Record<string, string[]> = {
       MARKETING: ['submissions'],
       WRITERS: ['scripts', 'writing_challenges'],
       PROJECTS: ['film_briefs', 'brief_interests'],
       'PROJECT ROOMS': ['project_rooms', 'project_room_members'],
       CAMPAIGNS: ['campaigns'],
-      FILMS: ['films'],
+      FILMS: ['films', 'now_showing', 'now_showing_requests'],
       SCREENINGS: ['presentations'],
     };
     const tables = SECTION_TABLES[section] || [];
     if (tables.length === 0) return;
 
+    const selects: Record<string, string> = {
+      submissions: '*, profiles(full_name, avatar_symbol, st_id)',
+      scripts: '*, user:profiles(full_name, avatar_symbol, st_id, role)',
+      writing_challenges: '*',
+      film_briefs: '*, producer:profiles(full_name, avatar_symbol), brief_interests(*, user:profiles(full_name, st_id, role, avatar_symbol))',
+      project_rooms: '*, project_room_members(*, profiles(id, full_name, avatar_symbol, avatar_url, st_id))',
+      campaigns: '*, campaign_assignments(count)',
+      films: '*',
+      now_showing: '*',
+      now_showing_requests: '*, profiles(full_name, st_id)',
+      presentations: '*, profiles(full_name, avatar_symbol, st_id)',
+    };
+
+    const hydrateOne = async (table: string, id: string) => {
+      const { data } = await supabase.from(table).select(selects[table] || '*').eq('id', id).maybeSingle();
+      return data;
+    };
+
+    const applyRow = (table: string, eventType: string, row: any, oldId?: string) => {
+      const patch = (setter: React.Dispatch<React.SetStateAction<any[]>>) => {
+        setter(prev => patchRealtimeList(prev, eventType, row, oldId));
+      };
+      if (table === 'submissions') patch(setSubmissions);
+      else if (table === 'scripts') patch(setScripts);
+      else if (table === 'writing_challenges') patch(setAdminChallenges);
+      else if (table === 'film_briefs') patch(setBriefs);
+      else if (table === 'project_rooms') patch(setProjectRooms);
+      else if (table === 'campaigns') patch(setCampaigns);
+      else if (table === 'films') patch(setFilms);
+      else if (table === 'now_showing') {
+        setNowShowing(prev => {
+          const next = patchRealtimeList(prev, eventType, row, oldId);
+          const slots = next.slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+            .map((r: any) => ({ id: r.id, title: r.title, image_url: r.image_url, link_url: r.link_url, file: null as File | null }));
+          while (slots.length < 3) slots.push(emptyNsSlot());
+          setNsSlots(slots);
+          return next;
+        });
+      }
+      else if (table === 'now_showing_requests') patch(setNsRequests);
+      else if (table === 'presentations') patch(setScreenings);
+    };
+
     let channel = supabase.channel(`admin_live_updates_${section}`);
     for (const table of tables) {
-      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => fetchData());
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+        const eventType = payload.eventType;
+        const id = (payload.new as any)?.id || (payload.old as any)?.id;
+        if (table === 'brief_interests') {
+          const briefId = (payload.new as any)?.brief_id || (payload.old as any)?.brief_id;
+          if (!briefId) return;
+          void hydrateOne('film_briefs', briefId).then((row) => {
+            if (row) setBriefs(prev => patchRealtimeList(prev, 'UPDATE', row, briefId));
+          });
+          return;
+        }
+        if (table === 'project_room_members') {
+          const roomId = (payload.new as any)?.room_id || (payload.old as any)?.room_id;
+          if (!roomId) return;
+          void hydrateOne('project_rooms', roomId).then((row) => {
+            if (row) setProjectRooms(prev => patchRealtimeList(prev, 'UPDATE', row, roomId));
+          });
+          return;
+        }
+        if (eventType === 'DELETE') {
+          applyRow(table, eventType, payload.old as any, (payload.old as any)?.id);
+          return;
+        }
+        void (async () => {
+          const hydrated = id ? await hydrateOne(table, id) : null;
+          applyRow(table, eventType, hydrated || payload.new, id);
+        })();
+      });
     }
     channel.subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  // fetchData is stable within the section's scope; section is the key dependency
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section]);
 
@@ -511,7 +656,6 @@ export default function AdminDashboard() {
           notes: newRoom.brief,
           status: 'active', 
           created_by: adminUser.id,
-          member_ids: memberIds
         })
         .select()
         .single();
@@ -519,7 +663,6 @@ export default function AdminDashboard() {
       if (error) throw error;
 
       if (insertedRoom) {
-        // Insert member rows into project_room_members join table
         const memberRows = memberIds.map(uid => ({
           room_id: insertedRoom.id,
           user_id: uid
@@ -527,9 +670,7 @@ export default function AdminDashboard() {
         const { error: membersErr } = await supabase
           .from('project_room_members')
           .insert(memberRows);
-        if (membersErr) {
-          console.error("Failed to insert project room members:", membersErr);
-        }
+        if (membersErr) throw membersErr;
       }
 
       setNewRoom({ title: '', script_id: '', brief: '' }); 
@@ -570,20 +711,11 @@ export default function AdminDashboard() {
       if (error || !profile) throw new Error("Member not found.");
       if (existingMembers.includes(profile.id)) throw new Error("Already a member.");
 
-      const { error: updErr } = await supabase.from('project_rooms').update({ 
-        member_ids: [...existingMembers, profile.id] 
-      }).eq('id', roomId);
-      
-      if (updErr) throw updErr;
-
-      // Also insert into project_room_members join table
       const { error: joinErr } = await supabase.from('project_room_members').insert({
         room_id: roomId,
         user_id: profile.id
       });
-      if (joinErr) {
-        console.error("Failed to insert member into project_room_members join table:", joinErr);
-      }
+      if (joinErr) throw joinErr;
 
       setRoomMemberId({ ...roomMemberId, [roomId]: '' });
       fetchData();
@@ -684,9 +816,9 @@ export default function AdminDashboard() {
       setUploadingFilm(true);
       
       let finalReelUrl = newFilm.reel_image;
-      const finalStills = newFilm.stills || [];
+      let finalPosterUrl = newFilm.poster_image;
+      let finalStills = Array.isArray(newFilm.stills) ? [...newFilm.stills] : [];
 
-      // Helper function for uploading
       const uploadFile = async (file: File, folder: string) => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
@@ -698,11 +830,9 @@ export default function AdminDashboard() {
       };
 
       if (reelFile) finalReelUrl = await uploadFile(reelFile, 'reels');
-      
-      const newStills = [...finalStills];
-      if (still1File) newStills[0] = await uploadFile(still1File, 'stills');
-      if (still2File) newStills[1] = await uploadFile(still2File, 'stills');
-      if (still3File) newStills[2] = await uploadFile(still3File, 'stills');
+      if (posterFile) finalPosterUrl = await uploadFile(posterFile, 'posters');
+      if (bgFile) finalStills = [await uploadFile(bgFile, 'stills')];
+      else if (finalStills.length > 1) finalStills = finalStills.slice(0, 1);
 
       const credits = normalizeFilmCredits(newFilm.credits);
       const director = creditVal(['direction', 'director']);
@@ -725,7 +855,8 @@ export default function AdminDashboard() {
         special_note: newFilm.special_note || null,
         video_link: newFilm.video_link || null,
         reel_image: finalReelUrl || null,
-        stills: newStills.filter(Boolean),
+        poster_image: finalPosterUrl || null,
+        stills: finalStills.filter(Boolean),
         coming_soon: !!newFilm.coming_soon,
         director: director || null,
         producer: producer || null,
@@ -747,15 +878,94 @@ export default function AdminDashboard() {
       
       setEditingFilm(null);
       setReelFile(null);
-      setStill1File(null);
-      setStill2File(null);
-      setStill3File(null);
+      setPosterFile(null);
+      setBgFile(null);
       setNewFilm(emptyFilm());
       fetchData();
     } catch (e: unknown) { 
       toast(e instanceof Error ? e.message : String(e)); 
     } finally {
       setUploadingFilm(false);
+    }
+  };
+
+  const uploadAsset = async (file: File, folder: string) => {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${folder}/${Math.random()}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from('cinematic_assets').upload(filePath, file);
+    if (uploadError) throw uploadError;
+    const { data: { publicUrl } } = supabase.storage.from('cinematic_assets').getPublicUrl(filePath);
+    return publicUrl;
+  };
+
+  const moveNsSlot = (from: number, to: number) => {
+    if (to < 0 || to >= nsSlots.length) return;
+    const next = [...nsSlots];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    setNsSlots(next);
+  };
+
+  const saveNowShowing = async () => {
+    const ready = nsSlots.filter(s => s.title.trim() && (s.image_url || s.file) && s.link_url.trim());
+    if (!ready.length) {
+      toast('Add a title, image, and link for at least one poster.');
+      return;
+    }
+    setSavingNowShowing(true);
+    try {
+      const uploaded = [];
+      for (let i = 0; i < ready.length; i++) {
+        const slot = ready[i];
+        let image_url = slot.image_url;
+        if (slot.file) image_url = await uploadAsset(slot.file, 'now-showing');
+        uploaded.push({ title: slot.title.trim(), image_url, link_url: slot.link_url.trim(), position: i, id: slot.id });
+      }
+      const keepIds = uploaded.map(u => u.id).filter(Boolean) as string[];
+      if (nowShowing.length) {
+        const toDelete = nowShowing.filter((row: any) => !keepIds.includes(row.id)).map((row: any) => row.id);
+        if (toDelete.length) await supabase.from('now_showing').delete().in('id', toDelete);
+      }
+      for (const row of uploaded) {
+        const payload = { title: row.title, image_url: row.image_url, link_url: row.link_url, position: row.position };
+        if (row.id) {
+          const { error } = await supabase.from('now_showing').update(payload).eq('id', row.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('now_showing').insert(payload);
+          if (error) throw error;
+        }
+      }
+      toast('NOW SHOWING SAVED');
+      fetchData();
+    } catch (e: unknown) {
+      toast(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingNowShowing(false);
+    }
+  };
+
+  const updateNsRequest = async (id: string, status: string) => {
+    const { error } = await supabase.from('now_showing_requests').update({ status }).eq('id', id);
+    if (error) toast(error.message);
+    else setNsRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+  };
+
+  const deleteNsRequest = async (id: string) => {
+    const { error } = await supabase.from('now_showing_requests').delete().eq('id', id);
+    if (error) toast(error.message);
+    else setNsRequests(prev => prev.filter(r => r.id !== id));
+  };
+
+  const loadMoreNsRequests = async () => {
+    const from = nsRequests.length;
+    setLoadingMore(true);
+    const { data, error } = await supabase.from('now_showing_requests').select('*, profiles(full_name, st_id)').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
+    setLoadingMore(false);
+    if (error) toast(error.message);
+    else {
+      setNsRequests(prev => mergeById(prev, data || []));
+      setNsReqHasMore(isFullPage(data));
     }
   };
 
@@ -927,6 +1137,7 @@ export default function AdminDashboard() {
                   )}
                 </div>
               ))}
+              <LoadMoreChip show={hasMore} loading={loadingMore} onClick={() => void fetchData(true)} />
             </div>
           </motion.div>
         )}
@@ -1144,6 +1355,8 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            <LoadMoreChip show={hasMore} loading={loadingMore} onClick={() => void fetchData(true)} />
+
             {/* Writer Challenges Section */}
             <div style={{ marginTop: 40, borderTop: '1px solid rgba(var(--ink-rgb),0.12)', paddingTop: 40 }}>
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 24, color: '#c9a153', margin: '0 0 16px' }}>WRITER CHALLENGES</p>
@@ -1259,6 +1472,7 @@ export default function AdminDashboard() {
                   )}
                 </div>
               ))}
+              <LoadMoreChip show={hasMore} loading={loadingMore} onClick={() => void fetchData(true)} />
             </div>
           </motion.div>
         )}
@@ -1330,8 +1544,7 @@ export default function AdminDashboard() {
                     <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 4, color: '#c9a153', marginBottom: 16 }}>TEAM MEMBERS</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        {room.project_room_members && room.project_room_members.length > 0 ? (
-                          room.project_room_members.map((m: any, idx: number) => {
+                        {(room.project_room_members || []).map((m: any, idx: number) => {
                             const prof = m?.profiles;
                             if (!prof) return null;
                             const displayName = prof.full_name || 'Member';
@@ -1367,19 +1580,14 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                             );
-                          })
-                        ) : (
-                          room.member_ids?.map((mId: string, idx: number) => (
-                            <div key={mId} style={{ width: 28, height: 28, background: '#16181f', border: '1px solid #c9a153', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: idx > 0 ? -10 : 0, zIndex: 10 - idx }}>👤</div>
-                          ))
-                        )}
+                          })}
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <input 
                           type="text" placeholder="SUPR-12345" value={roomMemberId[room.id] || ''} onChange={e => setRoomMemberId({ ...roomMemberId, [room.id]: e.target.value })}
                           style={{ background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,161,83,0.28)', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, outline: 'none', width: 80 }}
                         />
-                        <button onClick={() => addMemberToRoom(room.id, roomMemberId[room.id], room.member_ids)} style={{ background: 'none', border: '1px solid #c9a153', color: '#c9a153', padding: '4px 10px', fontSize: 8, cursor: 'pointer' }}>ADD</button>
+                        <button onClick={() => addMemberToRoom(room.id, roomMemberId[room.id], (room.project_room_members || []).map((m: any) => m.user_id || m.profiles?.id).filter(Boolean))} style={{ background: 'none', border: '1px solid #c9a153', color: '#c9a153', padding: '4px 10px', fontSize: 8, cursor: 'pointer' }}>ADD</button>
                       </div>
                     </div>
 
@@ -1398,6 +1606,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+            <LoadMoreChip show={hasMore} loading={loadingMore} onClick={() => void fetchData(true)} />
           </motion.div>
         )}
 
@@ -1449,6 +1658,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+              <LoadMoreChip show={hasMore} loading={loadingMore} onClick={() => void fetchData(true)} />
             </div>
           </motion.div>
         )}
@@ -1457,6 +1667,23 @@ export default function AdminDashboard() {
 
         {section === 'FILMS' && (
           <motion.div key="films" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', borderBottom: '1px solid rgba(var(--ink-rgb),0.12)', paddingBottom: 16 }}>
+              {(['EXISTING FILMS', 'NOW SHOWING', 'REQUESTS'] as const).map(tab => (
+                <button key={tab} onClick={() => setFilmsTab(tab)}
+                  style={{
+                    background: filmsTab === tab ? 'rgba(var(--ink-rgb),0.12)' : 'none',
+                    border: '1px solid rgba(201,161,83,0.1)', padding: '6px 14px',
+                    color: filmsTab === tab ? '#c9a153' : 'rgba(201,161,83,0.4)',
+                    fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', whiteSpace: 'nowrap'
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {filmsTab === 'EXISTING FILMS' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
             {/* Create/Edit Form */}
             <div style={{ padding: 32, border: '1px solid rgba(var(--ink-rgb),0.18)', background: 'rgba(var(--ink-rgb),0.03)', display: 'flex', flexDirection: 'column', gap: 24 }}>
               <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#c9a153', margin: 0 }}>{editingFilm ? 'EDIT FILM' : 'ADD NEW FILM'}</p>
@@ -1591,21 +1818,16 @@ export default function AdminDashboard() {
                 <CinemaInput label="VIDEO LINK (Trailer/Film URL)" value={newFilm.video_link} onChange={(v) => setNewFilm({ ...newFilm, video_link: v })} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>STILL IMAGE 1</label>
-                  <input type="file" accept="image/*" onChange={(e) => setStill1File(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                  {newFilm.stills?.[0] && !still1File && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[0]}</p>}
+                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>POSTER IMAGE</label>
+                  <input type="file" accept="image/*" onChange={(e) => setPosterFile(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
+                  {newFilm.poster_image && !posterFile && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.poster_image}</p>}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>STILL IMAGE 2</label>
-                  <input type="file" accept="image/*" onChange={(e) => setStill2File(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                  {newFilm.stills?.[1] && !still2File && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[1]}</p>}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>STILL IMAGE 3</label>
-                  <input type="file" accept="image/*" onChange={(e) => setStill3File(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                  {newFilm.stills?.[2] && !still3File && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[2]}</p>}
+                  <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>BG IMAGE</label>
+                  <input type="file" accept="image/*" onChange={(e) => setBgFile(e.target.files?.[0] || null)} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
+                  {newFilm.stills?.[0] && !bgFile && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {newFilm.stills[0]}</p>}
                 </div>
               </div>
 
@@ -1618,7 +1840,7 @@ export default function AdminDashboard() {
                 <button disabled={uploadingFilm} onClick={saveFilm} style={{ flex: 1, background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: uploadingFilm ? 'not-allowed' : 'pointer', opacity: uploadingFilm ? 0.7 : 1 }}>
                   {uploadingFilm ? 'UPLOADING...' : (editingFilm ? 'UPDATE FILM' : 'PUBLISH FILM')}
                 </button>
-                {editingFilm && <button onClick={() => { setEditingFilm(null); setReelFile(null); setStill1File(null); setStill2File(null); setStill3File(null); setNewFilm(emptyFilm()); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
+                {editingFilm && <button onClick={() => { setEditingFilm(null); setReelFile(null); setPosterFile(null); setBgFile(null); setNewFilm(emptyFilm()); }} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', padding: '0 24px', fontSize: 10, cursor: 'pointer' }}>CANCEL</button>}
               </div>
             </div>
 
@@ -1658,6 +1880,81 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+            <LoadMoreChip show={hasMore} loading={loadingMore} onClick={() => void fetchData(true)} />
+            </div>
+            )}
+
+            {filmsTab === 'NOW SHOWING' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {nsSlots.map((slot, idx) => (
+                  <div key={slot.id || `new-${idx}`} style={{ padding: 24, border: '1px solid rgba(var(--ink-rgb),0.12)', background: 'rgba(247,245,239,1)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', letterSpacing: 3, margin: 0 }}>POSTER {String(idx + 1).padStart(2, '0')}</p>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button type="button" onClick={() => moveNsSlot(idx, idx - 1)} disabled={idx === 0} style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontSize: 10, padding: '4px 10px', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.4 : 1 }}>▲</button>
+                        <button type="button" onClick={() => moveNsSlot(idx, idx + 1)} disabled={idx === nsSlots.length - 1} style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontSize: 10, padding: '4px 10px', cursor: idx === nsSlots.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === nsSlots.length - 1 ? 0.4 : 1 }}>▼</button>
+                        <button type="button" onClick={() => {
+                          setNsSlots(prev => {
+                            const next = prev.filter((_, i) => i !== idx);
+                            while (next.length < 3) next.push(emptyNsSlot());
+                            return next;
+                          });
+                        }} style={{ background: 'none', border: 'none', color: '#ff5050', fontSize: 14, cursor: 'pointer' }}>✕</button>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                      <CinemaInput label="TITLE" value={slot.title} onChange={(v) => { const next = [...nsSlots]; next[idx] = { ...next[idx], title: v }; setNsSlots(next); }} />
+                      <CinemaInput label="LINK URL" value={slot.link_url} onChange={(v) => { const next = [...nsSlots]; next[idx] = { ...next[idx], link_url: v }; setNsSlots(next); }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>IMAGE</label>
+                      <input type="file" accept="image/*" onChange={(e) => { const next = [...nsSlots]; next[idx] = { ...next[idx], file: e.target.files?.[0] || null }; setNsSlots(next); }} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
+                      {slot.image_url && !slot.file && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {slot.image_url}</p>}
+                    </div>
+                  </div>
+                ))}
+                {nsSlots.length < 10 && (
+                  <button
+                    type="button"
+                    onClick={() => setNsSlots([...nsSlots, emptyNsSlot()])}
+                    style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontSize: 10, padding: '4px 12px', cursor: 'pointer', alignSelf: 'flex-start' }}
+                  >
+                    + ADD POSTER
+                  </button>
+                )}
+                <button disabled={savingNowShowing} onClick={() => void saveNowShowing()} style={{ background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: savingNowShowing ? 'not-allowed' : 'pointer', opacity: savingNowShowing ? 0.7 : 1 }}>
+                  {savingNowShowing ? 'SAVING...' : 'SAVE NOW SHOWING'}
+                </button>
+              </div>
+            )}
+
+            {filmsTab === 'REQUESTS' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {nsRequests.length === 0 && !loading && (
+                  <p style={{ textAlign: 'center', opacity: 0.3, fontSize: 11, padding: 40 }}>NO REQUESTS</p>
+                )}
+                {nsRequests.map((req: any) => (
+                  <div key={req.id} style={{ padding: 24, border: '1px solid rgba(var(--ink-rgb),0.12)', background: 'rgba(247,245,239,1)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                      <div>
+                        <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: '0 0 4px' }}>{req.film_name}</p>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#c9a153', letterSpacing: 2, margin: 0 }}>
+                          {(req.profiles?.full_name || 'Member').toUpperCase()} · {req.email} · {new Date(req.created_at).toLocaleDateString()} · {String(req.status || 'pending').toUpperCase()}
+                        </p>
+                      </div>
+                    </div>
+                    {req.note && <p style={{ fontSize: 12, color: 'var(--ink)', opacity: 0.7, margin: 0 }}>{req.note}</p>}
+                    <a href={req.poster_link} target="_blank" rel="noopener noreferrer" style={{ color: '#c9a153', fontSize: 11, wordBreak: 'break-all' }}>{req.poster_link}</a>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <button type="button" onClick={() => void updateNsRequest(req.id, 'approved')} style={{ background: 'none', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>APPROVE</button>
+                      <button type="button" onClick={() => void updateNsRequest(req.id, 'rejected')} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>REJECT</button>
+                      <button type="button" onClick={() => void deleteNsRequest(req.id)} style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: '#ff5050', fontSize: 9, padding: '6px 16px', letterSpacing: 2, cursor: 'pointer' }}>DELETE</button>
+                    </div>
+                  </div>
+                ))}
+                <LoadMoreChip show={nsReqHasMore} loading={loadingMore} onClick={() => void loadMoreNsRequests()} />
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -1738,6 +2035,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+              <LoadMoreChip show={hasMore} loading={loadingMore} onClick={() => void fetchData(true)} />
             </div>
           </motion.div>
         )}

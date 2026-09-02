@@ -10,6 +10,7 @@ export interface GreenRoomAuthor {
   avatar_url: string | null;
   role: string | null;
   roles: string[] | null;
+  st_id?: string | null;
 }
 
 export interface GreenRoomFilm {
@@ -56,7 +57,7 @@ export type ReactionMap = Record<string, Record<ReactionKind, ReactionBucket>>;
 
 const MESSAGE_SELECT = `
   id, author_id, body, reel_film_id, external_link, external_link_title, external_link_image, reply_to_id, created_at, edited_at,
-  author:profiles!author_id (id, full_name, avatar_url, role, roles),
+  author:profiles!author_id (id, full_name, avatar_url, role, roles, st_id),
   film:films!reel_film_id (id, title, poster_image, reel_image, stills, duration, director, rating, coming_soon),
   reply_to:green_room_messages!reply_to_id (id, body, author_id, external_link_title)
 `;
@@ -73,6 +74,14 @@ function emptyBuckets(): Record<ReactionKind, ReactionBucket> {
     loved: { count: 0, mine: false },
     clap: { count: 0, mine: false },
   };
+}
+
+function weekAgoIso() {
+  return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+export function floorGuardMessage(raw: string) {
+  return /RESTRICTED FROM THE FLOOR/i.test(raw) ? 'RESTRICTED FROM THE FLOOR' : raw;
 }
 
 function unwrap<T>(value: unknown): T | null {
@@ -105,7 +114,7 @@ async function hydrateMessage(row: GreenRoomMessage): Promise<GreenRoomMessage> 
   if (!next.author) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, full_name, avatar_url, role, roles')
+      .select('id, full_name, avatar_url, role, roles, st_id')
       .eq('id', row.author_id)
       .maybeSingle();
     next.author = (data as GreenRoomAuthor | null) ?? null;
@@ -139,7 +148,7 @@ export interface SendGreenRoomInput {
 }
 
 export function useGreenRoomMessages() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [messages, setMessages] = useState<GreenRoomMessage[]>([]);
   const [reactions, setReactions] = useState<ReactionMap>({});
   const [loading, setLoading] = useState(false);
@@ -203,6 +212,7 @@ export function useGreenRoomMessages() {
       const { data, error } = await supabase
         .from('green_room_messages')
         .select(MESSAGE_SELECT)
+        .gte('created_at', weekAgoIso())
         .order('created_at', { ascending: false })
         .limit(80);
       let rows: GreenRoomMessage[] = [];
@@ -211,6 +221,7 @@ export function useGreenRoomMessages() {
         const fallback = await supabase
           .from('green_room_messages')
           .select('*')
+          .gte('created_at', weekAgoIso())
           .order('created_at', { ascending: false })
           .limit(80);
         if (fallback.error) throw fallback.error;
@@ -246,6 +257,7 @@ export function useGreenRoomMessages() {
         { event: 'INSERT', schema: 'public', table: 'green_room_messages' },
         (payload) => {
           const raw = payload.new as Record<string, unknown>;
+          if (raw?.created_at && String(raw.created_at) < weekAgoIso()) return;
           void hydrateMessage(normalizeMessage(raw)).then(upsertMessage);
         },
       )
@@ -323,7 +335,7 @@ export function useGreenRoomMessages() {
         .insert(payload)
         .select(MESSAGE_SELECT)
         .single();
-      if (error) return { error: error.message };
+      if (error) return { error: floorGuardMessage(error.message) };
       if (data) upsertMessage(normalizeMessage(data as Record<string, unknown>));
       return { error: null };
     },
@@ -345,7 +357,7 @@ export function useGreenRoomMessages() {
         .eq('author_id', user.id)
         .select(MESSAGE_SELECT)
         .single();
-      if (error) return { error: error.message };
+      if (error) return { error: floorGuardMessage(error.message) };
       if (data) upsertMessage(normalizeMessage(data as Record<string, unknown>));
       return { error: null };
     },
@@ -355,21 +367,19 @@ export function useGreenRoomMessages() {
   const deleteMessage = useCallback(
     async (id: string) => {
       if (!user) return { error: 'Not signed in' };
-      const { error } = await supabase
-        .from('green_room_messages')
-        .delete()
-        .eq('id', id)
-        .eq('author_id', user.id);
-      if (error) return { error: error.message };
+      let q = supabase.from('green_room_messages').delete().eq('id', id);
+      if (!isAdmin) q = q.eq('author_id', user.id);
+      const { error } = await q;
+      if (error) return { error: floorGuardMessage(error.message) };
       removeMessage(id);
       return { error: null };
     },
-    [user?.id, removeMessage],
+    [user?.id, isAdmin, removeMessage],
   );
 
   const toggleReaction = useCallback(
     async (messageId: string, kind: ReactionKind) => {
-      if (!user) return;
+      if (!user) return { error: 'Not signed in' };
       const mine = reactions[messageId]?.[kind]?.mine;
       setReactions((prev) => {
         const current = prev[messageId] ? { ...prev[messageId] } : emptyBuckets();
@@ -391,7 +401,6 @@ export function useGreenRoomMessages() {
           .eq('user_id', user.id)
           .eq('kind', kind);
         if (error) {
-          console.warn('[useGreenRoomMessages] unreact failed:', error);
           setReactions((prev) => {
             const current = prev[messageId] ? { ...prev[messageId] } : emptyBuckets();
             const bucket = { ...current[kind] };
@@ -399,6 +408,7 @@ export function useGreenRoomMessages() {
             bucket.count += 1;
             return { ...prev, [messageId]: { ...current, [kind]: bucket } };
           });
+          return { error: floorGuardMessage(error.message) };
         }
       } else {
         const { error } = await supabase.from('green_room_reactions').insert({
@@ -407,7 +417,6 @@ export function useGreenRoomMessages() {
           kind,
         });
         if (error) {
-          console.warn('[useGreenRoomMessages] react failed:', error);
           setReactions((prev) => {
             const current = prev[messageId] ? { ...prev[messageId] } : emptyBuckets();
             const bucket = { ...current[kind] };
@@ -415,8 +424,10 @@ export function useGreenRoomMessages() {
             bucket.count = Math.max(0, bucket.count - 1);
             return { ...prev, [messageId]: { ...current, [kind]: bucket } };
           });
+          return { error: floorGuardMessage(error.message) };
         }
       }
+      return { error: null };
     },
     [user?.id, reactions],
   );

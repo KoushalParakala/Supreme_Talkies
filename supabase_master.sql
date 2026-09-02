@@ -45,6 +45,8 @@ DROP TABLE IF EXISTS public.shoutout_wall             CASCADE;
 DROP TABLE IF EXISTS public.amplifier_groups          CASCADE;
 DROP TABLE IF EXISTS public.submissions               CASCADE;
 DROP TABLE IF EXISTS public.admin_templates           CASCADE;
+DROP TABLE IF EXISTS public.now_showing_requests      CASCADE;
+DROP TABLE IF EXISTS public.now_showing               CASCADE;
 DROP TABLE IF EXISTS public.films                     CASCADE;
 DROP TABLE IF EXISTS public.profiles                  CASCADE;
 
@@ -129,6 +131,31 @@ CREATE TABLE public.films (
   coming_soon          BOOLEAN DEFAULT FALSE,
   created_at           TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 4.2b NOW SHOWING (member call-sheet poster wall)
+CREATE TABLE public.now_showing (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title      TEXT NOT NULL,
+  image_url  TEXT NOT NULL,
+  link_url   TEXT NOT NULL,
+  position   INT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4.2c NOW SHOWING REQUESTS (members request a film for the wall)
+CREATE TABLE public.now_showing_requests (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id      UUID REFERENCES public.profiles(id),
+  film_name    TEXT NOT NULL,
+  email        TEXT NOT NULL,
+  note         TEXT,
+  poster_link  TEXT NOT NULL,
+  status       TEXT DEFAULT 'pending',  -- pending, approved, rejected
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Green Room chat, reactions, and Floor Desk moderation live in additive
+-- migrations (20260901, 20260902, 20260907). Do not paste them into this eraser.
 
 -- 4.3 SUBMISSIONS (general inbox, all types)
 CREATE TABLE public.submissions (
@@ -247,12 +274,11 @@ CREATE TABLE public.project_rooms (
   notes                    TEXT,
   status                   TEXT DEFAULT 'active',  -- active, completed, archived
   created_by               UUID REFERENCES public.profiles(id),
-  member_ids               UUID[] DEFAULT '{}',
   completion_badge_awarded BOOLEAN DEFAULT FALSE,
   created_at               TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4.13 PROJECT ROOM MEMBERS (normalized join, optional)
+-- 4.13 PROJECT ROOM MEMBERS (single source of truth for room membership)
 CREATE TABLE public.project_room_members (
   id        UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   room_id   UUID REFERENCES public.project_rooms(id) ON DELETE CASCADE,
@@ -364,7 +390,10 @@ CREATE TABLE public.admin_templates (
 -- ────────────────────────────────────────────────────────────────
 
 -- 5.1 member_directory (used by many dashboards via directory.ts)
-CREATE OR REPLACE VIEW public.member_directory AS
+-- security_invoker = false: anon can read these safe columns even though
+-- profiles SELECT is authenticated-only (no email/phone/age on this view).
+CREATE OR REPLACE VIEW public.member_directory
+WITH (security_invoker = false) AS
 SELECT
   id,
   full_name,
@@ -445,6 +474,8 @@ CREATE TRIGGER on_auth_user_created
 
 ALTER TABLE public.profiles              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.films                 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.now_showing           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.now_showing_requests  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.submissions           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scripts               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.script_versions       ENABLE ROW LEVEL SECURITY;
@@ -483,7 +514,7 @@ END;
 $$;
 
 -- ── PROFILES ──
-CREATE POLICY "profiles_read_all"    ON public.profiles FOR SELECT  USING (true);
+CREATE POLICY "profiles_read_all"    ON public.profiles FOR SELECT  TO authenticated USING (true);
 CREATE POLICY "profiles_insert_own"  ON public.profiles FOR INSERT  TO authenticated WITH CHECK (auth.uid() = id);
 CREATE POLICY "profiles_update_own"  ON public.profiles FOR UPDATE  TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 CREATE POLICY "profiles_delete_own"  ON public.profiles FOR DELETE  TO authenticated USING (auth.uid() = id);
@@ -576,6 +607,16 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.assign_role(TEXT) TO authenticated;
 
+CREATE OR REPLACE FUNCTION public.is_room_member(p_room_id UUID)
+RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.project_room_members
+    WHERE room_id = p_room_id AND user_id = auth.uid()
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_room_member(UUID) TO authenticated;
+
 -- ── MEMBER DIRECTORY VIEW (public read) ──
 -- Views inherit RLS from underlying table but we grant select explicitly
 GRANT SELECT ON public.member_directory TO authenticated, anon;
@@ -583,6 +624,15 @@ GRANT SELECT ON public.member_directory TO authenticated, anon;
 -- ── FILMS (public read, admin write) ──
 CREATE POLICY "films_public_read"    ON public.films FOR SELECT  USING (true);
 CREATE POLICY "films_admin_write"    ON public.films FOR ALL     TO authenticated USING (public.is_admin());
+
+-- ── NOW SHOWING ──
+CREATE POLICY "now_showing_read"         ON public.now_showing FOR SELECT TO authenticated USING (true);
+CREATE POLICY "now_showing_admin_write"  ON public.now_showing FOR ALL   TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- ── NOW SHOWING REQUESTS ──
+CREATE POLICY "nsr_insert"        ON public.now_showing_requests FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "nsr_own_read"      ON public.now_showing_requests FOR SELECT TO authenticated USING (auth.uid() = user_id OR public.is_admin());
+CREATE POLICY "nsr_admin_manage"  ON public.now_showing_requests FOR ALL   TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ── SUBMISSIONS ──
 CREATE POLICY "submissions_own"      ON public.submissions FOR ALL TO authenticated USING (auth.uid() = user_id OR public.is_admin());
@@ -630,9 +680,17 @@ CREATE POLICY "collab_parties"       ON public.collab_requests FOR ALL TO authen
 CREATE POLICY "collab_insert"        ON public.collab_requests FOR INSERT TO authenticated WITH CHECK (auth.uid() = sender_id);
 
 -- ── PROJECT ROOMS ──
-CREATE POLICY "rooms_member_or_admin" ON public.project_rooms FOR SELECT USING (auth.uid() = ANY(member_ids) OR public.is_admin());
+CREATE POLICY "rooms_member_or_admin" ON public.project_rooms FOR SELECT TO authenticated USING (
+  public.is_admin() OR public.is_room_member(id)
+);
 CREATE POLICY "rooms_admin_write"     ON public.project_rooms FOR ALL   TO authenticated USING (public.is_admin());
 CREATE POLICY "rooms_insert"          ON public.project_rooms FOR INSERT TO authenticated WITH CHECK (public.is_admin());
+
+-- ── PROJECT ROOM MEMBERS ──
+CREATE POLICY "room_members_select" ON public.project_room_members FOR SELECT TO authenticated USING (
+  public.is_admin() OR user_id = auth.uid() OR public.is_room_member(room_id)
+);
+CREATE POLICY "room_members_admin_write" ON public.project_room_members FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ── CAMPAIGNS ──
 CREATE POLICY "campaigns_read"       ON public.campaigns FOR SELECT USING (status = 'active' OR auth.uid() = created_by OR public.is_admin());
@@ -714,6 +772,11 @@ CREATE INDEX IF NOT EXISTS idx_campaigns_status      ON public.campaigns(status)
 CREATE INDEX IF NOT EXISTS idx_shoutout_created      ON public.shoutout_wall(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_presentations_user_id ON public.presentations(user_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_st_id        ON public.profiles(st_id);
+CREATE INDEX IF NOT EXISTS idx_room_members_room_id  ON public.project_room_members(room_id);
+CREATE INDEX IF NOT EXISTS idx_room_members_user_id  ON public.project_room_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_assign_user  ON public.campaign_assignments(user_id);
+CREATE INDEX IF NOT EXISTS idx_pres_react_user       ON public.presentation_reactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_aud_react_user        ON public.audience_reactions(user_id);
 
 -- ────────────────────────────────────────────────────────────────
 -- SECTION 10: SEED — backfill existing users with SUPR IDs

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { PAGE_SIZE, isFullPage, mergeById } from '../../lib/paging';
 
 function CinemaButton({ children, onClick, disabled, loading, style }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean; style?: React.CSSProperties; }) {
   const [hov, setHov] = useState(false);
@@ -56,6 +57,8 @@ export default function MarketingDashboard() {
   const [ideas, setIdeas] = useState<any[]>([]);
   const [newIdeaText, setNewIdeaText] = useState('');
   const [postingIdea, setPostingIdea] = useState(false);
+  const [hasMoreCampaigns, setHasMoreCampaigns] = useState(false);
+  const [hasMoreIdeas, setHasMoreIdeas] = useState(false);
 
   /* Collab Brief States */
   const [collabForm, setCollabForm] = useState({
@@ -81,10 +84,12 @@ export default function MarketingDashboard() {
         .from('campaigns')
         .select('*')
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(0, PAGE_SIZE - 1);
       
       if (fetchId !== fetchIdRef.current) return;
       setCampaigns(allCampaigns || []);
+      setHasMoreCampaigns(isFullPage(allCampaigns));
 
       const { data: assigns } = await supabase
         .from('campaign_assignments')
@@ -100,10 +105,12 @@ export default function MarketingDashboard() {
         .from('submissions')
         .select('*, profiles(full_name, role, roles)')
         .eq('type', 'marketing_idea')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(0, PAGE_SIZE - 1);
 
       if (fetchId !== fetchIdRef.current) return;
       setIdeas(allIdeas || []);
+      setHasMoreIdeas(isFullPage(allIdeas));
 
     } catch (err) {
       if (fetchId !== fetchIdRef.current) return;
@@ -318,6 +325,16 @@ export default function MarketingDashboard() {
                   );
                 })
               )}
+              {hasMoreCampaigns && (
+                <button type="button" onClick={async () => {
+                  const from = campaigns.length;
+                  const { data } = await supabase.from('campaigns').select('*').eq('status', 'active').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
+                  setCampaigns(prev => mergeById(prev, data || []));
+                  setHasMoreCampaigns(isFullPage(data));
+                }} style={{ background: 'none', border: '1px solid rgba(228,103,166,0.28)', padding: '6px 14px', color: '#E467A6', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                  LOAD MORE
+                </button>
+              )}
             </div>
           </div>
 
@@ -433,6 +450,16 @@ export default function MarketingDashboard() {
                 });
               })()}
             </div>
+            {hasMoreIdeas && (
+              <button type="button" onClick={async () => {
+                const from = ideas.length;
+                const { data } = await supabase.from('submissions').select('*, profiles(full_name, role, roles)').eq('type', 'marketing_idea').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
+                setIdeas(prev => mergeById(prev, data || []));
+                setHasMoreIdeas(isFullPage(data));
+              }} style={{ background: 'none', border: '1px solid rgba(228,103,166,0.28)', padding: '6px 14px', color: '#E467A6', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
+                LOAD MORE
+              </button>
+            )}
           </div>
 
           {/* THE COLLAB BRIEF SECTION */}

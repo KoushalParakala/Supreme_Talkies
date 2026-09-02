@@ -2801,7 +2801,60 @@ html[data-theme="dark"] .casting-logo {
 .crew-empty .dash-ghost-btn {
   margin-top: 16px;
 }
+.call-sheet-now {
+  margin-bottom: 3rem;
+}
+.call-sheet-now-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.2rem;
+}
+.call-sheet-poster {
+  display: block;
+  background: var(--background);
+  border: 1px solid var(--ink);
+  box-shadow: 14px 14px 0 rgba(23, 23, 23, 0.09);
+  overflow: hidden;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+}
+.call-sheet-poster img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.92);
+  transition: filter 0.2s;
+}
+.call-sheet-poster:hover img {
+  filter: brightness(1);
+}
+.call-sheet-poster span {
+  display: block;
+  padding: 10px 12px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.call-sheet-request {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 3rem;
+  padding: 22px 22px 18px;
+  background: var(--background);
+  border: 1px solid var(--ink);
+  box-shadow: 14px 14px 0 rgba(23, 23, 23, 0.09);
+}
 html[data-theme="dark"] .call-sheet-unit {
+  box-shadow: 14px 14px 0 rgba(0, 0, 0, 0.28);
+}
+html[data-theme="dark"] .call-sheet-poster,
+html[data-theme="dark"] .call-sheet-request {
   box-shadow: 14px 14px 0 rgba(0, 0, 0, 0.28);
 }
 @media (max-width: 800px) {
@@ -2916,6 +2969,29 @@ html[data-theme="dark"] .call-sheet-unit {
   border-radius: 50%;
   background: var(--role-accent, var(--vermilion));
   display: inline-block;
+}
+.green-room-admin {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #c9a153;
+}
+.green-room-desk.green-room-stage {
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: 24px;
+  align-items: start;
+}
+.green-room-desk-side {
+  position: sticky;
+  top: 96px;
+}
+.call-sheet-request-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 .green-room-time {
   margin-left: auto;
@@ -3263,6 +3339,15 @@ html[data-theme="dark"] .green-room-window {
   }
   .green-room-picker {
     width: min(100%, calc(100vw - 48px));
+  }
+  .green-room-desk.green-room-stage {
+    grid-template-columns: 1fr;
+  }
+  .green-room-desk-side {
+    position: static;
+  }
+  .call-sheet-request-fields {
+    grid-template-columns: 1fr;
   }
   .glass-nav nav {
     gap: 1rem;

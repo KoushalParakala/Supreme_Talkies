@@ -1,9 +1,10 @@
 import toast from 'react-hot-toast';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { deduplicateProfiles } from '../lib/profile';
+import { PAGE_SIZE, isFullPage, mergeById } from '../lib/paging';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 
@@ -27,6 +28,10 @@ export default function CrewDirectory() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [availableOnly, setAvailableOnly] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const searchRef = useRef(search);
+  searchRef.current = search;
 
   useEffect(() => {
     if (!authLoading) {
@@ -35,28 +40,43 @@ export default function CrewDirectory() {
     }
   }, [authLoading, user, isAdmin, navigate]);
 
-  useEffect(() => {
-    async function fetchCrew() {
-      try {
-        setLoading(true);
-        const [{ data: pData }, { data: subData }] = await Promise.all([
-          supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-          supabase.from('submissions').select('*').order('created_at', { ascending: false }),
-        ]);
-
-        const deduplicatedP = deduplicateProfiles(pData || []);
-        setCrew(deduplicatedP.map((p: any) => ({
-          ...p,
-          submissions: (subData || []).filter((s: any) => s.user_id === p.id),
-        })));
-      } catch (err) {
-        console.error('Fetch crew error:', err);
-      } finally {
-        setLoading(false);
+  const fetchCrew = async (append = false, q = searchRef.current) => {
+    try {
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      const from = append ? crew.length : 0;
+      const trimmed = q.trim();
+      let profilesQ = supabase.from('profiles').select('*').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
+      if (trimmed) {
+        const term = `%${trimmed}%`;
+        profilesQ = supabase.from('profiles').select('*').or(`full_name.ilike.${term},st_id.ilike.${term}`).order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
       }
+      const { data: pData } = await profilesQ;
+      const ids = (pData || []).map((p: any) => p.id);
+      const { data: subData } = ids.length
+        ? await supabase.from('submissions').select('*').in('user_id', ids)
+        : { data: [] as any[] };
+
+      const deduplicatedP = deduplicateProfiles(pData || []);
+      const mapped = deduplicatedP.map((p: any) => ({
+        ...p,
+        submissions: (subData || []).filter((s: any) => s.user_id === p.id),
+      }));
+      setCrew(prev => append ? mergeById(prev, mapped) : mapped);
+      setHasMore(isFullPage(pData));
+    } catch (err) {
+      console.error('Fetch crew error:', err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-    fetchCrew();
-  }, []);
+  };
+
+  useEffect(() => {
+    const t = setTimeout(() => { void fetchCrew(false, search); }, 280);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const filteredCrew = useMemo(() => {
     return crew.filter((member) => {
@@ -171,6 +191,11 @@ export default function CrewDirectory() {
                   </div>
                 </button>
               ))}
+              {hasMore && (
+                <button type="button" className="dash-ghost-btn" disabled={loadingMore} onClick={() => void fetchCrew(true)}>
+                  {loadingMore ? 'Loading…' : 'Load more'}
+                </button>
+              )}
             </div>
 
             {selectedCrew && (

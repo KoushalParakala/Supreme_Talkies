@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { DirectoryProfile, fetchMemberDirectoryByIds } from '../../lib/directory';
+import { PAGE_SIZE, isFullPage, mergeById } from '../../lib/paging';
 
 /* ── Shared UI Components ── */
 function CinemaInput({ label, placeholder, value, onChange, type = 'text' }: { label: string; placeholder?: string; value: string; onChange: (v: string) => void; type?: string }) {
@@ -176,6 +177,9 @@ export default function ProducerDashboard() {
   const [loadingInterests, setLoadingInterests] = useState<string | null>(null);
   const [userBriefInterests, setUserBriefInterests] = useState<Set<string>>(new Set());
   const [togglingInterest, setTogglingInterest] = useState<string | null>(null);
+  const [hasMoreScripts, setHasMoreScripts] = useState(false);
+  const [hasMoreBriefs, setHasMoreBriefs] = useState(false);
+  const [hasMoreAllBriefs, setHasMoreAllBriefs] = useState(false);
 
   const fetchDataRef = useRef(0);
   const fetchBriefsRef = useRef(0);
@@ -196,37 +200,41 @@ export default function ProducerDashboard() {
     if (hash === 'producer-briefs') setView('briefs');
   }, []);
 
-  const fetchBriefs = async () => {
+  const fetchBriefs = async (append = false) => {
     if (!user) return;
     const fetchId = ++fetchBriefsRef.current;
     try {
+      const from = append ? briefs.length : 0;
       const { data, error } = await supabase
         .from('film_briefs')
         .select('*, brief_interests(count)')
         .eq('producer_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
       
       if (fetchId !== fetchBriefsRef.current) return;
       if (error) throw error;
-      setBriefs(data || []);
+      setBriefs(prev => append ? mergeById(prev, data || []) : (data || []));
+      setHasMoreBriefs(isFullPage(data));
     } catch (err) {
       if (fetchId !== fetchBriefsRef.current) return;
       console.error('Error fetching briefs:', err);
     }
   };
 
-  const fetchAllBriefs = async () => {
+  const fetchAllBriefs = async (append = false) => {
     if (!user) return;
     try {
+      const from = append ? allBriefs.length : 0;
       const { data, error } = await supabase
         .from('film_briefs')
         .select('*')
         .eq('is_open', true)
         .neq('producer_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
       if (error) throw error;
 
-      // Fetch producer names
       const producerIds = [...new Set((data || []).map((b: any) => b.producer_id))];
       let producerMap = new Map();
       if (producerIds.length > 0) {
@@ -234,10 +242,12 @@ export default function ProducerDashboard() {
         if (producers) producerMap = new Map(producers.map(p => [p.id, p]));
       }
 
-      setAllBriefs((data || []).map((b: any) => ({
+      const mapped = (data || []).map((b: any) => ({
         ...b,
         producer: producerMap.get(b.producer_id) || null
-      })));
+      }));
+      setAllBriefs(prev => append ? mergeById(prev, mapped) : mapped);
+      setHasMoreAllBriefs(isFullPage(data));
     } catch (err) {
       console.error('Error fetching all briefs:', err);
     }
@@ -297,7 +307,7 @@ export default function ProducerDashboard() {
     setLoading(true);
     try {
       const [sRes, rRes] = await Promise.all([
-        supabase.from('scripts').select('*').neq('status', 'draft'),
+        supabase.from('scripts').select('*').neq('status', 'draft').order('created_at', { ascending: false }).range(0, PAGE_SIZE - 1),
         supabase.from('audience_reactions').select('submission_id, user_id').eq('reaction', 'fire')
       ]);
 
@@ -309,6 +319,7 @@ export default function ProducerDashboard() {
         ...script,
         user: writerProfiles.get(script.user_id) || null
       })));
+      setHasMoreScripts(isFullPage(sRes.data));
 
       // Fetch users interested in this producer's briefs for the roster
       let rosterList: DirectoryProfile[] = [];
@@ -555,6 +566,18 @@ export default function ProducerDashboard() {
             ))}
           </div>
         )}
+        {hasMoreScripts && (
+          <button type="button" onClick={async () => {
+            const from = scripts.length;
+            const { data } = await supabase.from('scripts').select('*').neq('status', 'draft').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
+            const writerProfiles = await fetchMemberDirectoryByIds((data || []).map((script: any) => script.user_id));
+            const mapped = (data || []).map((script: any) => ({ ...script, user: writerProfiles.get(script.user_id) || null }));
+            setScripts(prev => mergeById(prev, mapped));
+            setHasMoreScripts(isFullPage(data));
+          }} style={{ background: 'none', border: '1px solid rgba(158,95,221,0.28)', padding: '6px 14px', color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 24 }}>
+            LOAD MORE
+          </button>
+        )}
         </div>
       ) : view === 'briefs' ? (
         /* FILM BRIEFS TAB */
@@ -634,6 +657,12 @@ export default function ProducerDashboard() {
                     </div>
                   );
                 })
+              )}
+              {hasMoreAllBriefs && (
+                <button type="button" onClick={() => void fetchAllBriefs(true)}
+                  style={{ background: 'none', border: '1px solid rgba(158,95,221,0.28)', padding: '6px 14px', color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                  LOAD MORE
+                </button>
               )}
             </div>
           ) : (
@@ -822,6 +851,12 @@ export default function ProducerDashboard() {
                       </div>
                     );
                   })
+                )}
+                {hasMoreBriefs && (
+                  <button type="button" onClick={() => void fetchBriefs(true)}
+                    style={{ background: 'none', border: '1px solid rgba(158,95,221,0.28)', padding: '6px 14px', color: '#9E5FDD', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                    LOAD MORE
+                  </button>
                 )}
               </div>
             </div>

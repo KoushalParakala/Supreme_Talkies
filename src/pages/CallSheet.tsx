@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import Nav from '../components/Nav';
 import { useAuth } from '../context/AuthContext';
 import { ROLE_COLORS } from '../lib/roleColors';
+import { useNowShowing } from '../hooks/useNowShowing';
 import {
   CALL_SHEET_ROLE_LABELS,
   useCallSheet,
@@ -19,6 +22,32 @@ const UNIT_ACCENT: Record<CallSheetRole, string> = {
   amplifier: ROLE_COLORS.amplifier,
   admin: '#c9a153',
 };
+
+function CinemaInput({ label, placeholder, value, onChange, type = 'text' }: { label: string; placeholder?: string; value: string; onChange: (val: string) => void; type?: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>{label}</label>
+      <input
+        type={type}
+        value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        style={{ background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '12px 16px', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none' }}
+      />
+    </div>
+  );
+}
+
+function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { label: string; placeholder?: string; value: string; onChange: (val: string) => void; rows?: number }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>{label}</label>
+      <textarea
+        rows={rows}
+        value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        style={{ background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '12px 16px', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none', resize: 'vertical' }}
+      />
+    </div>
+  );
+}
 
 function pad(n: number): string {
   return String(Math.max(0, n)).padStart(2, '0');
@@ -78,8 +107,16 @@ function UnitCard({
 
 export default function CallSheet() {
   const navigate = useNavigate();
-  const { profile, displayName, isAdmin } = useAuth();
+  const { user, profile, displayName, isAdmin } = useAuth();
   const { roles, units, loading, error, fetchSheet } = useCallSheet();
+  const { posters, loading: postersLoading, submitRequest } = useNowShowing();
+  const [reqFilm, setReqFilm] = useState('');
+  const [reqEmail, setReqEmail] = useState(user?.email || '');
+  const [reqNote, setReqNote] = useState('');
+  const [reqLink, setReqLink] = useState('');
+  const [sendingReq, setSendingReq] = useState(false);
+
+  useEffect(() => { setReqEmail(user?.email || ''); }, [user?.email]);
 
   const openRole = (role: CallSheetRole) => {
     navigate('/dashboard', { state: { activeRole: role } });
@@ -126,6 +163,75 @@ export default function CallSheet() {
             )}
           </p>
         </div>
+
+        <div className="call-sheet-now">
+          <div className="section-line dash-section-line">
+            <span>NOW SHOWING</span>
+            <span>ON THE WALL <i /></span>
+          </div>
+          {postersLoading && posters.length === 0 ? (
+            <div className="dash-loading dash-loading-inline"><p>Pulling the posters…</p></div>
+          ) : posters.length === 0 ? (
+            <div className="crew-empty">
+              <h3>Nothing on the wall yet</h3>
+              <p>Request a film below and the floor will follow.</p>
+            </div>
+          ) : (
+            <div className="call-sheet-now-grid">
+              {posters.map((poster) => (
+                <a
+                  key={poster.id}
+                  className="call-sheet-poster"
+                  href={poster.link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img src={poster.image_url} alt={poster.title} />
+                  <span>{poster.title}</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <form
+          className="call-sheet-request"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!user || sendingReq) return;
+            setSendingReq(true);
+            try {
+              await submitRequest({
+                user_id: user.id,
+                film_name: reqFilm,
+                email: reqEmail,
+                note: reqNote,
+                poster_link: reqLink,
+              });
+              setReqFilm('');
+              setReqNote('');
+              setReqLink('');
+            } catch (err: unknown) {
+              toast(err instanceof Error ? err.message : String(err));
+            } finally {
+              setSendingReq(false);
+            }
+          }}
+        >
+          <div className="section-line dash-section-line">
+            <span>REQUEST YOUR FILM</span>
+            <span>FOR THE WALL <i /></span>
+          </div>
+          <div className="call-sheet-request-fields">
+            <CinemaInput label="FILM NAME" value={reqFilm} onChange={setReqFilm} />
+            <CinemaInput label="EMAIL" type="email" value={reqEmail} onChange={setReqEmail} />
+          </div>
+          <CinemaTextarea label="NOTE" value={reqNote} onChange={setReqNote} rows={3} />
+          <CinemaInput label="POSTER LINK" value={reqLink} onChange={setReqLink} placeholder="https://" />
+          <button type="submit" className="primary-button" disabled={sendingReq || !reqFilm.trim() || !reqEmail.trim() || !reqLink.trim()}>
+            {sendingReq ? 'SENDING…' : 'SEND REQUEST'}
+          </button>
+        </form>
 
         {error && (
           <div className="crew-empty call-sheet-error">

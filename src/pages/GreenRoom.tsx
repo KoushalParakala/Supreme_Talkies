@@ -11,9 +11,10 @@ import {
   type GreenRoomMessage,
 } from '../hooks/useGreenRoomMessages';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function GreenRoom() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const location = useLocation();
   const {
     messages,
@@ -36,10 +37,34 @@ export default function GreenRoom() {
   const [outbound, setOutbound] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<GreenRoomMessage | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [restriction, setRestriction] = useState<'restricted' | 'blocked' | null>(null);
   const floorRef = useRef<HTMLDivElement>(null);
   const stickRef = useRef(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hashDoneRef = useRef(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from('green_room_restrictions')
+        .select('kind')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const kind = data?.kind;
+      setRestriction(kind === 'restricted' || kind === 'blocked' ? kind : null);
+    };
+    void load();
+    const channel = supabase
+      .channel(`green-room-self-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'green_room_restrictions', filter: `user_id=eq.${user.id}` },
+        () => { void load(); },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [user?.id]);
 
   const scrollToBottom = (smooth = true) => {
     const el = floorRef.current;
@@ -88,7 +113,7 @@ export default function GreenRoom() {
 
   const submit = async (e?: FormEvent) => {
     e?.preventDefault();
-    if (!user || sending) return;
+    if (!user || sending || restriction) return;
     setSending(true);
     setError('');
     const result = await sendMessage({
@@ -124,6 +149,8 @@ export default function GreenRoom() {
     setPendingDelete(null);
   };
 
+  const blocked = restriction === 'blocked';
+
   return (
     <motion.div
       className="dash-shell site-page sub-page green-room-page"
@@ -155,40 +182,63 @@ export default function GreenRoom() {
               data-lenis-prevent
               onScroll={onFloorScroll}
             >
-              {loading && messages.length === 0 && (
-                <div className="dash-loading dash-loading-inline">
-                  <p>Opening the floor…</p>
-                </div>
-              )}
-              {!loading && messages.length === 0 && (
+              {blocked ? (
                 <div className="crew-empty">
-                  <h3>The floor is open</h3>
-                  <p>First line of the day sets the tone.</p>
+                  <h3>The floor is locked</h3>
+                  <p>You cannot use the floor.</p>
                 </div>
+              ) : (
+                <>
+                  {loading && messages.length === 0 && (
+                    <div className="dash-loading dash-loading-inline">
+                      <p>Opening the floor…</p>
+                    </div>
+                  )}
+                  {!loading && messages.length === 0 && (
+                    <div className="crew-empty">
+                      <h3>The floor is open</h3>
+                      <p>First line of the day sets the tone.</p>
+                    </div>
+                  )}
+                  {messages.map((message) => (
+                    <MessageBubble
+                      key={message.id}
+                      message={message}
+                      reactions={reactions[message.id] || emptyBuckets}
+                      flash={flashId === message.id}
+                      mine={!!user && message.author_id === user.id}
+                      isAdmin={isAdmin}
+                      onCallback={setReplyTo}
+                      onReact={(kind) => {
+                        if (restriction) {
+                          setError('RESTRICTED FROM THE FLOOR');
+                          return;
+                        }
+                        void toggleReaction(message.id, kind).then((result) => {
+                          if (result?.error) setError(result.error);
+                        });
+                      }}
+                      onScrollTo={scrollToMessage}
+                      onOpenExternal={setOutbound}
+                      onEdit={editMessage}
+                      onDelete={setPendingDelete}
+                    />
+                  ))}
+                </>
               )}
-              {messages.map((message) => (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  reactions={reactions[message.id] || emptyBuckets}
-                  flash={flashId === message.id}
-                  mine={!!user && message.author_id === user.id}
-                  onCallback={setReplyTo}
-                  onReact={(kind) => void toggleReaction(message.id, kind)}
-                  onScrollTo={scrollToMessage}
-                  onOpenExternal={setOutbound}
-                  onEdit={editMessage}
-                  onDelete={setPendingDelete}
-                />
-              ))}
             </div>
 
-            {stuckUp && (
+            {stuckUp && !blocked && (
               <button type="button" className="dash-ghost-btn green-room-jump" onClick={() => scrollToBottom(true)}>
                 New in the Green Room
               </button>
             )}
 
+            {blocked ? null : restriction === 'restricted' ? (
+              <div className="green-room-composer">
+                <p className="green-room-picker-error">RESTRICTED FROM THE FLOOR</p>
+              </div>
+            ) : (
             <form className="green-room-composer" onSubmit={(e) => void submit(e)}>
               {replyTo && (
                 <div className="green-room-reply-chip">
@@ -246,6 +296,7 @@ export default function GreenRoom() {
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
       </div>

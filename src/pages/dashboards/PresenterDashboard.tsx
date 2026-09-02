@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { PAGE_SIZE, isFullPage, mergeById } from '../../lib/paging';
 
 const ACCENT = '#86dcc9';
 const ACCENT_DIM = 'rgba(134, 220, 201, 0.32)';
@@ -66,12 +67,15 @@ export default function PresenterDashboard() {
   });
   const [myScreenings, setMyScreenings] = useState<any[]>([]);
   const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
+  const [hasMoreScreenings, setHasMoreScreenings] = useState(false);
 
-  const fetchScreenings = async () => {
+  const fetchScreenings = async (append = false) => {
     if (!user) return;
-    const { data } = await supabase.from('presentations').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    const from = append ? myScreenings.length : 0;
+    const { data } = await supabase.from('presentations').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
     const list = data || [];
-    setMyScreenings(list);
+    setMyScreenings(prev => append ? mergeById(prev, list) : list);
+    setHasMoreScreenings(isFullPage(data));
 
     if (list.length > 0) {
       try {
@@ -84,11 +88,11 @@ export default function PresenterDashboard() {
         (reactions || []).forEach((r: any) => {
           counts[r.presentation_id] = (counts[r.presentation_id] || 0) + 1;
         });
-        setReactionCounts(counts);
+        setReactionCounts(prev => append ? { ...prev, ...counts } : counts);
       } catch {
         // table may be unavailable — skip quietly
       }
-    } else {
+    } else if (!append) {
       setReactionCounts({});
     }
   };
@@ -176,6 +180,12 @@ export default function PresenterDashboard() {
                   </div>
                 );
               })}
+              {hasMoreScreenings && (
+                <button type="button" onClick={() => void fetchScreenings(true)}
+                  style={{ background: 'none', border: `1px solid ${ACCENT_DIM}`, padding: '6px 14px', color: ACCENT, fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                  LOAD MORE
+                </button>
+              )}
             </div>
           )}
         </div>

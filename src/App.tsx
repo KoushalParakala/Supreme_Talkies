@@ -22,6 +22,7 @@ const Films = lazy(() => import('./pages/Films'));
 const ProfileSettings = lazy(() => import('./pages/ProfileSettings'));
 const CallSheet = lazy(() => import('./pages/CallSheet'));
 const GreenRoom = lazy(() => import('./pages/GreenRoom'));
+const GreenRoomDesk = lazy(() => import('./pages/GreenRoomDesk'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 gsap.registerPlugin(ScrollTrigger);
@@ -148,6 +149,11 @@ function App() {
             <Route path="/crew" element={
               <ProtectedRoute>
                 <CrewDirectory />
+              </ProtectedRoute>
+            } />
+            <Route path="/green-room-desk" element={
+              <ProtectedRoute>
+                <GreenRoomDesk />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={

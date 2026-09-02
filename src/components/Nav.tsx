@@ -90,6 +90,7 @@ function UserMenu({
           <button type="button" role="menuitem" onClick={() => go('/green-room')}>Green Room</button>
           <button type="button" role="menuitem" onClick={() => go('/dashboard')}>Dashboard</button>
           {isAdmin && <button type="button" role="menuitem" onClick={() => go('/crew')}>Crew</button>}
+          {isAdmin && <button type="button" role="menuitem" onClick={() => go('/green-room-desk')}>Floor Desk</button>}
           <button type="button" role="menuitem" onClick={handleLogout} disabled={exiting}>
             {exiting ? 'Exiting…' : 'Sign out'}
           </button>
@@ -135,7 +136,10 @@ export default function Nav({ scrolled }: NavProps) {
               <Link to="/green-room" onClick={() => setMenu(false)}>Green Room</Link>
               <Link to="/dashboard" onClick={() => setMenu(false)}>Dashboard</Link>
               {isAdmin ? (
-                <Link to="/crew" onClick={() => setMenu(false)}>Crew</Link>
+                <>
+                  <Link to="/crew" onClick={() => setMenu(false)}>Crew</Link>
+                  <Link to="/green-room-desk" onClick={() => setMenu(false)}>Floor Desk</Link>
+                </>
               ) : (
                 <Link to="/role-select" onClick={() => setMenu(false)}>{hasRoles ? 'Add role' : 'Roles'}</Link>
               )}

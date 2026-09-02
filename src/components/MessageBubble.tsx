@@ -11,14 +11,21 @@ const REACTIONS: { kind: ReactionKind; label: string }[] = [
   { kind: 'clap', label: 'Clap 👍' },
 ];
 
-function authorRole(message: GreenRoomMessage): RoleColorId | null {
-  const raw = [
+function authorRoles(message: GreenRoomMessage): string[] {
+  return [
     ...(Array.isArray(message.author?.roles) ? message.author!.roles : []),
     message.author?.role,
   ]
     .filter((r): r is string => typeof r === 'string' && r.length > 0)
     .map((r) => r.toLowerCase());
-  for (const role of raw) {
+}
+
+function authorIsAdmin(message: GreenRoomMessage): boolean {
+  return authorRoles(message).includes('admin');
+}
+
+function authorRole(message: GreenRoomMessage): RoleColorId | null {
+  for (const role of authorRoles(message)) {
     if (role === 'admin') continue;
     if (role in ROLE_COLORS) return role as RoleColorId;
   }
@@ -46,6 +53,7 @@ export default function MessageBubble({
   onOpenExternal,
   onEdit,
   onDelete,
+  isAdmin = false,
 }: {
   message: GreenRoomMessage;
   reactions: Record<ReactionKind, ReactionBucket>;
@@ -57,6 +65,7 @@ export default function MessageBubble({
   onOpenExternal: (url: string) => void;
   onEdit: (id: string, body: string) => Promise<{ error: string | null }>;
   onDelete: (message: GreenRoomMessage) => void;
+  isAdmin?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.body || '');
@@ -148,6 +157,7 @@ export default function MessageBubble({
       <div className="green-room-msg-body">
         <div className="green-room-msg-top">
           <strong>{name}</strong>
+          {authorIsAdmin(message) && <span className="green-room-admin">ADMIN</span>}
           {role && <i className="green-room-role-dot" aria-hidden="true" />}
           <small className="green-room-time">
             {timeAgo(message.created_at)}
@@ -211,14 +221,14 @@ export default function MessageBubble({
             Callback
           </button>
           {mine && !editing && (
-            <>
-              <button type="button" className="green-room-own-btn" onClick={() => setEditing(true)}>
-                Edit
-              </button>
-              <button type="button" className="green-room-own-btn is-danger" onClick={() => onDelete(message)}>
-                Delete
-              </button>
-            </>
+            <button type="button" className="green-room-own-btn" onClick={() => setEditing(true)}>
+              Edit
+            </button>
+          )}
+          {(mine || isAdmin) && !editing && (
+            <button type="button" className="green-room-own-btn is-danger" onClick={() => onDelete(message)}>
+              Delete
+            </button>
           )}
         </div>
       </div>

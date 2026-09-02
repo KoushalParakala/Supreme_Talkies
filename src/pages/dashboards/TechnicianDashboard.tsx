@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { DirectoryProfile, fetchMemberByStId, fetchMemberDirectoryByIds } from '../../lib/directory';
+import { PAGE_SIZE, isFullPage, mergeById, patchRealtimeList } from '../../lib/paging';
 
 const SPECIALIZATIONS = ['Camera', 'Lighting', 'Sound', 'Editing', 'VFX', 'Production Design', 'Other'];
 
@@ -85,6 +86,9 @@ export default function TechnicianDashboard() {
   const [openBriefs, setOpenBriefs] = useState<any[]>([]);
   const [expressingBriefId, setExpressingBriefId] = useState<string | null>(null);
   const [userBriefInterests, setUserBriefInterests] = useState<Set<string>>(new Set());
+  const [hasMoreBriefs, setHasMoreBriefs] = useState(false);
+  const [hasMoreCrew, setHasMoreCrew] = useState(false);
+  const [hasMoreRequests, setHasMoreRequests] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -147,28 +151,32 @@ export default function TechnicianDashboard() {
   const fetchOpenBriefsRef = useRef(0);
   const fetchRequestsRef = useRef(0);
 
-  const fetchOtherCrew = async () => {
+  const fetchOtherCrew = async (append = false) => {
     const fetchId = ++fetchOtherCrewRef.current;
+    const from = append ? otherCrew.length : 0;
     const { data } = await supabase.from('member_directory')
       .select('id, full_name, avatar_symbol, st_id, st_verified, role, roles, skills, niche')
       .eq('availability', true)
       .contains('roles', ['technician'])
-      .neq('id', user?.id);
+      .neq('id', user?.id)
+      .range(from, from + PAGE_SIZE - 1);
     if (fetchId !== fetchOtherCrewRef.current) return;
-    setOtherCrew(data || []);
+    setOtherCrew(prev => append ? mergeById(prev as any, (data || []) as any) : ((data || []) as DirectoryProfile[]));
+    setHasMoreCrew(isFullPage(data));
   };
 
-  const fetchOpenBriefs = async () => {
+  const fetchOpenBriefs = async (append = false) => {
     const fetchId = ++fetchOpenBriefsRef.current;
     try {
+      const from = append ? openBriefs.length : 0;
       const { data, error } = await supabase.from('film_briefs')
         .select('*')
         .eq('is_open', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
       if (fetchId !== fetchOpenBriefsRef.current) return;
       if (error) { console.error('Error fetching briefs:', error); return; }
 
-      // Manual join: fetch producer profiles separately
       const producerIds = [...new Set((data || []).map((b: any) => b.producer_id).filter(Boolean))];
       let producerMap = new Map();
       if (producerIds.length > 0) {
@@ -177,10 +185,12 @@ export default function TechnicianDashboard() {
       }
       if (fetchId !== fetchOpenBriefsRef.current) return;
 
-      setOpenBriefs((data || []).map((b: any) => ({
+      const mapped = (data || []).map((b: any) => ({
         ...b,
         producer: producerMap.get(b.producer_id) || null
-      })));
+      }));
+      setOpenBriefs(prev => append ? mergeById(prev, mapped) : mapped);
+      setHasMoreBriefs(isFullPage(data));
     } catch (err) {
       if (fetchId !== fetchOpenBriefsRef.current) return;
       console.error('Error fetching open briefs:', err);
@@ -229,20 +239,21 @@ export default function TechnicianDashboard() {
     finally { setExpressingBriefId(null); }
   };
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (append = false) => {
     if (!user) return;
     const fetchId = ++fetchRequestsRef.current;
-    // Received
+    const from = append ? Math.max(receivedRequests.length, sentRequests.length) : 0;
     const { data: rec } = await supabase.from('collab_requests')
       .select('*')
       .eq('receiver_id', user.id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
 
-    // Sent
     const { data: sent } = await supabase.from('collab_requests')
       .select('*')
       .eq('sender_id', user.id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
 
     if (fetchId !== fetchRequestsRef.current) return;
     const profileMap = await fetchMemberDirectoryByIds([
@@ -251,14 +262,17 @@ export default function TechnicianDashboard() {
     ]);
 
     if (fetchId !== fetchRequestsRef.current) return;
-    setReceivedRequests((rec || []).map((request: any) => ({
+    const recMapped = (rec || []).map((request: any) => ({
       ...request,
       sender: profileMap.get(request.sender_id) || null
-    })));
-    setSentRequests((sent || []).map((request: any) => ({
+    }));
+    const sentMapped = (sent || []).map((request: any) => ({
       ...request,
       receiver: profileMap.get(request.receiver_id) || null
-    })));
+    }));
+    setReceivedRequests(prev => append ? mergeById(prev, recMapped) : recMapped);
+    setSentRequests(prev => append ? mergeById(prev, sentMapped) : sentMapped);
+    setHasMoreRequests(isFullPage(rec) || isFullPage(sent));
   };
 
   const toggleAvailability = async () => {
@@ -347,8 +361,44 @@ export default function TechnicianDashboard() {
   useEffect(() => {
     const channel = supabase
       .channel('tech_live_updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'collab_requests' }, () => fetchRequests())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'film_briefs' }, () => fetchOpenBriefs())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'collab_requests' }, (payload) => {
+        const eventType = payload.eventType;
+        const row = payload.new as any;
+        const oldId = (payload.old as any)?.id;
+        if (eventType === 'DELETE') {
+          setReceivedRequests(prev => patchRealtimeList(prev, eventType, null, oldId));
+          setSentRequests(prev => patchRealtimeList(prev, eventType, null, oldId));
+          return;
+        }
+        if (!user) return;
+        void (async () => {
+          if (row.receiver_id === user.id) {
+            const map = await fetchMemberDirectoryByIds([row.sender_id]);
+            setReceivedRequests(prev => patchRealtimeList(prev, eventType, { ...row, sender: map.get(row.sender_id) || null }, row.id));
+          }
+          if (row.sender_id === user.id) {
+            const map = await fetchMemberDirectoryByIds([row.receiver_id]);
+            setSentRequests(prev => patchRealtimeList(prev, eventType, { ...row, receiver: map.get(row.receiver_id) || null }, row.id));
+          }
+        })();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'film_briefs' }, (payload) => {
+        const eventType = payload.eventType;
+        const row = payload.new as any;
+        const oldId = (payload.old as any)?.id;
+        if (eventType === 'DELETE' || row?.is_open === false) {
+          setOpenBriefs(prev => prev.filter(b => b.id !== (oldId || row?.id)));
+          return;
+        }
+        void (async () => {
+          let producer = null;
+          if (row?.producer_id) {
+            const { data: producers } = await supabase.from('member_directory').select('id, full_name, avatar_symbol, st_id').eq('id', row.producer_id);
+            producer = producers?.[0] || null;
+          }
+          setOpenBriefs(prev => patchRealtimeList(prev, eventType, { ...row, producer }, row.id));
+        })();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -578,6 +628,12 @@ export default function TechnicianDashboard() {
                   </div>
                 );
               })}
+              {hasMoreBriefs && (
+                <button type="button" onClick={() => void fetchOpenBriefs(true)}
+                  style={{ background: 'none', border: '1px solid rgba(71,209,152,0.28)', padding: '6px 14px', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                  LOAD MORE
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -739,6 +795,12 @@ export default function TechnicianDashboard() {
                   </div>
                 ))}
               </div>
+              {hasMoreRequests && (
+                <button type="button" onClick={() => void fetchRequests(true)}
+                  style={{ background: 'none', border: '1px solid rgba(71,209,152,0.28)', padding: '6px 14px', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
+                  LOAD MORE
+                </button>
+              )}
             </div>
 
             {/* Mutual Connections */}
@@ -831,6 +893,12 @@ export default function TechnicianDashboard() {
                   </div>
                 ))}
               </div>
+              {hasMoreCrew && (
+                <button type="button" onClick={() => void fetchOtherCrew(true)}
+                  style={{ background: 'none', border: '1px solid rgba(71,209,152,0.28)', padding: '6px 14px', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
+                  LOAD MORE
+                </button>
+              )}
             </div>
           </motion.div>
         )}

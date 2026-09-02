@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { PAGE_SIZE, isFullPage, mergeById, patchRealtimeList } from '../../lib/paging';
 
 /* ── Shared Cinema Input ── */
 function CinemaInput({ label, type = 'text', placeholder, value, onChange, required }: {
@@ -277,6 +278,10 @@ export default function WriterDashboard() {
   const [openBriefs, setOpenBriefs] = useState<any[]>([]);
   const [expressingBriefId, setExpressingBriefId] = useState<string | null>(null);
   const [userInterests, setUserInterests] = useState<string[]>([]);
+  const [hasMoreScripts, setHasMoreScripts] = useState(false);
+  const [hasMoreBriefs, setHasMoreBriefs] = useState(false);
+  const [hasMorePins, setHasMorePins] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => { 
     if (!user) return;
@@ -319,17 +324,18 @@ export default function WriterDashboard() {
     }
   };
 
-  const fetchOpenBriefs = async () => {
+  const fetchOpenBriefs = async (append = false) => {
     const fetchId = ++fetchOpenBriefsRef.current;
     try {
+      const from = append ? openBriefs.length : 0;
       const { data, error } = await supabase.from('film_briefs')
         .select('*')
         .eq('is_open', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
       if (fetchId !== fetchOpenBriefsRef.current) return;
       if (error) { console.error('Error fetching briefs:', error); return; }
 
-      // Manual join: fetch producer profiles separately
       const producerIds = [...new Set((data || []).map((b: any) => b.producer_id).filter(Boolean))];
       let producerMap = new Map();
       if (producerIds.length > 0) {
@@ -338,10 +344,12 @@ export default function WriterDashboard() {
       }
       if (fetchId !== fetchOpenBriefsRef.current) return;
 
-      setOpenBriefs((data || []).map((b: any) => ({
+      const mapped = (data || []).map((b: any) => ({
         ...b,
         producer: producerMap.get(b.producer_id) || null
-      })));
+      }));
+      setOpenBriefs(prev => append ? mergeById(prev, mapped) : mapped);
+      setHasMoreBriefs(isFullPage(data));
     } catch (err) {
       if (fetchId !== fetchOpenBriefsRef.current) return;
       console.error('Error fetching open briefs:', err);
@@ -394,26 +402,31 @@ export default function WriterDashboard() {
 
 
 
-  const fetchInspirationPins = async () => {
+  const fetchInspirationPins = async (append = false) => {
     const fetchId = ++fetchInspirationPinsRef.current;
-    const { data } = await supabase.from('inspiration_pins').select('*').eq('user_id', user?.id).order('created_at', { ascending: false });
+    const from = append ? inspirationPins.length : 0;
+    const { data } = await supabase.from('inspiration_pins').select('*').eq('user_id', user?.id).order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
     if (fetchId !== fetchInspirationPinsRef.current) return;
-    setInspirationPins(data || []);
+    setInspirationPins(prev => append ? mergeById(prev, data || []) : (data || []));
+    setHasMorePins(isFullPage(data));
   };
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = async (append = false) => {
     if (!user) return;
     const fetchId = ++fetchSubmissionsRef.current;
     try {
+      const from = append ? submissions.length : 0;
       const { data: scriptsData, error: scriptsError } = await supabase
         .from('scripts')
         .select(`*, versions:script_versions(*)`)
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
 
       if (fetchId !== fetchSubmissionsRef.current) return;
       if (scriptsError) throw scriptsError;
-      setSubmissions(scriptsData || []);
+      setSubmissions(prev => append ? mergeById(prev, scriptsData || []) : (scriptsData || []));
+      setHasMoreScripts(isFullPage(scriptsData));
     } catch (err) {
       if (fetchId !== fetchSubmissionsRef.current) return;
       console.error('Error fetching scripts:', err);
@@ -460,10 +473,48 @@ export default function WriterDashboard() {
 
     const channel = supabase
       .channel('writer_live_updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'scripts' }, () => fetchSubmissions())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'writing_challenges' }, () => fetchChallenges())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'film_briefs' }, () => fetchOpenBriefs())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'brief_interests' }, () => fetchUserInterests())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'scripts' }, (payload) => {
+        const eventType = payload.eventType;
+        const row = payload.new as any;
+        const oldId = (payload.old as any)?.id;
+        if (eventType === 'DELETE') {
+          setSubmissions(prev => patchRealtimeList(prev, eventType, null, oldId));
+          return;
+        }
+        if (user && row?.user_id && row.user_id !== user.id) return;
+        void supabase.from('scripts').select(`*, versions:script_versions(*)`).eq('id', row.id).maybeSingle().then(({ data }) => {
+          setSubmissions(prev => patchRealtimeList(prev, eventType, data || row, row.id));
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'writing_challenges' }, (payload) => {
+        setChallenges(prev => patchRealtimeList(prev, payload.eventType, payload.new as any, (payload.old as any)?.id));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'film_briefs' }, (payload) => {
+        const eventType = payload.eventType;
+        const row = payload.new as any;
+        const oldId = (payload.old as any)?.id;
+        if (eventType === 'DELETE' || row?.is_open === false) {
+          setOpenBriefs(prev => prev.filter(b => b.id !== (oldId || row?.id)));
+          return;
+        }
+        void (async () => {
+          let producer = null;
+          if (row?.producer_id) {
+            const { data: producers } = await supabase.from('member_directory').select('id, full_name, avatar_symbol, st_id').eq('id', row.producer_id);
+            producer = producers?.[0] || null;
+          }
+          setOpenBriefs(prev => patchRealtimeList(prev, eventType, { ...row, producer }, row.id));
+        })();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'brief_interests' }, (payload) => {
+        const row = (payload.new || payload.old) as any;
+        if (!user || row?.user_id !== user.id) return;
+        if (payload.eventType === 'DELETE') {
+          setUserInterests(prev => prev.filter(id => id !== row.brief_id));
+        } else if (row?.brief_id && !userInterests.includes(row.brief_id)) {
+          setUserInterests(prev => prev.includes(row.brief_id) ? prev : [...prev, row.brief_id]);
+        }
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -772,6 +823,12 @@ export default function WriterDashboard() {
                         );
                       })
                     )}
+                    {hasMoreScripts && (
+                      <button type="button" onClick={() => { setLoadingMore(true); void fetchSubmissions(true).finally(() => setLoadingMore(false)); }}
+                        style={{ background: 'none', border: '1px solid rgba(73,148,223,0.28)', padding: '6px 14px', color: '#4994DF', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                        {loadingMore ? 'LOADING' : 'LOAD MORE'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -854,6 +911,12 @@ export default function WriterDashboard() {
                   </div>
                 );
               })}
+              {hasMoreBriefs && (
+                <button type="button" onClick={() => void fetchOpenBriefs(true)}
+                  style={{ background: 'none', border: '1px solid rgba(73,148,223,0.28)', padding: '6px 14px', color: '#4994DF', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                  LOAD MORE
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -1042,6 +1105,12 @@ export default function WriterDashboard() {
                     </motion.div>
                   ))}
                 </div>
+              )}
+              {hasMorePins && (
+                <button type="button" onClick={() => void fetchInspirationPins(true)}
+                  style={{ background: 'none', border: '1px solid rgba(73,148,223,0.28)', padding: '6px 14px', color: '#4994DF', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
+                  LOAD MORE
+                </button>
               )}
             </div>
           </motion.div>
