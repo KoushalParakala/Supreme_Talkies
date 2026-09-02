@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { startOfLocalDay } from '../lib/time';
+import { displayText } from '../lib/errors';
 
 export interface AppNotification {
   id: string;
@@ -69,7 +70,7 @@ export function useNotifications() {
         (payload) => {
           const row = payload.new as AppNotification;
           setItems((prev) => [row, ...prev].slice(0, 40));
-          toast(row.title, {
+          toast(displayText(row.title, 'Update on the sheet'), {
             icon: '✦',
             style: {
               background: 'rgba(30,32,41,0.95)',

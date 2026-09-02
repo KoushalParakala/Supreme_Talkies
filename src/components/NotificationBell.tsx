@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { IconBell } from './ReelIcons';
 import { timeAgo } from '../lib/time';
+import { displayText } from '../lib/errors';
 
 export default function NotificationBell({
   open,
@@ -89,10 +90,10 @@ export default function NotificationBell({
                   }}
                 >
                   <div className="nav-tray-item-top">
-                    <span>{n.title}</span>
+                    <span>{displayText(n.title, 'Update')}</span>
                     <small>{timeAgo(n.created_at)}</small>
                   </div>
-                  {n.body && <p>{n.body}</p>}
+                  {n.body && <p>{displayText(n.body)}</p>}
                 </button>
               ))}
             </div>

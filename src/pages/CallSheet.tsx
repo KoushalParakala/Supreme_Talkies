@@ -6,6 +6,7 @@ import Nav from '../components/Nav';
 import { useAuth } from '../context/AuthContext';
 import { ROLE_COLORS } from '../lib/roleColors';
 import { useNowShowing } from '../hooks/useNowShowing';
+import { errorMessage } from '../lib/errors';
 import {
   CALL_SHEET_ROLE_LABELS,
   useCallSheet,
@@ -114,6 +115,7 @@ export default function CallSheet() {
   const [reqEmail, setReqEmail] = useState(user?.email || '');
   const [reqNote, setReqNote] = useState('');
   const [reqLink, setReqLink] = useState('');
+  const [reqPoster, setReqPoster] = useState<File | null>(null);
   const [sendingReq, setSendingReq] = useState(false);
 
   useEffect(() => { setReqEmail(user?.email || ''); }, [user?.email]);
@@ -207,12 +209,14 @@ export default function CallSheet() {
                 email: reqEmail,
                 note: reqNote,
                 poster_link: reqLink,
+                posterFile: reqPoster,
               });
               setReqFilm('');
               setReqNote('');
               setReqLink('');
+              setReqPoster(null);
             } catch (err: unknown) {
-              toast(err instanceof Error ? err.message : String(err));
+              toast(errorMessage(err));
             } finally {
               setSendingReq(false);
             }
@@ -227,8 +231,27 @@ export default function CallSheet() {
             <CinemaInput label="EMAIL" type="email" value={reqEmail} onChange={setReqEmail} />
           </div>
           <CinemaTextarea label="NOTE" value={reqNote} onChange={setReqNote} rows={3} />
-          <CinemaInput label="POSTER LINK" value={reqLink} onChange={setReqLink} placeholder="https://" />
-          <button type="submit" className="primary-button" disabled={sendingReq || !reqFilm.trim() || !reqEmail.trim() || !reqLink.trim()}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>POSTER</label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 12, cursor: sendingReq ? 'not-allowed' : 'pointer', alignSelf: 'flex-start' }}>
+              <span style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontSize: 10, padding: '8px 14px', letterSpacing: 2, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700 }}>
+                UPLOAD POSTER
+              </span>
+              {reqPoster && <span style={{ fontSize: 11, color: 'var(--ink)', opacity: 0.7 }}>{reqPoster.name}</span>}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={sendingReq}
+                onChange={(e) => {
+                  setReqPoster(e.target.files?.[0] || null);
+                  e.target.value = '';
+                }}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
+          <CinemaInput label="POSTER LINK" value={reqLink} onChange={setReqLink} placeholder="https:// (optional if you upload)" />
+          <button type="submit" className="primary-button" disabled={sendingReq || !reqFilm.trim() || !reqEmail.trim() || (!reqLink.trim() && !reqPoster)}>
             {sendingReq ? 'SENDING…' : 'SEND REQUEST'}
           </button>
         </form>

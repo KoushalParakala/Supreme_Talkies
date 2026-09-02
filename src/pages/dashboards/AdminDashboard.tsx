@@ -5,6 +5,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { PAGE_SIZE, isFullPage, mergeById, patchRealtimeList } from '../../lib/paging';
+import { errorMessage } from '../../lib/errors';
+import { uploadCinematicAsset } from '../../lib/assets';
 
 interface CinemaInputProps {
   label: string;
@@ -38,13 +40,58 @@ interface CinemaTextareaProps {
 function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: CinemaTextareaProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>{label}</label>
-      <textarea 
+      {label && <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>{label}</label>}
+      <textarea
         rows={rows}
         value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{ background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.12)', padding: '12px 16px', color: 'var(--ink)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, outline: 'none', resize: 'vertical' }}
       />
     </div>
+  );
+}
+
+function FilePickButton({
+  label,
+  accept,
+  busy,
+  fileName,
+  onFile,
+}: {
+  label: string;
+  accept?: string;
+  busy?: boolean;
+  fileName?: string;
+  onFile: (file: File) => void;
+}) {
+  return (
+    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 12, cursor: busy ? 'not-allowed' : 'pointer' }}>
+      <span
+        style={{
+          background: 'none',
+          border: '1px solid rgba(201,161,83,0.28)',
+          color: '#c9a153',
+          fontSize: 10,
+          padding: '8px 14px',
+          letterSpacing: 2,
+          fontFamily: 'Space Grotesk, sans-serif',
+          fontWeight: 700,
+        }}
+      >
+        {busy ? 'UPLOADING…' : label}
+      </span>
+      {fileName && <span style={{ fontSize: 11, color: 'var(--ink)', opacity: 0.7 }}>{fileName}</span>}
+      <input
+        type="file"
+        accept={accept || 'image/*'}
+        disabled={busy}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) onFile(file);
+        }}
+        style={{ display: 'none' }}
+      />
+    </label>
   );
 }
 const KANBAN_STAGES = [
@@ -257,6 +304,7 @@ export default function AdminDashboard() {
   const emptyNsSlot = () => ({ id: undefined as string | undefined, title: '', image_url: '', link_url: '', file: null as File | null });
   const [nsSlots, setNsSlots] = useState(() => [emptyNsSlot(), emptyNsSlot(), emptyNsSlot()]);
   const [savingNowShowing, setSavingNowShowing] = useState(false);
+  const [nsUploadingIdx, setNsUploadingIdx] = useState<number | null>(null);
   const INITIAL_CREDITS = [
     { role: 'Direction', value: '' },
     { role: 'Writing', value: '' },
@@ -883,19 +931,29 @@ export default function AdminDashboard() {
       setNewFilm(emptyFilm());
       fetchData();
     } catch (e: unknown) { 
-      toast(e instanceof Error ? e.message : String(e)); 
+      toast(errorMessage(e)); 
     } finally {
       setUploadingFilm(false);
     }
   };
 
-  const uploadAsset = async (file: File, folder: string) => {
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${folder}/${Math.random()}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from('cinematic_assets').upload(filePath, file);
-    if (uploadError) throw uploadError;
-    const { data: { publicUrl } } = supabase.storage.from('cinematic_assets').getPublicUrl(filePath);
-    return publicUrl;
+  const uploadAsset = async (file: File, folder: string) => uploadCinematicAsset(file, folder);
+
+  const patchNsSlot = (idx: number, patch: Partial<ReturnType<typeof emptyNsSlot>>) => {
+    setNsSlots(prev => prev.map((slot, i) => i === idx ? { ...slot, ...patch } : slot));
+  };
+
+  const uploadNsPoster = async (idx: number, file: File) => {
+    setNsUploadingIdx(idx);
+    try {
+      const image_url = await uploadAsset(file, 'now-showing');
+      patchNsSlot(idx, { file: null, image_url });
+      toast('POSTER UPLOADED');
+    } catch (e: unknown) {
+      toast(errorMessage(e));
+    } finally {
+      setNsUploadingIdx(null);
+    }
   };
 
   const moveNsSlot = (from: number, to: number) => {
@@ -939,7 +997,7 @@ export default function AdminDashboard() {
       toast('NOW SHOWING SAVED');
       fetchData();
     } catch (e: unknown) {
-      toast(e instanceof Error ? e.message : String(e));
+      toast(errorMessage(e));
     } finally {
       setSavingNowShowing(false);
     }
@@ -1903,26 +1961,33 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                      <CinemaInput label="TITLE" value={slot.title} onChange={(v) => { const next = [...nsSlots]; next[idx] = { ...next[idx], title: v }; setNsSlots(next); }} />
-                      <CinemaInput label="LINK URL" value={slot.link_url} onChange={(v) => { const next = [...nsSlots]; next[idx] = { ...next[idx], link_url: v }; setNsSlots(next); }} />
+                      <CinemaInput label="TITLE" value={slot.title} onChange={(v) => patchNsSlot(idx, { title: v })} />
+                      <CinemaInput label="LINK URL" value={slot.link_url} onChange={(v) => patchNsSlot(idx, { link_url: v })} />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>IMAGE</label>
-                      <input type="file" accept="image/*" onChange={(e) => { const next = [...nsSlots]; next[idx] = { ...next[idx], file: e.target.files?.[0] || null }; setNsSlots(next); }} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', marginTop: 8 }} />
-                      {slot.image_url && !slot.file && <p style={{ fontSize: 9, color: '#c9a153', opacity: 0.6, margin: 0 }}>Current: {slot.image_url}</p>}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 10, color: '#c9a153', letterSpacing: 4 }}>POSTER IMAGE</label>
+                      <FilePickButton
+                        label="UPLOAD POSTER"
+                        busy={nsUploadingIdx === idx}
+                        fileName={slot.image_url ? 'Ready' : undefined}
+                        onFile={(file) => void uploadNsPoster(idx, file)}
+                      />
+                      {slot.image_url && (
+                        <img src={slot.image_url} alt="" style={{ width: 96, height: 144, objectFit: 'cover', border: '1px solid var(--ink)' }} />
+                      )}
                     </div>
                   </div>
                 ))}
                 {nsSlots.length < 10 && (
                   <button
                     type="button"
-                    onClick={() => setNsSlots([...nsSlots, emptyNsSlot()])}
+                    onClick={() => setNsSlots(prev => [...prev, emptyNsSlot()])}
                     style={{ background: 'none', border: '1px solid rgba(201,161,83,0.28)', color: '#c9a153', fontSize: 10, padding: '4px 12px', cursor: 'pointer', alignSelf: 'flex-start' }}
                   >
                     + ADD POSTER
                   </button>
                 )}
-                <button disabled={savingNowShowing} onClick={() => void saveNowShowing()} style={{ background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: savingNowShowing ? 'not-allowed' : 'pointer', opacity: savingNowShowing ? 0.7 : 1 }}>
+                <button disabled={savingNowShowing || nsUploadingIdx !== null} onClick={() => void saveNowShowing()} style={{ background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: savingNowShowing || nsUploadingIdx !== null ? 'not-allowed' : 'pointer', opacity: savingNowShowing || nsUploadingIdx !== null ? 0.7 : 1 }}>
                   {savingNowShowing ? 'SAVING...' : 'SAVE NOW SHOWING'}
                 </button>
               </div>
