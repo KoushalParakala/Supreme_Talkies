@@ -65,8 +65,13 @@ function absoluteUrl(maybe: string | null, base: string) {
 }
 
 function youtubeId(url: URL) {
-  if (url.hostname.includes('youtu.be')) return url.pathname.replace('/', '') || null
-  if (url.hostname.includes('youtube.com')) return url.searchParams.get('v')
+  if (url.hostname.includes('youtu.be')) return url.pathname.replace(/^\//, '').split('/')[0] || null
+  if (url.hostname.includes('youtube.com') || url.hostname.includes('youtube-nocookie.com')) {
+    const v = url.searchParams.get('v')
+    if (v) return v
+    const nested = url.pathname.match(/\/(?:shorts|embed|live)\/([^/?]+)/)
+    return nested?.[1] || null
+  }
   return null
 }
 
@@ -113,30 +118,45 @@ serve(async (req) => {
       return json({ error: 'That host cannot be fetched' }, 400)
     }
 
+    const ytEarly = youtubeId(target)
+    if (ytEarly) {
+      return json({
+        url: target.toString(),
+        title: 'YouTube',
+        image: `https://img.youtube.com/vi/${ytEarly}/hqdefault.jpg`,
+      })
+    }
+    const vimEarly = vimeoId(target)
+    if (vimEarly) {
+      return json({
+        url: target.toString(),
+        title: 'Vimeo',
+        image: `https://vumbnail.com/${vimEarly}.jpg`,
+      })
+    }
+
+    const fallback = () => json({
+      url: target.toString(),
+      title: target.hostname.replace(/^www\./, ''),
+      image: null,
+    })
+
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 5000)
+    const timer = setTimeout(() => controller.abort(), 8000)
     let html = ''
     try {
       const res = await fetch(target.toString(), {
         signal: controller.signal,
         redirect: 'follow',
         headers: {
-          'User-Agent': 'SupremeTalkiesLinkPreview/1.0',
+          'User-Agent': 'Mozilla/5.0 (compatible; SupremeTalkies/1.0; +https://supremetalkies.com)',
           Accept: 'text/html,application/xhtml+xml',
         },
       })
       const type = res.headers.get('content-type') || ''
-      if (!res.ok) return json({ error: 'Could not fetch that link' }, 400)
+      if (!res.ok) return fallback()
       if (!type.includes('text/html') && !type.includes('application/xhtml')) {
-        const yt = youtubeId(target)
-        if (yt) {
-          return json({
-            url: target.toString(),
-            title: 'YouTube',
-            image: `https://img.youtube.com/vi/${yt}/hqdefault.jpg`,
-          })
-        }
-        return json({ url: target.toString(), title: target.hostname, image: null })
+        return fallback()
       }
       const buf = await res.arrayBuffer()
       if (buf.byteLength > 512_000) {
@@ -144,6 +164,8 @@ serve(async (req) => {
       } else {
         html = new TextDecoder().decode(buf)
       }
+    } catch {
+      return fallback()
     } finally {
       clearTimeout(timer)
     }
@@ -153,16 +175,8 @@ serve(async (req) => {
       decodeEntities((html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || '').trim()) ||
       target.hostname
 
-    let image =
+    const image =
       absoluteUrl(metaContent(html, ['og:image', 'og:image:url', 'twitter:image']), target.toString())
-
-    const yt = youtubeId(target)
-    if (!image && yt) image = `https://img.youtube.com/vi/${yt}/hqdefault.jpg`
-
-    const vim = vimeoId(target)
-    if (!image && vim) {
-      image = `https://vumbnail.com/${vim}.jpg`
-    }
 
     return json({
       url: target.toString(),
@@ -171,6 +185,6 @@ serve(async (req) => {
     })
   } catch (err) {
     console.error('link-preview error:', err)
-    return json({ error: err?.message || 'Could not preview that link' }, 400)
+    return json({ error: err?.message || 'Could not preview that link' }, 200)
   }
 })

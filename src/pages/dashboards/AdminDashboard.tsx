@@ -1998,9 +1998,6 @@ export default function AdminDashboard() {
                     + ADD POSTER
                   </button>
                 )}
-                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.65, margin: 0 }}>
-                  Upload is storage only. GO LIVE writes the wall to Call Sheet. Title and link are optional.
-                </p>
                 <button disabled={savingNowShowing || nsUploadingIdx !== null} onClick={() => void saveNowShowing()} style={{ background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: savingNowShowing || nsUploadingIdx !== null ? 'not-allowed' : 'pointer', opacity: savingNowShowing || nsUploadingIdx !== null ? 0.7 : 1 }}>
                   {savingNowShowing ? 'GOING LIVE…' : 'GO LIVE'}
                 </button>

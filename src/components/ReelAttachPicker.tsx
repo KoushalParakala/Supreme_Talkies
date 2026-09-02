@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useFilms } from '../hooks/useFilms';
 import { filmStill } from '../data/films';
 import { IconX } from './ReelIcons';
+import { errorMessage } from '../lib/errors';
 
 export interface ReelDraft {
   reelFilmId?: string | null;
@@ -66,24 +67,32 @@ export default function ReelAttachPicker({
   };
 
   const fetchPreview = async (source?: string) => {
-    const trimmed = (source ?? url).trim();
-    if (!trimmed) return;
+    const raw = (source ?? url).trim();
+    if (!raw) return;
+    const trimmed = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    setUrl(trimmed);
     setBusy(true);
     setError('');
     setPreview(null);
+    const fallback: ReelDraft = { externalLink: trimmed, title: trimmed, image: null };
     try {
       const { data, error: fnError } = await supabase.functions.invoke('link-preview', {
         body: { url: trimmed },
       });
-      if (fnError) throw fnError;
-      if (data?.error) throw new Error(data.error);
-      setPreview({
-        externalLink: data.url || trimmed,
-        title: data.title || trimmed,
-        image: data.image || null,
-      });
+      if (data?.url || data?.title || data?.image) {
+        setPreview({
+          externalLink: data.url || trimmed,
+          title: data.title || trimmed,
+          image: data.image || null,
+        });
+        return;
+      }
+      setPreview(fallback);
+      const fromFn = typeof data?.error === 'string' ? data.error : null;
+      setError(fromFn || (fnError ? errorMessage(fnError) : 'Could not fetch a preview — pin the link anyway'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not preview that link');
+      setPreview(fallback);
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }

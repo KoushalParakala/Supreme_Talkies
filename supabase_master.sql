@@ -134,7 +134,7 @@ CREATE TABLE public.films (
 
 -- 4.2b NOW SHOWING (member call-sheet poster wall)
 CREATE TABLE public.now_showing (
-  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title      TEXT NOT NULL,
   image_url  TEXT NOT NULL,
   link_url   TEXT NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE public.now_showing (
 
 -- 4.2c NOW SHOWING REQUESTS (members request a film for the wall)
 CREATE TABLE public.now_showing_requests (
-  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      UUID REFERENCES public.profiles(id),
   film_name    TEXT NOT NULL,
   email        TEXT NOT NULL,
@@ -756,6 +756,14 @@ CREATE POLICY "Cinematic assets public read"
 CREATE POLICY "Cinematic assets admin upload"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'cinematic_assets' AND public.is_admin());
+
+CREATE POLICY "Cinematic assets member now-showing-requests"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (
+    bucket_id = 'cinematic_assets'
+    AND (storage.foldername(name))[1] = 'now-showing-requests'
+    AND (storage.foldername(name))[2] = auth.uid()::text
+  );
 
 -- ────────────────────────────────────────────────────────────────
 -- SECTION 9: INDEXES
