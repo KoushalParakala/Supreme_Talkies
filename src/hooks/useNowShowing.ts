@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { errorMessage } from '../lib/errors';
 import { uploadCinematicAsset } from '../lib/assets';
+import { patchRealtimeList } from '../lib/paging';
 
 export interface NowShowingPoster {
   id: string;
@@ -10,6 +11,10 @@ export interface NowShowingPoster {
   image_url: string;
   link_url: string;
   position: number;
+}
+
+function sortPosters(rows: NowShowingPoster[]) {
+  return [...rows].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 }
 
 export function useNowShowing() {
@@ -25,10 +30,28 @@ export function useNowShowing() {
         .order('position', { ascending: true });
       if (!alive) return;
       if (error) console.error('now_showing fetch', error);
-      setPosters((data || []) as NowShowingPoster[]);
+      setPosters(sortPosters((data || []) as NowShowingPoster[]));
       setLoading(false);
     })();
-    return () => { alive = false; };
+
+    const channel = supabase
+      .channel('now-showing-wall')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'now_showing' }, (payload) => {
+        const eventType = payload.eventType;
+        if (eventType === 'DELETE') {
+          setPosters(prev => sortPosters(patchRealtimeList(prev, eventType, null, (payload.old as { id?: string } | null)?.id)));
+          return;
+        }
+        const row = payload.new as NowShowingPoster | null;
+        if (!row?.id) return;
+        setPosters(prev => sortPosters(patchRealtimeList(prev, eventType, row, row.id)));
+      })
+      .subscribe();
+
+    return () => {
+      alive = false;
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   const submitRequest = async (payload: {

@@ -965,37 +965,48 @@ export default function AdminDashboard() {
   };
 
   const saveNowShowing = async () => {
-    const ready = nsSlots.filter(s => s.title.trim() && (s.image_url || s.file) && s.link_url.trim());
+    const ready = nsSlots.filter(s => s.image_url || s.file);
     if (!ready.length) {
-      toast('Add a title, image, and link for at least one poster.');
+      toast('Upload at least one poster, then GO LIVE.');
       return;
     }
     setSavingNowShowing(true);
     try {
-      const uploaded = [];
+      const rows = [];
       for (let i = 0; i < ready.length; i++) {
         const slot = ready[i];
         let image_url = slot.image_url;
         if (slot.file) image_url = await uploadAsset(slot.file, 'now-showing');
-        uploaded.push({ title: slot.title.trim(), image_url, link_url: slot.link_url.trim(), position: i, id: slot.id });
+        if (!image_url) throw new Error('A poster is missing its image URL.');
+        rows.push({
+          id: slot.id || crypto.randomUUID(),
+          title: slot.title.trim() || `Poster ${String(i + 1).padStart(2, '0')}`,
+          image_url,
+          link_url: slot.link_url.trim() || image_url,
+          position: i,
+        });
       }
-      const keepIds = uploaded.map(u => u.id).filter(Boolean) as string[];
-      if (nowShowing.length) {
-        const toDelete = nowShowing.filter((row: any) => !keepIds.includes(row.id)).map((row: any) => row.id);
-        if (toDelete.length) await supabase.from('now_showing').delete().in('id', toDelete);
+      const { data, error } = await supabase.from('now_showing').upsert(rows, { onConflict: 'id' }).select('id, title, image_url, link_url, position');
+      if (error) throw error;
+      if (!data?.length) throw new Error('GO LIVE did not write any posters. Run 20260906_now_showing.sql in Supabase.');
+      const keepIds = data.map((row: { id: string }) => row.id);
+      const stale = nowShowing.filter((row: { id: string }) => !keepIds.includes(row.id)).map((row: { id: string }) => row.id);
+      if (stale.length) {
+        const { error: delError } = await supabase.from('now_showing').delete().in('id', stale);
+        if (delError) throw delError;
       }
-      for (const row of uploaded) {
-        const payload = { title: row.title, image_url: row.image_url, link_url: row.link_url, position: row.position };
-        if (row.id) {
-          const { error } = await supabase.from('now_showing').update(payload).eq('id', row.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from('now_showing').insert(payload);
-          if (error) throw error;
-        }
-      }
-      toast('NOW SHOWING SAVED');
-      fetchData();
+      const live = [...data].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      setNowShowing(live);
+      const slots: ReturnType<typeof emptyNsSlot>[] = live.map((r) => ({
+        id: r.id,
+        title: r.title,
+        image_url: r.image_url,
+        link_url: r.link_url,
+        file: null,
+      }));
+      while (slots.length < 3) slots.push(emptyNsSlot());
+      setNsSlots(slots);
+      toast(`LIVE ON CALL SHEET — ${live.length} POSTER${live.length === 1 ? '' : 'S'}`);
     } catch (e: unknown) {
       toast(errorMessage(e));
     } finally {
@@ -1987,9 +1998,17 @@ export default function AdminDashboard() {
                     + ADD POSTER
                   </button>
                 )}
+                <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--ink)', opacity: 0.65, margin: 0 }}>
+                  Upload is storage only. GO LIVE writes the wall to Call Sheet. Title and link are optional.
+                </p>
                 <button disabled={savingNowShowing || nsUploadingIdx !== null} onClick={() => void saveNowShowing()} style={{ background: '#c9a153', color: '#171717', border: 'none', padding: '12px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 4, fontWeight: 700, cursor: savingNowShowing || nsUploadingIdx !== null ? 'not-allowed' : 'pointer', opacity: savingNowShowing || nsUploadingIdx !== null ? 0.7 : 1 }}>
-                  {savingNowShowing ? 'SAVING...' : 'SAVE NOW SHOWING'}
+                  {savingNowShowing ? 'GOING LIVE…' : 'GO LIVE'}
                 </button>
+                {nowShowing.length > 0 && (
+                  <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#c9a153', letterSpacing: 2, margin: 0 }}>
+                    LIVE NOW — {String(nowShowing.length).padStart(2, '0')} ON THE CALL SHEET
+                  </p>
+                )}
               </div>
             )}
 
