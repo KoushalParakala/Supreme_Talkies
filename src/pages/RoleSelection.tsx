@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import Nav from '../components/Nav';
-import { ROLE_COLORS, ROLE_ON_COLORS, type RoleColorId } from '../lib/roleColors';
+import { roleColor, roleOnColor, type RoleColorId } from '../lib/roleColors';
+import { useTheme } from '../context/ThemeContext';
 
 const ROLE_LOGOS: Record<string, string> = {
   writer: '/logo1.webp',
@@ -70,14 +71,16 @@ function RoleCard({
   isSelected: boolean;
   isExisting: boolean;
 }) {
+  const { theme } = useTheme();
+  const roleId = role.id as RoleColorId;
   return (
     <button
       type="button"
       onClick={onConfirm}
       className={`casting-card${isSelected ? ' is-selected' : ''}${isExisting ? ' is-existing' : ''}`}
       style={{
-        ['--role-accent' as string]: ROLE_COLORS[role.id as RoleColorId],
-        ['--role-on' as string]: ROLE_ON_COLORS[role.id as RoleColorId],
+        ['--role-accent' as string]: roleColor(roleId, theme),
+        ['--role-on' as string]: roleOnColor(roleId, theme),
       }}
     >
       <div className="casting-card-tags">
@@ -126,6 +129,7 @@ function FilmReel() {
 
 export default function RoleSelection() {
   const { user, profile, refreshProfile, displayName } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -208,7 +212,7 @@ export default function RoleSelection() {
                   <span
                     key={r}
                     style={{
-                      ['--role-accent' as string]: ROLE_COLORS[(r === 'amplifier' ? 'amplifier' : r) as RoleColorId] || 'var(--vermilion)',
+                      ['--role-accent' as string]: roleColor((r === 'amplifier' ? 'amplifier' : r) as RoleColorId, theme),
                     }}
                   >
                     {r === 'amplifier' ? 'Member' : r}

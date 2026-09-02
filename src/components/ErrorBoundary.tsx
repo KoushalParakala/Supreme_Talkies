@@ -27,6 +27,16 @@ export default class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info);
+    if (!isChunkError(error) || typeof window === 'undefined') return;
+    try {
+      const key = 'st-chunk-reload';
+      const last = Number(sessionStorage.getItem(key) || '0');
+      if (Date.now() - last < 12000) return;
+      sessionStorage.setItem(key, String(Date.now()));
+      window.location.reload();
+    } catch {
+      /* private mode */
+    }
   }
 
   private retry = () => {

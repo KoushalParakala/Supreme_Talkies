@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { timeAgo } from '../lib/time';
 import { filmStill } from '../data/films';
-import { ROLE_COLORS, type RoleColorId } from '../lib/roleColors';
+import { ROLE_COLORS, roleColor, type RoleColorId } from '../lib/roleColors';
+import { useTheme } from '../context/ThemeContext';
 import { displayReelTitle, reelPreviewFromUrl } from '../lib/reelLinks';
 import { displayText } from '../lib/errors';
 import { IconPencil, IconReply, IconTrash } from './ReelIcons';
@@ -75,12 +76,13 @@ export default function MessageBubble({
   onDelete: (message: GreenRoomMessage) => void;
   isAdmin?: boolean;
 }) {
+  const { theme } = useTheme();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.body || '');
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState('');
   const role = authorRole(message);
-  const accent = role ? ROLE_COLORS[role] : undefined;
+  const accent = role ? roleColor(role, theme) : undefined;
   const name = displayText(message.author?.full_name, 'Member').trim() || 'Member';
   const initial = name.charAt(0).toUpperCase();
   const derivedReel =

@@ -10,9 +10,9 @@ function CinemaButton({ children, onClick, disabled, loading, style }: { childre
   return (
     <motion.button type="button" onClick={onClick} disabled={disabled || loading}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !disabled ? '#E467A6' : 'transparent', color: hov && !disabled ? '#fffdf7' : '#E467A6', opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !disabled ? 'var(--vermilion)' : 'transparent', color: hov && !disabled ? 'var(--role-on-accent)' : 'var(--vermilion)', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #E467A6', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: '1px solid var(--vermilion)', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -25,9 +25,9 @@ function CinemaInput({ label, type = 'text', placeholder, value, onChange }: { l
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#E467A6', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: 'var(--vermilion)', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? 'var(--vermilion)' : 'color-mix(in srgb, var(--vermilion) 28%, transparent)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -37,9 +37,9 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: { lab
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#E467A6', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: 'var(--vermilion)', letterSpacing: 5, opacity: focused ? 1 : 0.7, textTransform: 'uppercase' }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#E467A6' : 'rgba(228,103,166,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? 'var(--vermilion)' : 'color-mix(in srgb, var(--vermilion) 28%, transparent)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -252,7 +252,7 @@ export default function MarketingDashboard() {
           {/* CAMPAIGNS SECTION */}
           <div id="marketing-campaigns">
             <div style={{ marginBottom: 32 }}>
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#E467A6', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN CENTER</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.4, letterSpacing: 3 }}>JOIN ACTIVE MISSIONS AND TRACK PROGRESS</p>
             </div>
 
@@ -271,30 +271,30 @@ export default function MarketingDashboard() {
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                             <span style={{ 
-                              width: 8, height: 8, borderRadius: '50%', background: c.status === 'active' ? '#E467A6' : '#666',
-                              boxShadow: c.status === 'active' ? '0 0 10px #E467A6' : 'none',
+                              width: 8, height: 8, borderRadius: '50%', background: c.status === 'active' ? 'var(--vermilion)' : '#666',
+                              boxShadow: c.status === 'active' ? '0 0 10px var(--vermilion)' : 'none',
                               animation: c.status === 'active' ? 'pulse 2s infinite' : 'none'
                             }} />
                             <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--ink)', margin: 0 }}>{c.title}</p>
                           </div>
                           <div style={{ display: 'flex', gap: 8 }}>
                             {c.platform?.map((p: string) => (
-                              <span key={p} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#E467A6', opacity: 0.6, letterSpacing: 2 }}>
+                              <span key={p} style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: 'var(--vermilion)', opacity: 0.6, letterSpacing: 2 }}>
                                 {p === 'Instagram' ? '📸' : p === 'Twitter/X' ? '🐦' : '🔗'} {p.toUpperCase()}
                               </span>
                             ))}
                           </div>
                         </div>
-                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, border: '1px solid rgba(228,103,166,0.28)', padding: '4px 10px', color: '#E467A6' }}>{c.status.toUpperCase()}</span>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, border: '1px solid color-mix(in srgb, var(--vermilion) 28%, transparent)', padding: '4px 10px', color: 'var(--vermilion)' }}>{c.status.toUpperCase()}</span>
                       </div>
 
                       <div style={{ marginBottom: 24 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: 'var(--ink)', opacity: 0.4 }}>ACTUAL REACH: {actual.toLocaleString()} / {target.toLocaleString()}</p>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: '#E467A6' }}>{Math.round(progress)}%</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, color: 'var(--vermilion)' }}>{Math.round(progress)}%</p>
                         </div>
                         <div style={{ height: 2, background: 'rgba(var(--ink-rgb),0.12)', overflow: 'hidden' }}>
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} style={{ height: '100%', background: '#E467A6' }} />
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} style={{ height: '100%', background: 'var(--vermilion)' }} />
                         </div>
                       </div>
                       
@@ -304,19 +304,19 @@ export default function MarketingDashboard() {
                             <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#4ade80', letterSpacing: 2 }}>
                               JOINED ({myAssignments[c.id].posts_count || 0} POSTS)
                             </span>
-                            <button onClick={() => handleLogPost(c.id)} style={{ background: 'transparent', border: '1px solid #E467A6', color: '#E467A6', padding: '6px 16px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>
+                            <button onClick={() => handleLogPost(c.id)} style={{ background: 'transparent', border: '1px solid var(--vermilion)', color: 'var(--vermilion)', padding: '6px 16px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}>
                               + LOG POST
                             </button>
                           </div>
                         ) : (
-                          <button onClick={() => handleJoinCampaign(c.id)} style={{ background: '#E467A6', border: 'none', color: '#fffdf7', padding: '8px 24px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>
+                          <button onClick={() => handleJoinCampaign(c.id)} style={{ background: 'var(--vermilion)', border: 'none', color: '#fffdf7', padding: '8px 24px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, fontWeight: 700, letterSpacing: 4, cursor: 'pointer' }}>
                             JOIN MISSION
                           </button>
                         )}
                         <button
                           type="button"
                           onClick={() => handleCopyKit(c)}
-                          style={{ background: 'transparent', border: '1px solid rgba(228,103,166,0.4)', color: '#E467A6', padding: '6px 16px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}
+                          style={{ background: 'transparent', border: '1px solid color-mix(in srgb, var(--vermilion) 40%, transparent)', color: 'var(--vermilion)', padding: '6px 16px', fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 3, cursor: 'pointer' }}
                         >
                           COPY KIT
                         </button>
@@ -331,7 +331,7 @@ export default function MarketingDashboard() {
                   const { data } = await supabase.from('campaigns').select('*').eq('status', 'active').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
                   setCampaigns(prev => mergeById(prev, data || []));
                   setHasMoreCampaigns(isFullPage(data));
-                }} style={{ background: 'none', border: '1px solid rgba(228,103,166,0.28)', padding: '6px 14px', color: '#E467A6', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                }} style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--vermilion) 28%, transparent)', padding: '6px 14px', color: 'var(--vermilion)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
                   LOAD MORE
                 </button>
               )}
@@ -341,7 +341,7 @@ export default function MarketingDashboard() {
           {/* IDEA BOARD SECTION */}
           <div id="marketing-ideas" style={{ paddingTop: 32, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
             <div style={{ marginBottom: 32 }}>
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#E467A6', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN IDEA BOARD</p>
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 4 }}>CAMPAIGN IDEA BOARD</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.4, letterSpacing: 3 }}>PIN YOUR IDEAS FOR THE TEAM</p>
             </div>
 
@@ -456,7 +456,7 @@ export default function MarketingDashboard() {
                 const { data } = await supabase.from('submissions').select('*, profiles(full_name, role, roles)').eq('type', 'marketing_idea').order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
                 setIdeas(prev => mergeById(prev, data || []));
                 setHasMoreIdeas(isFullPage(data));
-              }} style={{ background: 'none', border: '1px solid rgba(228,103,166,0.28)', padding: '6px 14px', color: '#E467A6', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
+              }} style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--vermilion) 28%, transparent)', padding: '6px 14px', color: 'var(--vermilion)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
                 LOAD MORE
               </button>
             )}
@@ -464,8 +464,8 @@ export default function MarketingDashboard() {
 
           {/* THE COLLAB BRIEF SECTION */}
           <div style={{ paddingTop: 64, borderTop: '1px solid rgba(var(--ink-rgb),0.12)' }}>
-            <div style={{ width: 28, height: 1, background: '#E467A6', opacity: 0.4, marginBottom: 20 }} />
-            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#E467A6', letterSpacing: 2, marginBottom: 6 }}>THE COLLAB BRIEF</p>
+            <div style={{ width: 28, height: 1, background: 'var(--vermilion)', opacity: 0.4, marginBottom: 20 }} />
+            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 6 }}>THE COLLAB BRIEF</p>
             <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>AMPLIFY THE SIGNAL. MOVE THE CROWD.</p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 680 }}>

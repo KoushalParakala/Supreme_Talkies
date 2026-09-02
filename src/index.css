@@ -1012,6 +1012,10 @@ footer .brand-lockup { color:var(--background); }
   --lift: color-mix(in srgb, #c9a153 5%, #f7f5ef);
 }
 html[data-theme="dark"] .dash-role-writer {
+  --vermilion: #3A76B8;
+  --primary: #3A76B8;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
   --background: #04060c;
   --foreground: #b8c6d6;
   --ink: #b8c6d6;
@@ -1023,6 +1027,10 @@ html[data-theme="dark"] .dash-role-writer {
   --lift: #0a1018;
 }
 html[data-theme="dark"] .dash-role-technician {
+  --vermilion: #2C9A6E;
+  --primary: #2C9A6E;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
   --background: #040806;
   --foreground: #b4cfc4;
   --ink: #b4cfc4;
@@ -1034,6 +1042,10 @@ html[data-theme="dark"] .dash-role-technician {
   --lift: #0a1612;
 }
 html[data-theme="dark"] .dash-role-producer {
+  --vermilion: #7A44C2;
+  --primary: #7A44C2;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
   --background: #07040c;
   --foreground: #c8bcd6;
   --ink: #c8bcd6;
@@ -1045,6 +1057,10 @@ html[data-theme="dark"] .dash-role-producer {
   --lift: #120a1a;
 }
 html[data-theme="dark"] .dash-role-presenter {
+  --vermilion: #359A86;
+  --primary: #359A86;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
   --background: #040807;
   --foreground: #b4cfc8;
   --ink: #b4cfc8;
@@ -1056,6 +1072,10 @@ html[data-theme="dark"] .dash-role-presenter {
   --lift: #0a1614;
 }
 html[data-theme="dark"] .dash-role-marketing {
+  --vermilion: #C04882;
+  --primary: #C04882;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
   --background: #0a0408;
   --foreground: #d4bcc8;
   --ink: #d4bcc8;
@@ -1067,6 +1087,10 @@ html[data-theme="dark"] .dash-role-marketing {
   --lift: #160a12;
 }
 html[data-theme="dark"] .dash-role-amplifier {
+  --vermilion: #C05628;
+  --primary: #C05628;
+  --primary-foreground: #fffdf7;
+  --role-on-accent: #fffdf7;
   --background: #0a0604;
   --foreground: #d4c4b4;
   --ink: #d4c4b4;

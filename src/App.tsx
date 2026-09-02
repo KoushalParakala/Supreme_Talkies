@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import GlobalGrain from './components/GlobalGrain';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
 
 // Lazy load pages
@@ -118,6 +119,7 @@ function App() {
           </motion.div>
         </div>
       }>
+        <ErrorBoundary key={location.pathname}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home />} />
@@ -164,6 +166,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>
+        </ErrorBoundary>
       </Suspense>
     </>
   );

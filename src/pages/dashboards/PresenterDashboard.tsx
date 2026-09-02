@@ -5,9 +5,9 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { PAGE_SIZE, isFullPage, mergeById } from '../../lib/paging';
 
-const ACCENT = '#86dcc9';
-const ACCENT_DIM = 'rgba(134, 220, 201, 0.32)';
-const ACCENT_FAINT = 'rgba(134, 220, 201, 0.14)';
+const ACCENT = 'var(--vermilion)';
+const ACCENT_DIM = 'color-mix(in srgb, var(--vermilion) 32%, transparent)';
+const ACCENT_FAINT = 'color-mix(in srgb, var(--vermilion) 14%, transparent)';
 
 /* ── Shared UI Components ── */
 function CinemaInput({ label, type = 'text', placeholder, value, onChange }: { label: string; type?: string; placeholder?: string; value: string; onChange: (v: string) => void; }) {
@@ -39,7 +39,7 @@ function CinemaButton({ children, onClick, loading, style, disabled }: { childre
   return (
     <motion.button type="button" onClick={onClick} disabled={loading || disabled}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !loading && !disabled ? ACCENT : 'transparent', color: hov && !loading && !disabled ? '#171717' : ACCENT, opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !loading && !disabled ? ACCENT : 'transparent', color: hov && !loading && !disabled ? 'var(--role-on-accent)' : ACCENT, opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
       style={{ border: `1px solid ${ACCENT}`, padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >

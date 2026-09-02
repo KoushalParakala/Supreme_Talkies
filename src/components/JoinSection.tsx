@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { IconArrowUpRight } from './ReelIcons';
-import { ROLE_COLORS, ROLE_ON_COLORS, type RoleColorId } from '../lib/roleColors';
+import { roleColor, roleOnColor, type RoleColorId } from '../lib/roleColors';
+import { useTheme } from '../context/ThemeContext';
 
 const ROLES = [
   { cue: 'LIGHT', slug: 'writer', title: 'Writer', line: 'Shape the first frame.' },
@@ -14,6 +15,7 @@ const ROLES = [
 
 export default function JoinSection() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const handleEntry = (cue?: string, slug?: string) => {
@@ -47,8 +49,8 @@ export default function JoinSection() {
             className={`member-tile role-${role.slug}`}
             key={role.slug}
             style={{
-              ['--tile-accent' as string]: ROLE_COLORS[role.slug as RoleColorId],
-              ['--tile-on' as string]: ROLE_ON_COLORS[role.slug as RoleColorId],
+              ['--tile-accent' as string]: roleColor(role.slug as RoleColorId, theme),
+              ['--tile-on' as string]: roleOnColor(role.slug as RoleColorId, theme),
             }}
             onClick={() => handleEntry(role.cue, role.slug)}
           >

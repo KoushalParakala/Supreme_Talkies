@@ -161,6 +161,7 @@ export default function Dashboard(){
   const subtitle =ROLE_SUBTITLES[activeRole]??'';
 
   return (
+    <ErrorBoundary>
     <motion.div className={`dash-shell site-page${activeRole ? ` dash-role dash-role-${activeRole}` : ''}`} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.4}}>
       <Nav scrolled={true}/>
       <div className={`dash-body${activeRole ? ` dash-role dash-role-${activeRole}` : ''}`}>
@@ -202,7 +203,7 @@ export default function Dashboard(){
                 <span>{subtitle}</span>
                 <span className="dash-meta-sep">/</span>
                 <span>{displayName || 'Member'}</span>
-                {profile?.st_id && (
+                {profile?.st_id && typeof profile.st_id === 'string' && (
                   <span className="dash-id">
                     {profile.st_id.startsWith('SUPR-') ? profile.st_id : 'SUPR-' + profile.st_id}
                   </span>
@@ -240,5 +241,6 @@ export default function Dashboard(){
         </div>
       </div>
     </motion.div>
+    </ErrorBoundary>
   );
 }

@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Nav from '../components/Nav';
 import { useAuth } from '../context/AuthContext';
-import { ROLE_COLORS } from '../lib/roleColors';
+import { roleColor, type RoleColorId } from '../lib/roleColors';
+import { useTheme } from '../context/ThemeContext';
 import { useNowShowing } from '../hooks/useNowShowing';
 import { errorMessage } from '../lib/errors';
 import {
@@ -14,15 +15,10 @@ import {
   type CallSheetUnit,
 } from '../hooks/useCallSheet';
 
-const UNIT_ACCENT: Record<CallSheetRole, string> = {
-  writer: ROLE_COLORS.writer,
-  technician: ROLE_COLORS.technician,
-  producer: ROLE_COLORS.producer,
-  presenter: ROLE_COLORS.presenter,
-  marketing: ROLE_COLORS.marketing,
-  amplifier: ROLE_COLORS.amplifier,
-  admin: '#c9a153',
-};
+function unitAccent(role: CallSheetRole, theme: 'light' | 'dark'): string {
+  if (role === 'admin') return '#c9a153';
+  return roleColor(role as RoleColorId, theme);
+}
 
 function CinemaInput({ label, placeholder, value, onChange, type = 'text' }: { label: string; placeholder?: string; value: string; onChange: (val: string) => void; type?: string }) {
   return (
@@ -61,7 +57,8 @@ function UnitCard({
   unit: CallSheetUnit;
   onOpen: (role: CallSheetRole) => void;
 }) {
-  const accent = UNIT_ACCENT[unit.role];
+  const { theme } = useTheme();
+  const accent = unitAccent(unit.role, theme);
   return (
     <article
       className="call-sheet-unit"

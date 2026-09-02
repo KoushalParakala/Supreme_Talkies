@@ -18,8 +18,8 @@ export function getInitials(name: string): string {
  */
 export function checkIsAdmin(_user: User | null, profile: Profile | null): boolean {
   const rArray = Array.isArray(profile?.roles) ? profile.roles : [];
-  if (rArray.some((r: string) => typeof r === 'string' && r.toLowerCase() === 'admin')) return true;
-  if (profile?.role?.toLowerCase() === 'admin') return true;
+  if (rArray.some((r) => typeof r === 'string' && r.toLowerCase() === 'admin')) return true;
+  if (typeof profile?.role === 'string' && profile.role.toLowerCase() === 'admin') return true;
   return false;
 }
 
@@ -27,7 +27,7 @@ export function checkIsAdmin(_user: User | null, profile: Profile | null): boole
  * Computes the display name from profile, user metadata, or email.
  */
 export function computeDisplayName(profile: Profile | null, user: User | null): string {
-  if (profile?.full_name && profile.full_name.trim()) {
+  if (typeof profile?.full_name === 'string' && profile.full_name.trim()) {
     return profile.full_name.trim();
   }
   const metaName = (user?.user_metadata as Record<string, unknown> | undefined)?.full_name;

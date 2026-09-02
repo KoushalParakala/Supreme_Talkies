@@ -16,14 +16,14 @@ function CinemaInput({ label, type = 'text', placeholder, value, onChange, requi
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#47D198', letterSpacing: 5, opacity: focused ? 1 : 0.7 }}>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: 'var(--vermilion)', letterSpacing: 5, opacity: focused ? 1 : 0.7 }}>
         {label}{required && ' *'}
       </label>
       <input
         type={type} placeholder={placeholder} value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#47D198' : 'rgba(71,209,152,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? 'var(--vermilion)' : 'color-mix(in srgb, var(--vermilion) 28%, transparent)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -36,9 +36,9 @@ function CinemaButton({ children, onClick, disabled, loading, style }: {
   return (
     <motion.button type="button" onClick={onClick} disabled={disabled || loading}
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      animate={{ background: hov && !disabled ? '#47D198' : 'transparent', color: hov && !disabled ? '#171717' : '#47D198', opacity: disabled ? 0.4 : 1 }}
+      animate={{ background: hov && !disabled ? 'var(--vermilion)' : 'transparent', color: hov && !disabled ? 'var(--role-on-accent)' : 'var(--vermilion)', opacity: disabled ? 0.4 : 1 }}
       transition={{ duration: 0.2 }}
-      style={{ border: '1px solid #47D198', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
+      style={{ border: '1px solid var(--vermilion)', padding: '13px 44px', fontFamily: 'DM Serif Display, serif', fontSize: 15, letterSpacing: 5, alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, cursor: disabled ? 'not-allowed' : 'pointer', ...style }}
     >
       {loading && <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />}
       {children}
@@ -53,9 +53,9 @@ function CinemaTextarea({ label, placeholder, value, onChange, rows = 3 }: {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: '#47D198', letterSpacing: 5, opacity: focused ? 1 : 0.7 }}>{label}</label>
+      <label style={{ fontFamily: 'DM Serif Display, serif', fontSize: 11, color: 'var(--vermilion)', letterSpacing: 5, opacity: focused ? 1 : 0.7 }}>{label}</label>
       <textarea rows={rows} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? '#47D198' : 'rgba(71,209,152,0.28)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
+        style={{ background: 'transparent', border: 'none', borderBottom: `1px solid ${focused ? 'var(--vermilion)' : 'color-mix(in srgb, var(--vermilion) 28%, transparent)'}`, paddingBottom: 10, fontFamily: 'Space Grotesk, sans-serif', fontSize: 14, color: 'var(--ink)', width: '100%', outline: 'none', resize: 'none', lineHeight: 1.7, transition: 'border-color 0.2s' }}
       />
     </div>
   );
@@ -418,14 +418,14 @@ export default function TechnicianDashboard() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             style={{
-              background: activeTab === tab.id ? 'rgba(71,209,152,0.1)' : 'none',
+              background: activeTab === tab.id ? 'color-mix(in srgb, var(--vermilion) 10%, transparent)' : 'none',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '2px solid #47D198' : '2px solid transparent',
+              borderBottom: activeTab === tab.id ? '2px solid var(--vermilion)' : '2px solid transparent',
               padding: '12px 24px',
               fontFamily: 'Space Grotesk, sans-serif',
               fontSize: 10,
               letterSpacing: 5,
-              color: '#47D198',
+              color: 'var(--vermilion)',
               cursor: 'pointer',
               transition: 'all 0.3s ease'
             }}
@@ -447,14 +447,14 @@ export default function TechnicianDashboard() {
           >
             {/* Feature 1: Availability Toggle */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#47D198', letterSpacing: 8 }}>AVAILABILITY STATUS</label>
+              <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--vermilion)', letterSpacing: 8 }}>AVAILABILITY STATUS</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                 <div 
                   onClick={toggleAvailability}
                   style={{ 
                     cursor: 'pointer', position: 'relative', width: 64, height: 32, 
-                    background: available ? 'rgba(71,209,152,0.4)' : 'rgba(71,209,152,0.1)', 
-                    borderRadius: 16, border: `1px solid ${available ? '#47D198' : 'rgba(71,209,152,0.28)'}`,
+                    background: available ? 'color-mix(in srgb, var(--vermilion) 40%, transparent)' : 'color-mix(in srgb, var(--vermilion) 10%, transparent)', 
+                    borderRadius: 16, border: `1px solid ${available ? 'var(--vermilion)' : 'color-mix(in srgb, var(--vermilion) 28%, transparent)'}`,
                     transition: 'all 0.3s ease'
                   }}
                 >
@@ -464,7 +464,7 @@ export default function TechnicianDashboard() {
                     style={{ position: 'absolute', top: 3, width: 24, height: 24, borderRadius: '50%', background: '#fffdf7', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
                   />
                 </div>
-                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 3, color: '#47D198', opacity: available ? 1 : 0.4 }}>
+                <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, letterSpacing: 3, color: 'var(--vermilion)', opacity: available ? 1 : 0.4 }}>
                   {available ? 'AVAILABLE FOR PROJECTS' : 'NOT AVAILABLE'}
                 </span>
               </div>
@@ -472,14 +472,14 @@ export default function TechnicianDashboard() {
 
             {/* Portfolio Form */}
             <div>
-              <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#47D198', letterSpacing: 2, marginBottom: 6 }}>YOUR CREW CARD</p>
+              <div style={{ width: 28, height: 1, background: 'var(--vermilion)', opacity: 0.4, marginBottom: 20 }} />
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 6 }}>YOUR CREW CARD</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.35, letterSpacing: 2, marginBottom: 40 }}>THE CRAFT BEHIND EVERY FRAME</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 40, maxWidth: 680 }}>
                 {/* Specialization Toggle Buttons */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#47D198', letterSpacing: 5, textTransform: 'uppercase' }}>NICHE / SPECIALISATION</label>
+                  <label style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--vermilion)', letterSpacing: 5, textTransform: 'uppercase' }}>NICHE / SPECIALISATION</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {SPECIALIZATIONS.map(s => {
                       const val = s.toUpperCase();
@@ -490,8 +490,8 @@ export default function TechnicianDashboard() {
                           onClick={() => setFormData({ ...formData, specialization: val })}
                           style={{
                             padding: '7px 16px', borderRadius: 2,
-                            background: isSelected ? 'rgba(71,209,152,0.14)' : 'transparent',
-                            border: `1px solid ${isSelected ? '#47D198' : 'rgba(var(--ink-rgb),0.18)'}`,
+                            background: isSelected ? 'color-mix(in srgb, var(--vermilion) 14%, transparent)' : 'transparent',
+                            border: `1px solid ${isSelected ? 'var(--vermilion)' : 'rgba(var(--ink-rgb),0.18)'}`,
                             color: isSelected ? 'var(--ink)' : 'rgba(var(--ink-rgb),0.45)',
                             fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 3,
                             cursor: 'pointer', transition: 'all 0.2s ease', textTransform: 'uppercase'
@@ -552,8 +552,8 @@ export default function TechnicianDashboard() {
             exit={{ opacity: 0, y: -10 }}
             style={{ display: 'flex', flexDirection: 'column', gap: 32 }}
           >
-            <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 8 }} />
-            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: '#47D198', letterSpacing: 2, marginBottom: 6 }}>OPEN FILM BRIEFS</p>
+            <div style={{ width: 28, height: 1, background: 'var(--vermilion)', opacity: 0.4, marginBottom: 8 }} />
+            <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 22, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 6 }}>OPEN FILM BRIEFS</p>
             <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.35, letterSpacing: 2, marginBottom: 28 }}>PROJECTS SEEKING CREW</p>            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {openBriefs.length === 0 ? (
                 <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 12, color: 'var(--ink)', opacity: 0.25, fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>No active briefs right now.</p>
@@ -562,23 +562,23 @@ export default function TechnicianDashboard() {
                 const acceptedRequest = sentRequests.find(req => req.project_title === brief.title && req.status === 'accepted');
 
                 return (
-                  <div key={brief.id} style={{ background: 'var(--lift)', border: `1px solid ${acceptedRequest ? 'rgba(74,222,128,0.4)' : hasInterested ? 'rgba(71,209,152,0.4)' : 'rgba(var(--ink-rgb),0.14)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
+                  <div key={brief.id} style={{ background: 'var(--lift)', border: `1px solid ${acceptedRequest ? 'rgba(74,222,128,0.4)' : hasInterested ? 'color-mix(in srgb, var(--vermilion) 40%, transparent)' : 'rgba(var(--ink-rgb),0.14)'}`, padding: 32, display: 'flex', flexDirection: 'column', gap: 20, transition: 'border-color 0.3s' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <h3 style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 20, color: 'var(--ink)', margin: '0 0 6px' }}>{brief.title}</h3>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {brief.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'var(--vermilion)', opacity: 0.5, letterSpacing: 3, margin: 0 }}>BY {brief.producer?.full_name?.toUpperCase() || 'PRODUCER'}</p>
                       </div>
                       {acceptedRequest ? (
                         <div style={{ textAlign: 'right' }}>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#4ade80', letterSpacing: 3, margin: '0 0 4px', fontWeight: 700 }}>
                             ✦ ACCEPTED
                           </p>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.8, margin: 0 }}>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'var(--vermilion)', opacity: 0.8, margin: 0 }}>
                             {acceptedRequest.receiver?.contact || 'Check Mutual Connections'}
                           </p>
                         </div>
                       ) : hasInterested ? (
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: '#47D198', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 11, color: 'var(--vermilion)', letterSpacing: 3, margin: 0, fontWeight: 700 }}>
                           ✦ INTERESTED
                         </p>
                       ) : null}
@@ -589,7 +589,7 @@ export default function TechnicianDashboard() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
                       {brief.genre?.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#47D198', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
+                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: 'var(--vermilion)', letterSpacing: 4, opacity: 0.5 }}>GENRE</span>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             {brief.genre.map((g: string) => <span key={g} style={{ fontSize: 9, color: 'var(--ink)', background: 'rgba(var(--ink-rgb),0.04)', padding: '2px 8px', border: '1px solid rgba(var(--ink-rgb),0.12)' }}>{g}</span>)}
                           </div>
@@ -597,15 +597,15 @@ export default function TechnicianDashboard() {
                       )}
                       {brief.looking_for?.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#47D198', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
+                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: 'var(--vermilion)', letterSpacing: 4, opacity: 0.5 }}>LOOKING FOR</span>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {brief.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: '#47D198', border: '1px solid #47D198', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
+                            {brief.looking_for.map((l: string) => <span key={l} style={{ fontSize: 9, color: 'var(--vermilion)', border: '1px solid var(--vermilion)', padding: '2px 8px' }}>{l.toUpperCase()}</span>)}
                           </div>
                         </div>
                       )}
                       {(brief.budget_range || brief.timeline) && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#47D198', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
+                          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: 'var(--vermilion)', letterSpacing: 4, opacity: 0.5 }}>BUDGET & TIMELINE</span>
                           <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', margin: 0 }}>{[brief.budget_range, brief.timeline].filter(Boolean).join(' • ')}</p>
                         </div>
                       )}
@@ -613,14 +613,14 @@ export default function TechnicianDashboard() {
 
                     <div style={{ paddingTop: 16, borderTop: '1px solid rgba(var(--ink-rgb),0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: '#47D198', opacity: 0.5, letterSpacing: 2 }}>PRODUCER</span>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, color: 'var(--vermilion)', opacity: 0.5, letterSpacing: 2 }}>PRODUCER</span>
                         <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)' }}>{brief.producer?.full_name || 'Unknown'}</span>
                       </div>
                       <CinemaButton 
                         onClick={() => handleInterestInBrief(brief)} 
                         loading={expressingBriefId === brief.id}
                         disabled={!!acceptedRequest}
-                        style={acceptedRequest ? { borderColor: '#4ade80', color: '#4ade80', background: 'rgba(74,222,128,0.08)' } : hasInterested ? { borderColor: '#47D198', background: 'rgba(71,209,152,0.08)' } : {}}
+                        style={acceptedRequest ? { borderColor: '#4ade80', color: '#4ade80', background: 'rgba(74,222,128,0.08)' } : hasInterested ? { borderColor: 'var(--vermilion)', background: 'color-mix(in srgb, var(--vermilion) 8%, transparent)' } : {}}
                       >
                         {expressingBriefId === brief.id ? '...' : acceptedRequest ? 'COLLABORATION ACTIVE' : hasInterested ? '✦ INTERESTED — WITHDRAW' : 'EXPRESS INTEREST'}
                       </CinemaButton>
@@ -630,7 +630,7 @@ export default function TechnicianDashboard() {
               })}
               {hasMoreBriefs && (
                 <button type="button" onClick={() => void fetchOpenBriefs(true)}
-                  style={{ background: 'none', border: '1px solid rgba(71,209,152,0.28)', padding: '6px 14px', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
+                  style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--vermilion) 28%, transparent)', padding: '6px 14px', color: 'var(--vermilion)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', alignSelf: 'center' }}>
                   LOAD MORE
                 </button>
               )}
@@ -657,7 +657,7 @@ export default function TechnicianDashboard() {
                 {expandingNewCollab && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 32, maxWidth: 680, padding: 32, background: 'var(--lift)', border: '1px solid rgba(var(--ink-rgb),0.12)', marginTop: 24 }}>
-                      <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, margin: 0 }}>NEW CONNECTION</p>
+                      <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--vermilion)', letterSpacing: 2, margin: 0 }}>NEW CONNECTION</p>
                       <CinemaInput
                         label="SEARCH BY NAME"
                         placeholder="Type a crew member's name..."
@@ -667,7 +667,7 @@ export default function TechnicianDashboard() {
                       {(searchingName || nameResults.length > 0 || nameQuery.trim().length >= 2) && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: -8 }}>
                           {searchingName && (
-                            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#47D198', opacity: 0.5, margin: 0 }}>Searching directory…</p>
+                            <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--vermilion)', opacity: 0.5, margin: 0 }}>Searching directory…</p>
                           )}
                           {!searchingName && nameQuery.trim().length >= 2 && nameResults.length === 0 && (
                             <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.35, margin: 0 }}>No members matched that name.</p>
@@ -682,7 +682,7 @@ export default function TechnicianDashboard() {
                                 setNameResults([]);
                               }}
                               style={{
-                                textAlign: 'left', background: 'rgba(71,209,152,0.08)', border: '1px solid rgba(71,209,152,0.1)',
+                                textAlign: 'left', background: 'color-mix(in srgb, var(--vermilion) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--vermilion) 10%, transparent)',
                                 padding: '10px 14px', cursor: 'pointer', color: 'var(--ink)',
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
                               }}
@@ -690,7 +690,7 @@ export default function TechnicianDashboard() {
                               <span style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14 }}>
                                 {m.avatar_symbol || '·'} {m.full_name}
                               </span>
-                              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', letterSpacing: 1 }}>
+                              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'var(--vermilion)', letterSpacing: 1 }}>
                                 {m.st_id ? (m.st_id.startsWith('SUPR-') ? m.st_id : `SUPR-${m.st_id}`) : 'NO ID'}
                               </span>
                             </button>
@@ -713,8 +713,8 @@ export default function TechnicianDashboard() {
 
             {/* Received Requests */}
             <div>
-              <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>RECEIVED</p>
+              <div style={{ width: 28, height: 1, background: 'var(--vermilion)', opacity: 0.4, marginBottom: 20 }} />
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 4 }}>RECEIVED</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>INCOMING CONNECTIONS ({receivedRequests.filter(req => req.status === 'pending').length})</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 800 }}>
@@ -740,14 +740,14 @@ export default function TechnicianDashboard() {
                         <span style={{ fontSize: 24 }}>{req.sender?.avatar_symbol || req.sender?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                         <div>
                           <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 16, color: 'var(--ink)', margin: '0 0 4px' }}>{req.sender?.full_name}</p>
-                          <span style={{ padding: '2px 8px', background: 'rgba(var(--ink-rgb),0.12)', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 2 }}>{req.sender?.role?.toUpperCase()}</span>
+                          <span style={{ padding: '2px 8px', background: 'rgba(var(--ink-rgb),0.12)', color: 'var(--vermilion)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 2 }}>{req.sender?.role?.toUpperCase()}</span>
                         </div>
                       </div>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#47D198', opacity: 0.4, margin: 0 }}>{new Date(req.created_at).toLocaleDateString()}</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--vermilion)', opacity: 0.4, margin: 0 }}>{new Date(req.created_at).toLocaleDateString()}</p>
                     </div>
 
                     <div>
-                      <p style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 16, color: '#47D198', margin: '0 0 8px' }}>{req.project_title || 'Untitled Project'}</p>
+                      <p style={{ fontFamily: 'DM Serif Display, serif', fontStyle: 'italic', fontSize: 16, color: 'var(--vermilion)', margin: '0 0 8px' }}>{req.project_title || 'Untitled Project'}</p>
                       <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 13, color: 'var(--ink)', opacity: 0.7, lineHeight: 1.6, margin: 0 }}>{req.message}</p>
                     </div>
 
@@ -759,7 +759,7 @@ export default function TechnicianDashboard() {
                           style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', color: 'rgba(255,120,120,0.8)', padding: '13px 32px', fontFamily: 'DM Serif Display, serif', fontSize: 14, letterSpacing: 4, cursor: 'pointer' }}
                         >DECLINE</button>
                       </div>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: '#47D198', opacity: 0.3, margin: 0 }}>{req.sender?.st_id ? (req.sender.st_id.startsWith('SUPR-') ? req.sender.st_id : `SUPR-${req.sender.st_id}`) : 'Pending'}</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--vermilion)', opacity: 0.3, margin: 0 }}>{req.sender?.st_id ? (req.sender.st_id.startsWith('SUPR-') ? req.sender.st_id : `SUPR-${req.sender.st_id}`) : 'Pending'}</p>
                     </div>
                   </div>
                 ))}
@@ -768,8 +768,8 @@ export default function TechnicianDashboard() {
 
             {/* Sent Requests */}
             <div>
-              <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>SENT</p>
+              <div style={{ width: 28, height: 1, background: 'var(--vermilion)', opacity: 0.4, marginBottom: 20 }} />
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 4 }}>SENT</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>YOUR OUTGOING PINGS ({sentRequests.filter(req => req.status === 'pending').length})</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 800 }}>
@@ -783,13 +783,13 @@ export default function TechnicianDashboard() {
                       <span style={{ fontSize: 20 }}>{req.receiver?.avatar_symbol || req.receiver?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                       <div>
                         <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', margin: '0 0 2px' }}>{req.receiver?.full_name}</p>
-                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{req.receiver?.st_id ? (req.receiver.st_id.startsWith('SUPR-') ? req.receiver.st_id : `SUPR-${req.receiver.st_id}`) : 'Pending'}</p>
+                        <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'var(--vermilion)', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{req.receiver?.st_id ? (req.receiver.st_id.startsWith('SUPR-') ? req.receiver.st_id : `SUPR-${req.receiver.st_id}`) : 'Pending'}</p>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                       <span style={{ 
                         fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, letterSpacing: 2, padding: '4px 10px',
-                        background: 'rgba(var(--ink-rgb),0.12)', color: '#47D198'
+                        background: 'rgba(var(--ink-rgb),0.12)', color: 'var(--vermilion)'
                       }}>PENDING</span>
                     </div>
                   </div>
@@ -797,7 +797,7 @@ export default function TechnicianDashboard() {
               </div>
               {hasMoreRequests && (
                 <button type="button" onClick={() => void fetchRequests(true)}
-                  style={{ background: 'none', border: '1px solid rgba(71,209,152,0.28)', padding: '6px 14px', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
+                  style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--vermilion) 28%, transparent)', padding: '6px 14px', color: 'var(--vermilion)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
                   LOAD MORE
                 </button>
               )}
@@ -805,8 +805,8 @@ export default function TechnicianDashboard() {
 
             {/* Mutual Connections */}
             <div>
-              <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>MUTUAL CONNECTIONS</p>
+              <div style={{ width: 28, height: 1, background: 'var(--vermilion)', opacity: 0.4, marginBottom: 20 }} />
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 4 }}>MUTUAL CONNECTIONS</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>ACTIVE COLLABORATORS</p>
               
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
@@ -830,16 +830,16 @@ export default function TechnicianDashboard() {
                         <span style={{ fontSize: 24 }}>{collab.peer?.avatar_symbol || collab.peer?.full_name?.substring(0,1).toUpperCase() || '?'}</span>
                         <div>
                           <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', margin: '0 0 2px' }}>{collab.peer?.full_name}</p>
-                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{collab.peer?.st_id ? (collab.peer.st_id.startsWith('SUPR-') ? collab.peer.st_id : `SUPR-${collab.peer.st_id}`) : 'Pending'}</p>
+                          <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'var(--vermilion)', opacity: 0.5, margin: 0, letterSpacing: 2 }}>{collab.peer?.st_id ? (collab.peer.st_id.startsWith('SUPR-') ? collab.peer.st_id : `SUPR-${collab.peer.st_id}`) : 'Pending'}</p>
                         </div>
                       </div>
                     </div>
                     {collab.peer?.portfolio_url ? (
-                      <a href={collab.peer.portfolio_url} target="_blank" rel="noreferrer" style={{ alignSelf: 'flex-start', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 2, color: '#47D198', textDecoration: 'underline', marginTop: 8 }}>
+                      <a href={collab.peer.portfolio_url} target="_blank" rel="noreferrer" style={{ alignSelf: 'flex-start', fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, letterSpacing: 2, color: 'var(--vermilion)', textDecoration: 'underline', marginTop: 8 }}>
                         VIEW WORK →
                       </a>
                     ) : (
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.4, margin: '8px 0 0', letterSpacing: 2 }}>NO PORTFOLIO</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'var(--vermilion)', opacity: 0.4, margin: '8px 0 0', letterSpacing: 2 }}>NO PORTFOLIO</p>
                     )}
                     <button 
                       onClick={() => handleRemoveConnection(collab.peer?.id)}
@@ -875,27 +875,27 @@ export default function TechnicianDashboard() {
 
             {/* Find Crew */}
             <div>
-              <div style={{ width: 28, height: 1, background: '#47D198', opacity: 0.4, marginBottom: 20 }} />
-              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: '#47D198', letterSpacing: 2, marginBottom: 4 }}>DISCOVER CREW</p>
+              <div style={{ width: 28, height: 1, background: 'var(--vermilion)', opacity: 0.4, marginBottom: 20 }} />
+              <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 18, color: 'var(--vermilion)', letterSpacing: 2, marginBottom: 4 }}>DISCOVER CREW</p>
               <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 10, color: 'var(--ink)', opacity: 0.3, letterSpacing: 3, marginBottom: 28 }}>AVAILABLE TECHNICIANS</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
                 {otherCrew.map(tech => (
                   <div key={tech.id} style={{ border: '1px solid rgba(var(--ink-rgb),0.12)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 16 }}>{tech.avatar_symbol || tech.full_name?.substring(0,1).toUpperCase() || '?'}</span>
-                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: '#47D198', opacity: 0.3, margin: 0 }}>{tech.st_id ? (tech.st_id.startsWith('SUPR-') ? tech.st_id : `SUPR-${tech.st_id}`) : 'Pending'}</p>
+                      <p style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 9, color: 'var(--vermilion)', opacity: 0.3, margin: 0 }}>{tech.st_id ? (tech.st_id.startsWith('SUPR-') ? tech.st_id : `SUPR-${tech.st_id}`) : 'Pending'}</p>
                     </div>
                     <p style={{ fontFamily: 'DM Serif Display, serif', fontSize: 14, color: 'var(--ink)', margin: 0 }}>{tech.full_name}</p>
                     <button 
                       onClick={() => { setNewCollab({ ...newCollab, stId: tech.st_id || '' }); setExpandingNewCollab(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      style={{ background: 'none', border: '1px solid rgba(var(--ink-rgb),0.18)', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, padding: '6px', cursor: 'pointer' }}
+                      style={{ background: 'none', border: '1px solid rgba(var(--ink-rgb),0.18)', color: 'var(--vermilion)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, padding: '6px', cursor: 'pointer' }}
                     >CONNECT</button>
                   </div>
                 ))}
               </div>
               {hasMoreCrew && (
                 <button type="button" onClick={() => void fetchOtherCrew(true)}
-                  style={{ background: 'none', border: '1px solid rgba(71,209,152,0.28)', padding: '6px 14px', color: '#47D198', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
+                  style={{ background: 'none', border: '1px solid color-mix(in srgb, var(--vermilion) 28%, transparent)', padding: '6px 14px', color: 'var(--vermilion)', fontFamily: 'Space Grotesk, sans-serif', fontSize: 8, letterSpacing: 3, cursor: 'pointer', marginTop: 16 }}>
                   LOAD MORE
                 </button>
               )}
